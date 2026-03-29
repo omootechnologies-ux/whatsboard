@@ -6,7 +6,7 @@ import { adminClient } from "@/lib/supabase/admin";
 import { loginSchema, registerSchema } from "@/lib/validations";
 
 export async function registerAction(
-  prevState: { error: string },
+  prevState: { error?: string } | void,
   formData: FormData
 ) {
   const parsed = registerSchema.safeParse({
@@ -85,7 +85,7 @@ export async function registerAction(
 }
 
 export async function loginAction(
-  prevState: { error: string },
+  prevState: { error?: string } | void,
   formData: FormData
 ) {
   const parsed = loginSchema.safeParse({
