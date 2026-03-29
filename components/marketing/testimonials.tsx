@@ -27,7 +27,7 @@ export function Testimonials() {
           It feels like clarity, not just software.
         </h2>
         <p className="mt-4 text-slate-300">
-          Built for real East African selling behavior — not generic CRM dashboards with no understanding of chat commerce.
+          Built for real East African selling behavior — not generic CRM dashboards that do not understand chat commerce.
         </p>
       </div>
 

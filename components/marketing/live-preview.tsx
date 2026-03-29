@@ -9,7 +9,8 @@ export function LivePreview() {
           A dashboard that actually feels like control.
         </h2>
         <p className="mt-4 text-slate-300">
-          Built for sellers who already get customers on WhatsApp, Instagram, TikTok, and Facebook — but lose order control after the first message.
+          Built for sellers who already get customers on WhatsApp, Instagram, TikTok, and Facebook —
+          but lose order control after the first message.
         </p>
       </div>
 

@@ -6,7 +6,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl">
       <div className="container-pad flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-400 text-slate-950 font-bold shadow-lg shadow-emerald-500/20">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-400 text-slate-950 font-bold shadow-lg shadow-emerald-500/20">
             W
           </div>
           <div>
@@ -26,7 +26,7 @@ export function Navbar() {
           <Button variant="ghost" asChild className="hidden sm:inline-flex">
             <Link href="/login">Login</Link>
           </Button>
-          <Button asChild className="pulse-border">
+          <Button asChild className="pulse-soft">
             <Link href="/register">Start Free</Link>
           </Button>
         </div>

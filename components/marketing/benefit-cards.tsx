@@ -15,10 +15,10 @@ export function BenefitCards() {
     <section className="container-pad py-16">
       <div className="mb-10 max-w-2xl">
         <h2 className="text-3xl font-bold tracking-tight text-white">
-          What changes when business stops depending on memory
+          What changes when the business stops depending on memory
         </h2>
         <p className="mt-3 text-slate-300">
-          More control. Less noise. Fewer awkward “who handled this order?” meetings.
+          More control. Less noise. More cash actually collected.
         </p>
       </div>
 
