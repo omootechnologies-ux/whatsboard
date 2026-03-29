@@ -125,3 +125,43 @@ export async function getCustomersData() {
     };
   });
 }
+
+export async function getFollowUpsData() {
+  const { supabase, businessId } = await getViewerContext();
+
+  if (!businessId) return [];
+
+  const { data } = await supabase
+    .from("follow_ups")
+    .select(`
+      id,
+      due_at,
+      note,
+      completed,
+      orders(
+        id,
+        product_name,
+        delivery_area,
+        customers(name, phone)
+      )
+    `)
+    .eq("business_id", businessId)
+    .order("created_at", { ascending: false });
+
+  return (data ?? []).map((item: any) => {
+    const order = Array.isArray(item.orders) ? item.orders[0] : item.orders;
+    const customer = Array.isArray(order?.customers) ? order.customers[0] : order?.customers;
+
+    return {
+      id: item.id,
+      dueAt: item.due_at,
+      note: item.note,
+      completed: item.completed,
+      orderId: order?.id ?? "",
+      product: order?.product_name ?? "",
+      area: order?.delivery_area ?? "",
+      customerName: customer?.name ?? "Unknown",
+      phone: customer?.phone ?? ""
+    };
+  });
+}

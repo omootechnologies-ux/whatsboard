@@ -89,6 +89,8 @@ export async function createOrderAction(
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/orders");
+  revalidatePath("/dashboard/customers");
+  revalidatePath("/dashboard/follow-ups");
 
   return { error: "", success: true };
 }
@@ -113,7 +115,23 @@ export async function updateOrderStageAction(orderId: string, stage: string) {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/orders");
-  revalidatePath("/dashboard/customers");
+  return { success: true };
+}
+
+export async function completeFollowUpAction(followUpId: string) {
+  const { supabase, businessId } = await getBusinessId();
+
+  const { error } = await supabase
+    .from("follow_ups")
+    .update({
+      completed: true,
+      completed_at: new Date().toISOString()
+    })
+    .eq("id", followUpId)
+    .eq("business_id", businessId);
+
+  if (error) return { error: error.message };
+
   revalidatePath("/dashboard/follow-ups");
   return { success: true };
 }
