@@ -1,9 +1,9 @@
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
 import Link from "next/link";
 import { getDashboardData } from "@/lib/queries";
 import { formatTZS } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 export default async function OrdersPage() {
   const { orders } = await getDashboardData();
@@ -12,11 +12,14 @@ export default async function OrdersPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-semibold">Orders</h2>
-        <p className="mt-2 text-slate-600">Search, filter, and update the orders that started in chat.</p>
+        <p className="mt-2 text-slate-300">
+          Search, filter, and update the orders that started in chat.
+        </p>
       </div>
-      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
+
+      <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5">
         <table className="w-full text-left text-sm">
-          <thead className="border-b border-slate-200 text-slate-500">
+          <thead className="border-b border-white/10 text-slate-400">
             <tr>
               <th className="px-4 py-3">Customer</th>
               <th className="px-4 py-3">Product</th>
@@ -29,7 +32,11 @@ export default async function OrdersPage() {
           <tbody>
             {orders.map((order) => (
               <tr key={order.id} className="border-b border-white/5 last:border-none">
-                <td className="px-4 py-3"><Link href={`/dashboard/orders/${order.id}`} className="hover:text-emerald-300">{order.customerName}</Link></td>
+                <td className="px-4 py-3">
+                  <Link href={`/dashboard/orders/${order.id}`} className="hover:text-emerald-300">
+                    {order.customerName}
+                  </Link>
+                </td>
                 <td className="px-4 py-3">{order.product}</td>
                 <td className="px-4 py-3">{order.area}</td>
                 <td className="px-4 py-3">{formatTZS(order.amount)}</td>
