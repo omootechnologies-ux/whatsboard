@@ -9,6 +9,7 @@ WHATSBOARD is a WhatsApp-first order-to-cash board for East African sellers.
 - Payment visibility
 - Analytics dashboard
 - Supabase-ready schema with RLS
+- Live Supabase data instead of local demo records
 
 ## Run locally
 1. Copy `.env.example` to `.env.local`

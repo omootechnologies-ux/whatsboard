@@ -11,41 +11,48 @@ export default async function OrdersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">Orders</h2>
-        <p className="mt-2 text-slate-300">
+        <h2 className="text-2xl font-semibold text-slate-900">Orders</h2>
+        <p className="mt-2 text-slate-600">
           Search, filter, and update the orders that started in chat.
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/5">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-white/10 text-slate-400">
-            <tr>
-              <th className="px-4 py-3">Customer</th>
-              <th className="px-4 py-3">Product</th>
-              <th className="px-4 py-3">Area</th>
-              <th className="px-4 py-3">Amount</th>
-              <th className="px-4 py-3">Stage</th>
-              <th className="px-4 py-3">Payment</th>
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order) => (
-              <tr key={order.id} className="border-b border-white/5 last:border-none">
-                <td className="px-4 py-3">
-                  <Link href={`/dashboard/orders/${order.id}`} className="hover:text-emerald-300">
-                    {order.customerName}
-                  </Link>
-                </td>
-                <td className="px-4 py-3">{order.product}</td>
-                <td className="px-4 py-3">{order.area}</td>
-                <td className="px-4 py-3">{formatTZS(order.amount)}</td>
-                <td className="px-4 py-3">{order.stage}</td>
-                <td className="px-4 py-3">{order.paymentStatus}</td>
+      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[840px] text-left text-sm">
+            <thead className="border-b border-slate-200 text-slate-500">
+              <tr>
+                <th className="px-4 py-3">Customer</th>
+                <th className="px-4 py-3">Product</th>
+                <th className="px-4 py-3">Area</th>
+                <th className="px-4 py-3">Amount</th>
+                <th className="px-4 py-3">Stage</th>
+                <th className="px-4 py-3">Payment</th>
+                <th className="px-4 py-3">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {orders.map((order) => (
+                <tr key={order.id} className="border-b border-slate-100 last:border-none">
+                  <td className="px-4 py-3 font-medium text-slate-900">{order.customerName}</td>
+                  <td className="px-4 py-3 text-slate-700">{order.product}</td>
+                  <td className="px-4 py-3 text-slate-600">{order.area}</td>
+                  <td className="px-4 py-3 text-emerald-600">{formatTZS(order.amount)}</td>
+                  <td className="px-4 py-3 text-slate-700">{order.stage}</td>
+                  <td className="px-4 py-3 text-slate-700">{order.paymentStatus}</td>
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/dashboard/orders/${order.id}`}
+                      className="inline-flex rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                    >
+                      Open
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

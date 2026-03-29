@@ -2,6 +2,9 @@ import { notFound } from "next/navigation";
 import { getViewerContext } from "@/lib/queries";
 import { formatTZS } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function OrderDetailPage({ params }: { params: { id: string } }) {
   const { supabase, businessId } = await getViewerContext();
   if (!businessId) return notFound();
@@ -22,27 +25,25 @@ export default async function OrderDetailPage({ params }: { params: { id: string
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-semibold">{customer?.name ?? "Unknown customer"}</h2>
+        <h2 className="text-2xl font-semibold text-slate-900">{customer?.name ?? "Unknown customer"}</h2>
         <p className="mt-2 text-slate-600">
           Track payment, dispatch, notes, and follow-up for this order.
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-3xl border border-slate-200 bg-white p-5">
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-sm text-slate-500">Product</p>
           <p className="mt-1">{order.product_name}</p>
 
           <p className="mt-4 text-sm text-slate-500">Amount</p>
-          <p className="mt-1 font-semibold text-emerald-600">
-            {formatTZS(Number(order.amount))}
-          </p>
+          <p className="mt-1 font-semibold text-emerald-600">{formatTZS(Number(order.amount))}</p>
 
           <p className="mt-4 text-sm text-slate-500">Area</p>
           <p className="mt-1">{order.delivery_area}</p>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-5">
+        <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
           <p className="text-sm text-slate-500">Stage</p>
           <p className="mt-1">{order.stage}</p>
 
@@ -54,7 +55,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
         </div>
       </div>
 
-      <div className="rounded-3xl border border-slate-200 bg-white p-5">
+      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 className="text-lg font-semibold">Activity</h3>
         <div className="mt-4 space-y-3">
           {(order.order_activity ?? []).map((item: any, index: number) => (

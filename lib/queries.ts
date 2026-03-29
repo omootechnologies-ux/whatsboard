@@ -4,7 +4,10 @@ export async function getViewerContext() {
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
   const user = userData.user;
-  if (!user) return { supabase, user: null, businessId: null, profile: null };
+
+  if (!user) {
+    return { supabase, user: null, businessId: null, profile: null };
+  }
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -12,12 +15,20 @@ export async function getViewerContext() {
     .eq("id", user.id)
     .single();
 
-  return { supabase, user, businessId: profile?.business_id ?? null, profile };
+  return {
+    supabase,
+    user,
+    businessId: profile?.business_id ?? null,
+    profile
+  };
 }
 
 export async function getDashboardData() {
   const { supabase, businessId } = await getViewerContext();
-  if (!businessId) return { orders: [], metrics: null };
+
+  if (!businessId) {
+    return { orders: [], metrics: null };
+  }
 
   const { data: orders } = await supabase
     .from("orders")
@@ -83,6 +94,7 @@ export async function getDashboardData() {
 
 export async function getCustomersData() {
   const { supabase, businessId } = await getViewerContext();
+
   if (!businessId) return [];
 
   const { data } = await supabase
