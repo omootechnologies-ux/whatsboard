@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -13,8 +14,10 @@ import {
   BarChart,
   Bar
 } from "recharts";
+import { Plus, X } from "lucide-react";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { KanbanBoard } from "@/components/dashboard/kanban-board";
+import { OrderForm } from "@/components/forms/order-form";
 import { demoOrders } from "@/lib/demo-data";
 import { formatTZS } from "@/lib/utils";
 
@@ -44,6 +47,8 @@ const areaData = [
 const pieColors = ["#10b981", "#0f172a", "#14b8a6", "#94a3b8"];
 
 export default function DashboardPage() {
+  const [showOrderForm, setShowOrderForm] = useState(false);
+
   const paidOrders = demoOrders.filter((o) => o.paymentStatus === "paid").length;
   const unpaidOrders = demoOrders.filter((o) => o.paymentStatus === "unpaid").length;
   const unpaidValue = demoOrders
@@ -52,17 +57,40 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <section className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+      <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-slate-900">Overview</h2>
           <p className="mt-2 text-slate-600">
             See what is paid, stuck, delayed, and ready for follow-up.
           </p>
         </div>
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-          Your orders are finally in one place. Your stress can now reduce small small.
+
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={() => setShowOrderForm((prev) => !prev)}
+            className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-600"
+          >
+            {showOrderForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {showOrderForm ? "Close Form" : "Add Order"}
+          </button>
+
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            Your orders are finally in one place.
+          </div>
         </div>
       </section>
+
+      {showOrderForm && (
+        <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4">
+            <h3 className="text-xl font-semibold text-slate-900">Create new order</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Capture the order before it gets lost in chat.
+            </p>
+          </div>
+          <OrderForm />
+        </section>
+      )}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Orders today" value={String(demoOrders.length)} hint="Tracked from chat to cash" />
