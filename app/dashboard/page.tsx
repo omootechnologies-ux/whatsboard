@@ -1,5 +1,13 @@
 import Link from "next/link";
-import { Plus, AlertCircle, TrendingUp, ShoppingBag, CheckCircle2, Clock } from "lucide-react";
+import {
+  Plus,
+  AlertCircle,
+  TrendingUp,
+  ShoppingBag,
+  CheckCircle2,
+  BellRing,
+  ArrowRight,
+} from "lucide-react";
 import { KanbanBoard } from "@/components/dashboard/kanban-board";
 import { formatTZS } from "@/lib/utils";
 import { getDashboardData } from "@/lib/queries";
@@ -20,56 +28,123 @@ export default async function DashboardPage() {
     return created.toDateString() === today.toDateString();
   }).length;
 
+  const readyToDispatch = orders.filter(
+    (o) => o.stage === "confirmed" || o.stage === "packing"
+  ).length;
+
+  const deliveredCount = orders.filter((o) => o.stage === "delivered").length;
+
+  const recentOrders = [...orders].slice(0, 5);
+
   return (
     <div className="space-y-8">
+      <section className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
+        <div className="overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-100 p-6 lg:p-8">
+            <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-600">
+              Overview
+            </p>
+            <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 lg:text-4xl">
+              Your seller control room.
+            </h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 lg:text-base">
+              See what needs payment, what needs packing, and what needs follow-up before a customer
+              disappears into another inbox.
+            </p>
 
-      {/* Header */}
-      <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 mb-1">Operations Center</p>
-          <h2 className="text-2xl font-bold text-slate-900">Good day. Here's your pipeline. 👋</h2>
-          <p className="mt-1 text-sm text-slate-500">
-            {todayOrders > 0
-              ? `${todayOrders} order${todayOrders > 1 ? "s" : ""} created today.`
-              : "No orders yet today — go get some customers."}{" "}
-            {urgentUnpaid > 0 && (
-              <span className="text-red-500 font-medium">
-                {urgentUnpaid} unpaid order{urgentUnpaid > 1 ? "s" : ""} need attention.
-              </span>
-            )}
-          </p>
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/dashboard/orders/new"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+              >
+                <Plus className="h-4 w-4" />
+                Add New Order
+              </Link>
+
+              <Link
+                href="/dashboard/orders"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-400"
+              >
+                Open Orders
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid gap-4 p-6 md:grid-cols-3 lg:p-8">
+            <MiniInsight
+              label="Orders today"
+              value={String(todayOrders)}
+              note={todayOrders > 0 ? "Fresh activity on the board." : "Quiet day so far."}
+            />
+            <MiniInsight
+              label="Ready to move"
+              value={String(readyToDispatch)}
+              note="Confirmed or packing right now."
+            />
+            <MiniInsight
+              label="Delivered"
+              value={String(deliveredCount)}
+              note="Orders already completed."
+            />
+          </div>
         </div>
-        <Link
-          href="/dashboard/orders/new"
-          className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          New Order
-        </Link>
+
+        <div className="rounded-[32px] border border-slate-200 bg-slate-950 p-6 text-white shadow-sm lg:p-7">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/55">
+            Attention needed
+          </p>
+          <h2 className="mt-3 text-2xl font-black tracking-tight">
+            {urgentUnpaid > 0 ? `${urgentUnpaid} unpaid orders` : "No unpaid pressure right now"}
+          </h2>
+          <p className="mt-3 text-sm leading-7 text-white/70">
+            {urgentUnpaid > 0
+              ? "This is cash still sitting in chats, screenshots, promises, and 'nitakutumia sasa'."
+              : "Clean. Your unpaid queue looks calm at the moment."}
+          </p>
+
+          <div className="mt-6 space-y-3">
+            <AlertLine
+              tone={urgentUnpaid > 0 ? "danger" : "ok"}
+              text={
+                urgentUnpaid > 0
+                  ? "Follow up before dispatch. Don’t pack for vibes."
+                  : "No urgent unpaid orders detected."
+              }
+            />
+            <AlertLine
+              tone="neutral"
+              text={`${metrics?.totalOrders ?? 0} total tracked orders on the system.`}
+            />
+            <AlertLine
+              tone="neutral"
+              text={`${formatTZS(metrics?.unpaidValue ?? 0)} still waiting to be collected.`}
+            />
+          </div>
+        </div>
       </section>
 
-      {/* Stat Cards */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Total Orders"
           value={String(metrics?.totalOrders ?? 0)}
-          hint="All tracked orders"
+          hint="Everything currently tracked"
           icon={<ShoppingBag className="h-4 w-4" />}
-          color="slate"
+          tone="slate"
         />
         <StatCard
-          label="Paid"
+          label="Paid Orders"
           value={String(metrics?.paidOrders ?? 0)}
-          hint="Confirmed payments"
+          hint="Confirmed payments received"
           icon={<CheckCircle2 className="h-4 w-4" />}
-          color="green"
+          tone="green"
         />
         <StatCard
           label="Unpaid Orders"
           value={String(metrics?.unpaidOrders ?? 0)}
-          hint="Needs follow-up now"
+          hint="Needs follow-up"
           icon={<AlertCircle className="h-4 w-4" />}
-          color="red"
+          tone="red"
           urgent={urgentUnpaid > 0}
         />
         <StatCard
@@ -77,28 +152,167 @@ export default async function DashboardPage() {
           value={formatTZS(metrics?.unpaidValue ?? 0)}
           hint="Cash still on the table"
           icon={<TrendingUp className="h-4 w-4" />}
-          color="orange"
+          tone="orange"
         />
       </section>
 
-      {/* Unpaid Alert Banner */}
-      {urgentUnpaid > 0 && (
-        <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm">
-          <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
-          <p className="text-red-700">
-            <span className="font-semibold">{urgentUnpaid} orders unpaid</span> and not yet delivered.
-            Don't pack and dispatch until payment is confirmed.{" "}
-            <Link href="/dashboard/orders" className="underline font-semibold">
-              View orders →
-            </Link>
-          </p>
+      <section className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
+        <div className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+          <KanbanBoard orders={orders} />
         </div>
-      )}
 
-      {/* Kanban */}
-      <section>
-        <KanbanBoard orders={orders} />
+        <div className="space-y-6">
+          <div className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">
+                  Quick pressure check
+                </p>
+                <h3 className="mt-2 text-xl font-black tracking-tight text-slate-900">
+                  Follow-ups and unpaid heat
+                </h3>
+              </div>
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                <BellRing className="h-5 w-5" />
+              </span>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              <QuickRow
+                label="Unpaid waiting action"
+                value={String(urgentUnpaid)}
+                tone={urgentUnpaid > 0 ? "red" : "green"}
+              />
+              <QuickRow
+                label="Orders created today"
+                value={String(todayOrders)}
+                tone="slate"
+              />
+              <QuickRow
+                label="Ready for packing / dispatch"
+                value={String(readyToDispatch)}
+                tone="orange"
+              />
+              <QuickRow
+                label="Paid orders"
+                value={String(metrics?.paidOrders ?? 0)}
+                tone="green"
+              />
+            </div>
+          </div>
+
+          <div className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">
+                  Recent activity
+                </p>
+                <h3 className="mt-2 text-xl font-black tracking-tight text-slate-900">
+                  Latest orders
+                </h3>
+              </div>
+
+              <Link
+                href="/dashboard/orders"
+                className="text-sm font-semibold text-emerald-600 hover:text-emerald-700"
+              >
+                See all
+              </Link>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {recentOrders.length > 0 ? (
+                recentOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-900">
+                        {order.customerName}
+                      </p>
+                      <p className="truncate text-xs text-slate-500">{order.product}</p>
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-bold text-emerald-600">
+                        {formatTZS(order.amount)}
+                      </p>
+                      <p className="text-xs text-slate-400">{order.stage.replaceAll("_", " ")}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
+                  No orders yet.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </section>
+    </div>
+  );
+}
+
+function MiniInsight({
+  label,
+  value,
+  note,
+}: {
+  label: string;
+  value: string;
+  note: string;
+}) {
+  return (
+    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{label}</p>
+      <p className="mt-3 text-3xl font-black tracking-tight text-slate-900">{value}</p>
+      <p className="mt-2 text-sm text-slate-500">{note}</p>
+    </div>
+  );
+}
+
+function AlertLine({
+  text,
+  tone,
+}: {
+  text: string;
+  tone: "danger" | "ok" | "neutral";
+}) {
+  const toneMap = {
+    danger: "border-red-500/20 bg-red-500/10 text-red-100",
+    ok: "border-emerald-500/20 bg-emerald-500/10 text-emerald-100",
+    neutral: "border-white/10 bg-white/5 text-white/80",
+  };
+
+  return (
+    <div className={`rounded-2xl border px-4 py-3 text-sm ${toneMap[tone]}`}>
+      {text}
+    </div>
+  );
+}
+
+function QuickRow({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "red" | "green" | "orange" | "slate";
+}) {
+  const toneMap = {
+    red: "bg-red-50 text-red-600",
+    green: "bg-emerald-50 text-emerald-600",
+    orange: "bg-orange-50 text-orange-600",
+    slate: "bg-slate-100 text-slate-700",
+  };
+
+  return (
+    <div className="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3">
+      <p className="text-sm font-medium text-slate-600">{label}</p>
+      <span className={`rounded-xl px-3 py-1 text-sm font-bold ${toneMap[tone]}`}>{value}</span>
     </div>
   );
 }
@@ -108,14 +322,14 @@ function StatCard({
   value,
   hint,
   icon,
-  color,
+  tone,
   urgent,
 }: {
   label: string;
   value: string;
   hint?: string;
   icon: React.ReactNode;
-  color: "slate" | "green" | "red" | "orange";
+  tone: "slate" | "green" | "red" | "orange";
   urgent?: boolean;
 }) {
   const colorMap = {
@@ -124,25 +338,23 @@ function StatCard({
     red: "bg-red-50 text-red-500",
     orange: "bg-orange-50 text-orange-500",
   };
-  const valueColorMap = {
-    slate: "text-slate-900",
-    green: "text-emerald-600",
-    red: "text-red-500",
-    orange: "text-orange-500",
-  };
 
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md ${
-        urgent ? "border-red-300 ring-1 ring-red-200" : "border-slate-200"
-      }`}
+      className={[
+        "rounded-[28px] border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
+        urgent ? "border-red-200 ring-1 ring-red-100" : "border-slate-200",
+      ].join(" ")}
     >
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</p>
-        <span className={`inline-flex rounded-lg p-1.5 ${colorMap[color]}`}>{icon}</span>
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">{label}</p>
+        <span className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl ${colorMap[tone]}`}>
+          {icon}
+        </span>
       </div>
-      <p className={`text-3xl font-bold tracking-tight ${valueColorMap[color]}`}>{value}</p>
-      {hint && <p className="mt-1 text-xs text-slate-400">{hint}</p>}
+
+      <p className="text-3xl font-black tracking-tight text-slate-900">{value}</p>
+      {hint && <p className="mt-2 text-sm text-slate-500">{hint}</p>}
     </div>
   );
 }
