@@ -3,7 +3,7 @@
 import { useFormState, useFormStatus } from "react-dom";
 
 type AuthFormState = {
-  error?: string;
+  error: string;
 };
 
 function SubmitButton({ label }: { label: string }) {
@@ -24,14 +24,11 @@ export function AuthForm({
   fields,
   submitLabel
 }: {
-  action: (
-    state: AuthFormState | void,
-    payload: FormData
-  ) => Promise<AuthFormState | void>;
+  action: (state: AuthFormState, payload: FormData) => Promise<AuthFormState>;
   fields: Array<{ name: string; label: string; type?: string; placeholder: string }>;
   submitLabel: string;
 }) {
-  const [state, formAction] = useFormState<AuthFormState, FormData>(action, { error: "" });
+  const [state, formAction] = useFormState(action, { error: "" });
 
   return (
     <form action={formAction} className="mt-6 space-y-4">
@@ -49,7 +46,7 @@ export function AuthForm({
           />
         </div>
       ))}
-      {state?.error ? <p className="text-sm text-rose-300">{state.error}</p> : null}
+      {state.error ? <p className="text-sm text-rose-300">{state.error}</p> : null}
       <SubmitButton label={submitLabel} />
     </form>
   );

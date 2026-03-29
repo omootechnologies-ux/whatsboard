@@ -5,10 +5,14 @@ import { createClient } from "@/lib/supabase/server";
 import { adminClient } from "@/lib/supabase/admin";
 import { loginSchema, registerSchema } from "@/lib/validations";
 
+type AuthFormState = {
+  error: string;
+};
+
 export async function registerAction(
-  prevState: { error?: string } | void,
+  prevState: AuthFormState,
   formData: FormData
-) {
+): Promise<AuthFormState> {
   const parsed = registerSchema.safeParse({
     businessName: formData.get("businessName"),
     fullName: formData.get("fullName"),
@@ -76,18 +80,16 @@ export async function registerAction(
   });
 
   if (signInError) {
-    return {
-      error: "Account created, but auto-login failed. Please log in manually."
-    };
+    return { error: "Account created, but auto-login failed. Please log in manually." };
   }
 
   redirect("/dashboard");
 }
 
 export async function loginAction(
-  prevState: { error?: string } | void,
+  prevState: AuthFormState,
   formData: FormData
-) {
+): Promise<AuthFormState> {
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password")

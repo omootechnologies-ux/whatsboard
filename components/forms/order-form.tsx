@@ -7,8 +7,8 @@ import { ORDER_STAGES } from "@/lib/constants";
 const PAYMENT_OPTIONS = ["unpaid", "partial", "paid", "cod"];
 
 type OrderFormState = {
-  error?: string;
-  success?: boolean;
+  error: string;
+  success: boolean;
 };
 
 function SubmitButton() {
@@ -25,10 +25,10 @@ function SubmitButton() {
 }
 
 export function OrderForm() {
-  const [state, formAction] = useFormState<OrderFormState, FormData>(
-    createOrderAction,
-    { error: "", success: false }
-  );
+  const [state, formAction] = useFormState(createOrderAction, {
+    error: "",
+    success: false
+  });
 
   return (
     <form action={formAction} className="grid gap-4 md:grid-cols-2">
@@ -52,8 +52,8 @@ export function OrderForm() {
         ))}
       </select>
       <textarea name="notes" placeholder="Notes" className="min-h-28 rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 md:col-span-2" />
-      {state?.error ? <p className="text-sm text-rose-300 md:col-span-2">{state.error}</p> : null}
-      {state?.success ? <p className="text-sm text-emerald-300 md:col-span-2">Order created successfully.</p> : null}
+      {state.error ? <p className="text-sm text-rose-300 md:col-span-2">{state.error}</p> : null}
+      {state.success ? <p className="text-sm text-emerald-300 md:col-span-2">Order created successfully.</p> : null}
       <div className="md:col-span-2">
         <SubmitButton />
       </div>
