@@ -1,1689 +1,1231 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>WhatsBoard — Stop Losing Orders After the Chat Starts</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsBoard — Stop Running Your Business From Screenshots</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Bricolage+Grotesque:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
-/* ═══════════════════════════════════
-   RESET & ROOT
-═══════════════════════════════════ */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;font-size:16px}
-body{
-  background:#ffffff;
-  color:#0D1F16;
-  font-family:'Plus Jakarta Sans',sans-serif;
-  font-size:15px;
-  line-height:1.7;
-  overflow-x:hidden;
-  -webkit-font-smoothing:antialiased;
-}
-a{color:inherit;text-decoration:none}
-button,input{font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer}
-::-webkit-scrollbar{width:5px}
-::-webkit-scrollbar-track{background:#f5f5f5}
-::-webkit-scrollbar-thumb{background:#ccc;border-radius:4px}
+  :root {
+    --white: #ffffff;
+    --black: #0a0a0a;
+    --green: #00C566;
+    --green-dark: #009950;
+    --green-pale: #E8FFF4;
+    --yellow: #FFE135;
+    --red: #FF3B3B;
+    --orange: #FF6B00;
+    --grey-100: #F5F5F5;
+    --grey-200: #E8E8E8;
+    --grey-400: #999;
+    --grey-600: #555;
+    --wa-green: #25D366;
+  }
 
-:root{
-  --g:#25D366;
-  --gd:#1AAD52;
-  --gb:#128C7E;
-  --red:#E53E3E;
-  --red-light:#FEF2F2;
-  --amber:#D97706;
-  --amber-light:#FFFBEB;
-  --green-light:#F0FDF4;
-  --green-mid:#DCFCE7;
-  --gray:#6B7280;
-  --gray-light:#F9FAFB;
-  --gray-mid:#F3F4F6;
-  --border:#E5E7EB;
-  --text:#0D1F16;
-  --text2:#374151;
-  --text3:#6B7280;
-  --font-head:'Syne',sans-serif;
-  --shadow-sm:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
-  --shadow:0 4px 16px rgba(0,0,0,.08),0 2px 6px rgba(0,0,0,.05);
-  --shadow-lg:0 10px 40px rgba(0,0,0,.1),0 4px 12px rgba(0,0,0,.06);
-  --shadow-green:0 8px 32px rgba(37,211,102,.2);
-  --radius:10px;
-  --radius-lg:16px;
-  --radius-xl:24px;
-  --trans:.22s cubic-bezier(.4,0,.2,1);
-}
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* ═══════════════════════════════════
-   UTILITIES
-═══════════════════════════════════ */
-.container{width:100%;max-width:1100px;margin:0 auto;padding:0 24px}
-.container-sm{width:100%;max-width:780px;margin:0 auto;padding:0 24px}
+  html { scroll-behavior: smooth; }
 
-.tag{
-  display:inline-flex;align-items:center;gap:6px;
-  background:var(--green-light);color:var(--gd);
-  font-size:12px;font-weight:600;letter-spacing:.05em;
-  padding:5px 12px;border-radius:20px;border:1px solid #BBF7D0;
-}
-.tag-red{background:var(--red-light);color:var(--red);border-color:#FECACA}
-.tag-amber{background:var(--amber-light);color:var(--amber);border-color:#FDE68A}
-.tag-gray{background:var(--gray-mid);color:var(--text3);border-color:var(--border)}
+  body {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    background: var(--white);
+    color: var(--black);
+    overflow-x: hidden;
+  }
 
-.section-label{
-  font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
-  color:var(--gd);margin-bottom:14px;
-}
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(10px);
+    border-bottom: 2px solid var(--black);
+    padding: 0 5%;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 60px;
+  }
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1.2rem;
+    display: flex; align-items: center; gap: 8px;
+    text-decoration: none; color: var(--black);
+  }
+  .nav-logo .dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--wa-green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.4); opacity: 0.7; }
+  }
+  .nav-links { display: flex; align-items: center; gap: 32px; }
+  .nav-links a { text-decoration: none; color: var(--grey-600); font-weight: 500; font-size: 0.9rem; }
+  .nav-links a:hover { color: var(--black); }
+  .nav-cta {
+    background: var(--black); color: var(--white);
+    padding: 8px 20px; border-radius: 6px;
+    text-decoration: none; font-weight: 700; font-size: 0.85rem;
+    transition: transform 0.15s, background 0.15s;
+  }
+  .nav-cta:hover { background: var(--green-dark); transform: translateY(-1px); }
 
-h1,h2,h3{font-family:var(--font-head);line-height:1.15;letter-spacing:-.02em}
-h1{font-size:clamp(38px,6vw,68px);font-weight:800}
-h2{font-size:clamp(28px,4vw,46px);font-weight:800}
-h3{font-size:clamp(20px,2.5vw,28px);font-weight:700}
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    padding: 120px 5% 80px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
 
-.btn-primary{
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  background:var(--g);color:#fff;
-  padding:14px 28px;border-radius:var(--radius);
-  font-size:15px;font-weight:600;
-  border:none;
-  transition:var(--trans);
-  box-shadow:var(--shadow-green);
-  white-space:nowrap;
-}
-.btn-primary:hover{background:var(--gd);transform:translateY(-1px);box-shadow:0 12px 40px rgba(37,211,102,.3)}
-.btn-primary:active{transform:translateY(0)}
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 39px,
+      var(--grey-200) 39px,
+      var(--grey-200) 40px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 39px,
+      var(--grey-200) 39px,
+      var(--grey-200) 40px
+    );
+    opacity: 0.4;
+    pointer-events: none;
+  }
 
-.btn-ghost{
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  background:#fff;color:var(--text2);
-  padding:13px 26px;border-radius:var(--radius);
-  font-size:15px;font-weight:600;
-  border:1.5px solid var(--border);
-  transition:var(--trans);
-  white-space:nowrap;
-}
-.btn-ghost:hover{border-color:#9CA3AF;color:var(--text)}
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--yellow);
+    border: 2px solid var(--black);
+    border-radius: 4px;
+    padding: 6px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem; font-weight: 500;
+    margin-bottom: 24px;
+    animation: wiggle 3s ease-in-out infinite;
+  }
+  @keyframes wiggle {
+    0%, 90%, 100% { transform: rotate(0deg); }
+    92% { transform: rotate(-2deg); }
+    96% { transform: rotate(2deg); }
+  }
 
-.btn-lg{padding:16px 36px;font-size:16px;border-radius:12px}
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+  }
 
-/* ═══════════════════════════════════
-   ANIMATIONS
-═══════════════════════════════════ */
-@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
-@keyframes fadeIn{from{opacity:0}to{opacity:1}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-@keyframes slideIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}
-@keyframes badge-pop{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
-@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes typing{0%,100%{width:0}50%{width:100%}}
+  .hero h1 .strike {
+    position: relative;
+    color: var(--grey-400);
+  }
+  .hero h1 .strike::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    top: 50%;
+    height: 4px;
+    background: var(--red);
+    transform: rotate(-2deg);
+  }
 
-.animate-on-scroll{opacity:0;transform:translateY(28px);transition:opacity .6s ease,transform .6s ease}
-.animate-on-scroll.visible{opacity:1;transform:translateY(0)}
-.delay-1{transition-delay:.1s}
-.delay-2{transition-delay:.2s}
-.delay-3{transition-delay:.3s}
-.delay-4{transition-delay:.4s}
-.delay-5{transition-delay:.5s}
+  .hero h1 .highlight {
+    background: var(--yellow);
+    padding: 0 6px;
+    border-radius: 4px;
+  }
 
-/* ═══════════════════════════════════
-   NAV
-═══════════════════════════════════ */
-nav{
-  position:fixed;top:0;left:0;right:0;z-index:300;
-  height:64px;display:flex;align-items:center;
-  background:rgba(255,255,255,.9);
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
-  border-bottom:1px solid rgba(229,231,235,.8);
-  transition:var(--trans);
-}
-nav.scrolled{box-shadow:0 2px 20px rgba(0,0,0,.08)}
-.nav-inner{
-  width:100%;max-width:1100px;margin:0 auto;padding:0 24px;
-  display:flex;align-items:center;justify-content:space-between;
-}
-.nav-logo{
-  display:flex;align-items:center;gap:10px;
-  font-family:var(--font-head);font-size:20px;font-weight:800;
-  letter-spacing:-.02em;color:var(--text);
-}
-.nav-logo-icon{
-  width:34px;height:34px;background:var(--g);border-radius:9px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:16px;font-weight:800;color:#fff;font-family:var(--font-head);
-  flex-shrink:0;
-}
-.nav-links{display:flex;align-items:center;gap:28px}
-.nav-links a{font-size:14px;font-weight:500;color:var(--text3);transition:var(--trans)}
-.nav-links a:hover{color:var(--text)}
-.nav-cta{display:flex;align-items:center;gap:10px}
-.nav-login{font-size:14px;font-weight:600;color:var(--text2);transition:var(--trans)}
-.nav-login:hover{color:var(--text)}
-.nav-start{
-  background:var(--g);color:#fff;padding:8px 18px;border-radius:8px;
-  font-size:14px;font-weight:600;border:none;transition:var(--trans);
-}
-.nav-start:hover{background:var(--gd)}
-.hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;padding:4px}
-.hamburger span{width:22px;height:2px;background:var(--text);border-radius:2px;transition:var(--trans)}
-.mobile-menu{
-  display:none;position:fixed;top:64px;left:0;right:0;bottom:0;z-index:299;
-  background:#fff;padding:32px 24px;flex-direction:column;gap:24px;
-}
-.mobile-menu.open{display:flex}
-.mobile-menu a{font-size:18px;font-weight:600;color:var(--text);padding:12px 0;border-bottom:1px solid var(--border)}
+  .hero-sub {
+    font-size: 1.15rem; color: var(--grey-600);
+    line-height: 1.7;
+    margin-bottom: 36px;
+    max-width: 480px;
+  }
+  .hero-sub strong { color: var(--black); }
 
-/* ═══════════════════════════════════
-   HERO
-═══════════════════════════════════ */
-.hero{
-  padding:140px 0 80px;
-  position:relative;overflow:hidden;
-}
-.hero::before{
-  content:'';position:absolute;top:-100px;left:50%;transform:translateX(-50%);
-  width:900px;height:600px;
-  background:radial-gradient(ellipse at center,rgba(37,211,102,.07) 0%,transparent 70%);
-  pointer-events:none;
-}
-.hero-inner{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
-.hero-left{animation:fadeUp .7s ease forwards}
-.hero-badge-row{display:flex;align-items:center;gap:8px;margin-bottom:24px;flex-wrap:wrap}
-.hero-live-dot{
-  display:inline-flex;align-items:center;gap:6px;
-  background:#fff;border:1.5px solid #BBF7D0;
-  border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--gd);
-}
-.hero-live-dot span{width:6px;height:6px;border-radius:50%;background:var(--g);animation:pulse 1.4s infinite}
-.hero h1{color:var(--text);margin-bottom:20px}
-.hero h1 em{font-style:normal;color:var(--g)}
-.hero-sub{font-size:17px;color:var(--text3);line-height:1.7;margin-bottom:32px;max-width:460px}
-.hero-sub strong{color:var(--text2);font-weight:600}
-.hero-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:40px}
-.hero-microcopy{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:5px}
-.hero-microcopy svg{flex-shrink:0}
-.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
-.hero-stat{padding:16px 20px;text-align:center;border-right:1.5px solid var(--border)}
-.hero-stat:last-child{border-right:none}
-.hero-stat-num{font-family:var(--font-head);font-size:24px;font-weight:800;color:var(--text)}
-.hero-stat-num .plus{color:var(--g)}
-.hero-stat-label{font-size:11px;color:var(--text3);margin-top:2px}
+  .hero-ctas {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    margin-bottom: 48px;
+  }
+  .btn-primary {
+    background: var(--green); color: var(--black);
+    padding: 14px 28px; border-radius: 8px;
+    font-weight: 800; font-size: 1rem;
+    text-decoration: none; border: 2px solid var(--black);
+    box-shadow: 4px 4px 0 var(--black);
+    transition: transform 0.12s, box-shadow 0.12s;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn-primary:hover { transform: translate(-2px,-2px); box-shadow: 6px 6px 0 var(--black); }
+  .btn-primary:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--black); }
 
-/* Dashboard mockup */
-.hero-right{position:relative;animation:fadeUp .7s .15s ease both}
-.dash-mockup{
-  background:#fff;border:1.5px solid var(--border);border-radius:var(--radius-xl);
-  box-shadow:var(--shadow-lg);overflow:hidden;
-}
-.dash-topbar{
-  background:var(--gray-mid);border-bottom:1px solid var(--border);
-  padding:12px 16px;display:flex;align-items:center;gap:8px;
-}
-.dash-dot{width:10px;height:10px;border-radius:50%}
-.dash-dot.r{background:#FF5F57}
-.dash-dot.y{background:#FFBD2E}
-.dash-dot.g{background:#28CA42}
-.dash-title{margin-left:8px;font-size:12px;font-weight:600;color:var(--text3)}
-.dash-body{padding:20px}
-.dash-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
-.dash-greeting{font-size:13px;font-weight:700;color:var(--text)}
-.dash-date{font-size:11px;color:var(--text3)}
-.dash-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
-.dash-metric{
-  background:var(--gray-light);border:1px solid var(--border);border-radius:var(--radius);
-  padding:12px 14px;
-}
-.dash-metric.green{background:var(--green-light);border-color:#BBF7D0}
-.dash-metric.red{background:var(--red-light);border-color:#FECACA}
-.dash-m-label{font-size:10px;color:var(--text3);margin-bottom:4px}
-.dash-m-val{font-family:var(--font-head);font-size:22px;font-weight:800;color:var(--text)}
-.dash-m-val.red-val{color:var(--red)}
-.dash-m-val.green-val{color:var(--gd)}
-.dash-m-note{font-size:10px;color:var(--text3);margin-top:2px}
-.dash-pipeline{margin-bottom:14px}
-.dash-pipeline-title{font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
-.pipeline-cols{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.p-col{background:var(--gray-light);border:1px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center}
-.p-col-count{font-family:var(--font-head);font-size:18px;font-weight:800;color:var(--text)}
-.p-col-label{font-size:9px;color:var(--text3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.p-col.urgent .p-col-count{color:var(--red)}
-.dash-messages{border-top:1px solid var(--border);padding-top:14px}
-.dash-msg-title{font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em}
-.dash-msg{
-  display:flex;align-items:center;gap:8px;
-  padding:7px 10px;border-radius:8px;
-  background:var(--gray-light);margin-bottom:6px;
-  border:1px solid var(--border);
-  font-size:11px;
-}
-.dash-msg:last-child{margin-bottom:0}
-.dash-msg-av{
-  width:26px;height:26px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:10px;font-weight:700;flex-shrink:0;
-}
-.dash-msg-name{font-weight:600;color:var(--text);flex-shrink:0}
-.dash-msg-text{color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1}
-.dash-msg-tag{flex-shrink:0}
+  .btn-ghost {
+    color: var(--black); font-weight: 600; font-size: 0.95rem;
+    text-decoration: none;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-ghost:hover { text-decoration: underline; }
 
-/* Floating alert */
-.float-alert{
-  position:absolute;bottom:-16px;right:-16px;
-  background:#fff;border:1.5px solid #FECACA;border-radius:12px;
-  padding:12px 16px;box-shadow:var(--shadow-lg);
-  display:flex;align-items:flex-start;gap:10px;
-  animation:float 3s ease-in-out infinite;
-  max-width:200px;
-  z-index:10;
-}
-.float-alert-icon{
-  width:30px;height:30px;border-radius:8px;
-  background:var(--red-light);display:flex;align-items:center;justify-content:center;
-  font-size:14px;flex-shrink:0;
-}
-.float-alert-text{font-size:11px;line-height:1.5}
-.float-alert-text strong{display:block;font-weight:700;color:var(--red);font-size:12px}
-.float-alert-text span{color:var(--text3)}
-.float-alert2{
-  position:absolute;top:-12px;left:-16px;
-  background:#fff;border:1.5px solid #BBF7D0;border-radius:12px;
-  padding:10px 14px;box-shadow:var(--shadow-lg);
-  display:flex;align-items:center;gap:8px;
-  animation:float 3s .8s ease-in-out infinite;
-  z-index:10;
-}
-.float-alert2-icon{
-  width:28px;height:28px;border-radius:8px;
-  background:var(--green-light);display:flex;align-items:center;justify-content:center;
-  font-size:13px;
-}
-.float-alert2-text{font-size:11px;font-weight:600;color:var(--gd)}
+  .hero-proof {
+    display: flex; align-items: center; gap: 16px;
+    font-size: 0.85rem; color: var(--grey-600);
+  }
+  .avatars {
+    display: flex;
+  }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 2px solid var(--white);
+    margin-right: -8px;
+    font-size: 0.75rem;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    color: var(--white);
+  }
 
-/* ═══════════════════════════════════
-   LOGOS / TRUST BAR
-═══════════════════════════════════ */
-.trust-bar{
-  border-top:1px solid var(--border);border-bottom:1px solid var(--border);
-  padding:24px 0;background:var(--gray-light);
-}
-.trust-inner{
-  display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;
-}
-.trust-label{font-size:12px;color:var(--text3);font-weight:500;white-space:nowrap}
-.trust-pills{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-.trust-pill{
-  display:flex;align-items:center;gap:6px;
-  background:#fff;border:1px solid var(--border);border-radius:20px;
-  padding:6px 14px;font-size:13px;font-weight:600;color:var(--text2);
-}
-.trust-pill img,.trust-pill span.icon{font-size:16px}
+  /* ── CHAOS PHONE MOCKUP ── */
+  .hero-visual {
+    position: relative;
+    display: flex; justify-content: center; align-items: center;
+  }
 
-/* ═══════════════════════════════════
-   PAIN SECTION
-═══════════════════════════════════ */
-.pain{padding:100px 0;background:#fff}
-.pain-header{text-align:center;max-width:640px;margin:0 auto 60px}
-.pain-header h2 span{color:var(--red)}
-.pain-header p{font-size:17px;color:var(--text3);margin-top:16px}
+  .phone-chaos {
+    position: relative;
+    width: 280px;
+    animation: float 4s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+  }
 
-.chat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.chat-card{
-  background:#fff;border:1.5px solid var(--border);border-radius:var(--radius-lg);
-  padding:20px;box-shadow:var(--shadow-sm);transition:var(--trans);
-  position:relative;overflow:hidden;
-}
-.chat-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,#E53E3E,#F97316);
-}
-.chat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
-.chat-card-tag{margin-bottom:14px}
-.chat-bubble{
-  background:var(--gray-light);border:1px solid var(--border);border-radius:12px 12px 12px 2px;
-  padding:10px 14px;font-size:13px;margin-bottom:8px;position:relative;
-}
-.chat-bubble.green-bubble{
-  background:var(--green-light);border-color:#BBF7D0;
-  border-radius:12px 12px 2px 12px;align-self:flex-end;
-}
-.chat-bubble.highlight{
-  background:#FEF2F2;border-color:#FECACA;
-}
-.chat-bubble strong{color:var(--red);font-weight:700}
-.chat-name{font-size:10px;color:var(--text3);margin-bottom:4px;font-weight:600}
-.chat-time{font-size:10px;color:var(--text3);margin-top:4px}
-.chat-card-footer{
-  margin-top:14px;padding-top:14px;border-top:1px solid var(--border);
-  font-size:12px;color:var(--text3);font-style:italic;
-  display:flex;align-items:center;gap:6px;
-}
-.chat-card-footer::before{content:'😬';font-style:normal}
+  .phone-frame {
+    background: var(--black);
+    border-radius: 32px;
+    padding: 12px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.2), 0 0 0 2px var(--black);
+  }
+  .phone-screen {
+    background: #e5ddd5;
+    border-radius: 22px;
+    overflow: hidden;
+    min-height: 480px;
+  }
+  .phone-wa-header {
+    background: #075e54;
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 10px;
+    color: white;
+  }
+  .wa-avatar {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--wa-green);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.8rem;
+  }
+  .wa-name { font-size: 0.85rem; font-weight: 600; }
+  .wa-status { font-size: 0.7rem; opacity: 0.8; }
 
-.pain-chaos{
-  margin-top:60px;
-  background:var(--gray-light);border:1.5px solid var(--border);border-radius:var(--radius-xl);
-  padding:40px;display:grid;grid-template-columns:repeat(2,1fr);gap:0;
-}
-.chaos-left{padding-right:40px;border-right:1px solid var(--border)}
-.chaos-right{padding-left:40px}
-.chaos-title{font-size:13px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px}
-.chaos-item{
-  display:flex;align-items:flex-start;gap:12px;margin-bottom:16px;
-  padding:14px;background:#fff;border-radius:var(--radius);border:1px solid var(--border);
-}
-.chaos-item:last-child{margin-bottom:0}
-.chaos-icon{
-  width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;
-  font-size:15px;flex-shrink:0;
-}
-.chaos-icon.red-bg{background:var(--red-light)}
-.chaos-icon.amber-bg{background:var(--amber-light)}
-.chaos-text{font-size:13px;color:var(--text2)}
-.chaos-text strong{display:block;font-weight:700;color:var(--text);margin-bottom:2px;font-size:13px}
+  .chat-messages {
+    padding: 10px;
+    display: flex; flex-direction: column; gap: 6px;
+    font-size: 0.78rem;
+  }
+  .msg {
+    max-width: 75%;
+    padding: 6px 10px;
+    border-radius: 8px;
+    line-height: 1.4;
+    position: relative;
+    animation: msgPop 0.3s ease backwards;
+  }
+  @keyframes msgPop {
+    from { opacity: 0; transform: scale(0.8) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .msg-in {
+    background: white;
+    align-self: flex-start;
+    border-bottom-left-radius: 2px;
+  }
+  .msg-out {
+    background: #dcf8c6;
+    align-self: flex-end;
+    border-bottom-right-radius: 2px;
+  }
+  .msg-time { font-size: 0.6rem; opacity: 0.5; float: right; margin-left: 8px; margin-top: 2px; }
 
-/* ═══════════════════════════════════
-   AWKWARD TRUTH
-═══════════════════════════════════ */
-.truth{
-  padding:100px 0;
-  background:var(--text);
-  position:relative;overflow:hidden;
-}
-.truth::before{
-  content:'';position:absolute;top:0;left:0;right:0;bottom:0;
-  background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2325D366' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-  pointer-events:none;
-}
-.truth-header{text-align:center;max-width:700px;margin:0 auto 56px}
-.truth-header h2{color:#fff}
-.truth-header h2 em{font-style:normal;color:var(--g)}
-.truth-header p{color:rgba(255,255,255,.5);font-size:17px;margin-top:14px}
-.truth-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.truth-card{
-  background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:var(--radius-lg);padding:28px 24px;
-  transition:var(--trans);
-}
-.truth-card:hover{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.14)}
-.truth-card-icon{font-size:28px;margin-bottom:16px}
-.truth-card h3{font-family:var(--font-head);font-size:17px;font-weight:700;color:#fff;margin-bottom:10px}
-.truth-card p{font-size:13px;color:rgba(255,255,255,.5);line-height:1.7}
-.truth-card .swahili-hook{
-  margin-top:14px;padding:10px 14px;
-  background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.2);
-  border-radius:8px;font-size:12px;font-weight:600;color:var(--g);
-  font-style:italic;
-}
-.truth-quote{
-  max-width:780px;margin:56px auto 0;text-align:center;
-  padding:40px;background:rgba(255,255,255,.04);
-  border:1px solid rgba(255,255,255,.08);border-radius:var(--radius-xl);
-}
-.truth-quote blockquote{
-  font-family:var(--font-head);font-size:clamp(22px,3vw,32px);
-  font-weight:700;color:#fff;line-height:1.4;
-}
-.truth-quote blockquote em{font-style:normal;color:var(--g)}
-.truth-quote cite{display:block;margin-top:16px;font-size:13px;color:rgba(255,255,255,.4);font-style:normal}
+  /* floating chaos elements */
+  .chaos-bubble {
+    position: absolute;
+    background: var(--white);
+    border: 2px solid var(--black);
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    box-shadow: 3px 3px 0 var(--black);
+    white-space: nowrap;
+  }
+  .chaos-bubble.red { background: #FFE5E5; border-color: var(--red); }
+  .chaos-bubble.green { background: var(--green-pale); border-color: var(--green); }
+  .chaos-bubble.yellow { background: var(--yellow); }
 
-/* ═══════════════════════════════════
-   SOLUTION
-═══════════════════════════════════ */
-.solution{padding:100px 0;background:#fff}
-.solution-header{max-width:640px;margin:0 auto 60px;text-align:center}
-.solution-header h2 span{color:var(--g)}
-.solution-header p{font-size:17px;color:var(--text3);margin-top:14px}
-.solution-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.solution-card{
-  padding:28px;border:1.5px solid var(--border);border-radius:var(--radius-lg);
-  transition:var(--trans);position:relative;overflow:hidden;
-}
-.solution-card::after{
-  content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
-  background:var(--g);transform:scaleX(0);transition:var(--trans);transform-origin:left;
-}
-.solution-card:hover{border-color:#BBF7D0;box-shadow:var(--shadow-green);transform:translateY(-3px)}
-.solution-card:hover::after{transform:scaleX(1)}
-.sol-icon{
-  width:44px;height:44px;background:var(--green-light);border-radius:12px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:20px;margin-bottom:18px;
-}
-.sol-title{font-weight:700;font-size:15px;color:var(--text);margin-bottom:8px}
-.sol-desc{font-size:13px;color:var(--text3);line-height:1.7}
+  .cb1 { top: -20px; right: -60px; transform: rotate(3deg); animation: floatA 3s ease-in-out infinite; }
+  .cb2 { top: 80px; left: -80px; transform: rotate(-4deg); animation: floatB 3.5s ease-in-out infinite; }
+  .cb3 { bottom: 80px; right: -70px; transform: rotate(2deg); animation: floatA 4s ease-in-out infinite 0.5s; }
+  .cb4 { bottom: 20px; left: -70px; transform: rotate(-2deg); animation: floatB 3s ease-in-out infinite 1s; }
 
-/* ═══════════════════════════════════
-   WORKFLOW
-═══════════════════════════════════ */
-.workflow{padding:100px 0;background:var(--gray-light)}
-.workflow-header{text-align:center;max-width:580px;margin:0 auto 60px}
-.workflow-header h2 span{color:var(--g)}
-.flow-steps{
-  display:grid;grid-template-columns:repeat(7,1fr);
-  align-items:start;gap:0;position:relative;
-}
-.flow-step{
-  display:flex;flex-direction:column;align-items:center;
-  text-align:center;position:relative;
-}
-.flow-step::after{
-  content:'';position:absolute;top:22px;left:50%;right:-50%;
-  height:2px;border-top:2px dashed #D1FAE5;z-index:0;
-}
-.flow-step:last-child::after{display:none}
-.flow-step-icon{
-  width:44px;height:44px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:18px;z-index:1;position:relative;
-  border:2px solid #fff;box-shadow:var(--shadow-sm);
-}
-.flow-step-icon.s1{background:#EEF2FF;color:#6366F1}
-.flow-step-icon.s2{background:#FEF9C3;color:#CA8A04}
-.flow-step-icon.s3{background:#FEF2F2;color:#EF4444}
-.flow-step-icon.s4{background:#FFF7ED;color:#EA580C}
-.flow-step-icon.s5{background:#F0FDF4;color:#16A34A}
-.flow-step-icon.s6{background:#F0FDFA;color:#0D9488}
-.flow-step-icon.s7{background:#FDF4FF;color:#9333EA}
-.flow-step-label{font-size:11px;font-weight:700;color:var(--text2);margin-top:10px;line-height:1.4}
-.flow-step-sub{font-size:10px;color:var(--text3);margin-top:3px;font-style:italic}
+  @keyframes floatA {
+    0%, 100% { transform: translateY(0) rotate(3deg); }
+    50% { transform: translateY(-8px) rotate(3deg); }
+  }
+  @keyframes floatB {
+    0%, 100% { transform: translateY(0) rotate(-4deg); }
+    50% { transform: translateY(-8px) rotate(-4deg); }
+  }
 
-.flow-detail{
-  margin-top:48px;
-  display:grid;grid-template-columns:repeat(3,1fr);gap:16px;
-}
-.flow-detail-card{
-  background:#fff;border:1.5px solid var(--border);border-radius:var(--radius-lg);
-  padding:20px;box-shadow:var(--shadow-sm);
-}
-.fdc-top{display:flex;align-items:center;gap:10px;margin-bottom:14px}
-.fdc-icon{
-  width:36px;height:36px;border-radius:10px;
-  display:flex;align-items:center;justify-content:center;font-size:16px;
-}
-.fdc-title{font-weight:700;font-size:13px;color:var(--text)}
-.fdc-items{display:flex;flex-direction:column;gap:6px}
-.fdc-item{
-  display:flex;align-items:center;gap:8px;
-  font-size:12px;color:var(--text3);
-}
-.fdc-item::before{content:'✓';color:var(--g);font-weight:700;font-size:11px;flex-shrink:0}
+  /* ── TICKER ── */
+  .ticker {
+    background: var(--black);
+    color: var(--yellow);
+    padding: 12px 0;
+    overflow: hidden;
+    border-top: 2px solid var(--black);
+    border-bottom: 2px solid var(--black);
+  }
+  .ticker-inner {
+    display: flex;
+    animation: ticker 25s linear infinite;
+    white-space: nowrap;
+    width: max-content;
+  }
+  .ticker-item {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    padding: 0 40px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .ticker-item::before { content: '★'; color: var(--wa-green); }
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
 
-/* ═══════════════════════════════════
-   BEFORE / AFTER
-═══════════════════════════════════ */
-.transformation{padding:100px 0;background:#fff}
-.transformation-header{text-align:center;max-width:580px;margin:0 auto 60px}
-.ba-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
-.ba-col{border-radius:var(--radius-xl);overflow:hidden;border:1.5px solid var(--border)}
-.ba-header{padding:20px 28px;display:flex;align-items:center;gap:10px}
-.ba-header.before-header{background:#FEF2F2;border-bottom:1.5px solid #FECACA}
-.ba-header.after-header{background:var(--green-light);border-bottom:1.5px solid #BBF7D0}
-.ba-header h3{font-size:16px;font-weight:700}
-.before-header h3{color:var(--red)}
-.after-header h3{color:var(--gd)}
-.ba-icon{font-size:20px}
-.ba-items{padding:24px 28px;display:flex;flex-direction:column;gap:12px}
-.ba-item{
-  display:flex;align-items:flex-start;gap:12px;
-  padding:14px;border-radius:var(--radius);font-size:13px;
-}
-.ba-item.before-item{background:var(--red-light);border:1px solid #FEE2E2}
-.ba-item.after-item{background:var(--green-light);border:1px solid #BBF7D0}
-.before-item .ba-bullet{color:var(--red);font-size:16px;line-height:1;flex-shrink:0}
-.after-item .ba-bullet{color:var(--gd);font-size:16px;line-height:1;flex-shrink:0}
-.ba-text strong{display:block;font-weight:700;font-size:13px;color:var(--text);margin-bottom:3px}
-.ba-text span{font-size:12px;color:var(--text3);font-style:italic}
+  /* ── PAIN SECTION ── */
+  .section { padding: 100px 5%; }
+  .section-label {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--grey-600);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-bottom: 2px solid var(--black);
+    padding-bottom: 4px;
+    margin-bottom: 20px;
+  }
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+  }
+  .section-sub {
+    font-size: 1.1rem; color: var(--grey-600);
+    line-height: 1.7; max-width: 560px;
+    margin-bottom: 60px;
+  }
 
-/* ═══════════════════════════════════
-   TESTIMONIALS
-═══════════════════════════════════ */
-.testimonials{padding:100px 0;background:var(--gray-light)}
-.testimonials-header{text-align:center;max-width:580px;margin:0 auto 56px}
-.testimonials-header p{font-size:17px;color:var(--text3);margin-top:14px}
-.testi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
-.testi-card{
-  background:#fff;border:1.5px solid var(--border);border-radius:var(--radius-lg);
-  padding:28px;box-shadow:var(--shadow-sm);transition:var(--trans);
-}
-.testi-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
-.testi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-.testi-author{display:flex;align-items:center;gap:12px}
-.testi-av{
-  width:42px;height:42px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:14px;color:#fff;font-family:var(--font-head);flex-shrink:0;
-}
-.testi-name{font-weight:700;font-size:14px;color:var(--text)}
-.testi-biz{font-size:12px;color:var(--text3)}
-.testi-stars{color:#F59E0B;font-size:13px}
-.testi-body{font-size:14px;color:var(--text2);line-height:1.75;margin-bottom:16px}
-.testi-hook{
-  background:var(--green-light);border:1px solid #BBF7D0;
-  border-radius:8px;padding:10px 14px;
-  font-size:12px;font-weight:600;color:var(--gd);font-style:italic;
-}
+  /* PAIN CARDS */
+  .pain-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+  }
 
-/* ═══════════════════════════════════
-   OBJECTIONS
-═══════════════════════════════════ */
-.objections{padding:100px 0;background:#fff}
-.objections-header{text-align:center;max-width:580px;margin:0 auto 56px}
-.obj-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;max-width:900px;margin:0 auto}
-.obj-card{
-  border:1.5px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;
-}
-.obj-q{
-  padding:18px 24px;background:var(--gray-light);
-  font-weight:700;font-size:14px;color:var(--text);
-  display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);
-}
-.obj-q::before{content:'"';font-size:24px;color:var(--text3);line-height:1;font-family:Georgia}
-.obj-a{padding:18px 24px;font-size:13px;color:var(--text3);line-height:1.7}
-.obj-a strong{color:var(--gd);font-weight:600}
+  .pain-card {
+    border: 2px solid var(--black);
+    border-radius: 16px;
+    padding: 28px;
+    background: var(--white);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .pain-card:hover { transform: translate(-3px, -3px); box-shadow: 6px 6px 0 var(--black); }
 
-/* ═══════════════════════════════════
-   PRICING
-═══════════════════════════════════ */
-.pricing{padding:100px 0;background:var(--gray-light)}
-.pricing-header{text-align:center;max-width:540px;margin:0 auto 56px}
-.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:960px;margin:0 auto}
-.price-card{
-  background:#fff;border:1.5px solid var(--border);border-radius:var(--radius-xl);
-  padding:32px 28px;position:relative;transition:var(--trans);
-}
-.price-card.featured{
-  border:2px solid var(--g);box-shadow:var(--shadow-green);
-  transform:scale(1.03);
-}
-.price-card:hover:not(.featured){transform:translateY(-4px);box-shadow:var(--shadow)}
-.price-badge{
-  position:absolute;top:-14px;left:50%;transform:translateX(-50%);
-  background:var(--g);color:#fff;
-  font-size:11px;font-weight:700;letter-spacing:.04em;
-  padding:5px 14px;border-radius:20px;white-space:nowrap;
-}
-.price-plan{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:12px}
-.price-amount{display:flex;align-items:baseline;gap:4px;margin-bottom:6px}
-.price-currency{font-size:16px;font-weight:700;color:var(--text);align-self:flex-start;padding-top:6px}
-.price-num{font-family:var(--font-head);font-size:44px;font-weight:800;color:var(--text);line-height:1}
-.price-period{font-size:13px;color:var(--text3)}
-.price-desc{font-size:13px;color:var(--text3);margin-bottom:24px;line-height:1.6}
-.price-features{display:flex;flex-direction:column;gap:10px;margin-bottom:28px}
-.price-feat{display:flex;align-items:flex-start;gap:8px;font-size:13px;color:var(--text2)}
-.price-feat::before{content:'✓';color:var(--g);font-weight:700;flex-shrink:0;margin-top:1px}
-.price-feat.no::before{content:'×';color:var(--text3)}
-.price-feat.no{color:var(--text3)}
-.price-btn{
-  width:100%;padding:13px;border-radius:var(--radius);
-  font-size:14px;font-weight:600;border:1.5px solid var(--border);
-  background:#fff;color:var(--text);transition:var(--trans);
-}
-.price-btn:hover{border-color:var(--g);color:var(--gd)}
-.price-btn.green{background:var(--g);color:#fff;border-color:var(--g)}
-.price-btn.green:hover{background:var(--gd)}
+  .pain-card::before {
+    content: attr(data-emoji);
+    position: absolute;
+    top: -10px; right: 16px;
+    font-size: 3rem;
+    opacity: 0.12;
+  }
 
-/* ═══════════════════════════════════
-   FINAL CTA
-═══════════════════════════════════ */
-.final-cta{
-  padding:120px 0;
-  background:var(--text);
-  position:relative;overflow:hidden;text-align:center;
-}
-.final-cta::before{
-  content:'';position:absolute;
-  top:50%;left:50%;transform:translate(-50%,-50%);
-  width:700px;height:400px;
-  background:radial-gradient(ellipse at center,rgba(37,211,102,.12) 0%,transparent 70%);
-  pointer-events:none;
-}
-.final-cta h2{color:#fff;max-width:700px;margin:0 auto 20px;font-size:clamp(32px,5vw,54px)}
-.final-cta h2 em{font-style:normal;color:var(--g)}
-.final-cta-sub{color:rgba(255,255,255,.5);font-size:17px;max-width:500px;margin:0 auto 36px;line-height:1.7}
-.final-cta-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:24px}
-.final-cta-note{font-size:13px;color:rgba(255,255,255,.35);display:flex;align-items:center;gap:6px;justify-content:center}
-.cta-shout{
-  display:inline-block;margin-top:20px;
-  font-size:22px;font-weight:700;color:rgba(255,255,255,.15);
-  font-family:var(--font-head);letter-spacing:-.01em;
-}
+  .pain-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem; color: var(--grey-400);
+    margin-bottom: 12px;
+  }
+  .pain-card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem; font-weight: 700;
+    margin-bottom: 10px;
+  }
+  .pain-card p { font-size: 0.9rem; color: var(--grey-600); line-height: 1.6; }
 
-/* ═══════════════════════════════════
-   FOOTER
-═══════════════════════════════════ */
-footer{
-  background:#060C08;border-top:1px solid rgba(255,255,255,.06);
-  padding:60px 0 32px;
-}
-.footer-inner{
-  display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:48px;
-}
-.footer-brand{}
-.footer-logo{
-  display:flex;align-items:center;gap:10px;margin-bottom:14px;
-  font-family:var(--font-head);font-size:20px;font-weight:800;color:#fff;
-}
-.footer-tagline{font-size:13px;color:rgba(255,255,255,.35);line-height:1.7;max-width:260px;margin-bottom:20px}
-.footer-social{display:flex;gap:10px}
-.social-btn{
-  width:34px;height:34px;border-radius:8px;
-  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);
-  display:flex;align-items:center;justify-content:center;
-  font-size:14px;transition:var(--trans);
-}
-.social-btn:hover{background:rgba(255,255,255,.1)}
-.footer-col h4{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.3);margin-bottom:16px}
-.footer-col a{display:block;font-size:13px;color:rgba(255,255,255,.4);margin-bottom:10px;transition:var(--trans)}
-.footer-col a:hover{color:#fff}
-.footer-bottom{
-  border-top:1px solid rgba(255,255,255,.06);padding-top:28px;
-  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;
-}
-.footer-copy{font-size:12px;color:rgba(255,255,255,.25)}
-.footer-legal{display:flex;gap:20px}
-.footer-legal a{font-size:12px;color:rgba(255,255,255,.25);transition:var(--trans)}
-.footer-legal a:hover{color:rgba(255,255,255,.5)}
+  .pain-card.bad { background: #FFF5F5; border-color: var(--red); }
+  .pain-card.bad .pain-num { color: var(--red); }
 
-/* ═══════════════════════════════════
-   ANNOUNCEMENT BANNER
-═══════════════════════════════════ */
-.ann-banner{
-  background:var(--g);color:#fff;
-  text-align:center;padding:10px 20px;font-size:13px;font-weight:600;
-  position:relative;z-index:400;
-}
-.ann-banner em{font-style:normal;background:rgba(0,0,0,.15);padding:2px 8px;border-radius:4px;margin:0 6px}
+  .pain-quote {
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: rgba(0,0,0,0.04);
+    border-left: 3px solid var(--black);
+    border-radius: 0 8px 8px 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--grey-600);
+    font-style: italic;
+  }
 
-/* ═══════════════════════════════════
-   RESPONSIVE
-═══════════════════════════════════ */
-@media(max-width:1024px){
-  .hero-inner{grid-template-columns:1fr;gap:40px}
-  .hero-right{max-width:560px;margin:0 auto}
-  .flow-steps{grid-template-columns:repeat(4,1fr)}
-  .flow-step:nth-child(4)::after{display:none}
-  .flow-steps .flow-step:nth-child(5),
-  .flow-steps .flow-step:nth-child(6),
-  .flow-steps .flow-step:nth-child(7){display:none}
-  .footer-inner{grid-template-columns:1fr 1fr}
-}
-@media(max-width:768px){
-  .nav-links{display:none}
-  .hamburger{display:flex}
-  .nav-cta .btn-ghost{display:none}
-  .hero{padding:110px 0 60px}
-  .hero-stats{grid-template-columns:repeat(3,1fr)}
-  .chat-grid{grid-template-columns:1fr}
-  .pain-chaos{grid-template-columns:1fr}
-  .chaos-left{padding-right:0;border-right:none;border-bottom:1px solid var(--border);padding-bottom:28px;margin-bottom:28px}
-  .chaos-right{padding-left:0}
-  .truth-grid{grid-template-columns:1fr}
-  .solution-grid{grid-template-columns:1fr}
-  .flow-steps{grid-template-columns:1fr;gap:20px}
-  .flow-step::after{display:none}
-  .flow-detail{grid-template-columns:1fr}
-  .ba-grid{grid-template-columns:1fr}
-  .testi-grid{grid-template-columns:1fr}
-  .obj-grid{grid-template-columns:1fr}
-  .pricing-grid{grid-template-columns:1fr;max-width:400px}
-  .price-card.featured{transform:scale(1)}
-  .footer-inner{grid-template-columns:1fr}
-  .final-cta-btns{flex-direction:column;align-items:center}
-}
+  /* ── HOW IT WORKS ── */
+  .how-bg {
+    background: var(--black);
+    color: var(--white);
+    padding: 100px 5%;
+  }
+  .how-bg .section-label { color: var(--grey-400); border-color: var(--grey-600); }
+  .how-bg .section-sub { color: #aaa; }
 
-/* ═══════════════════════════════════
-   MISC COMPONENTS
-═══════════════════════════════════ */
-.divider{height:1px;background:var(--border);margin:0}
-.emoji-large{font-size:36px;line-height:1;display:block;margin-bottom:16px}
-.highlight-green{color:var(--gd);font-weight:700}
-.highlight-red{color:var(--red);font-weight:700}
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 2px;
+    background: #333;
+    border: 2px solid #333;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-top: 40px;
+  }
 
-/* Swahili phrase badge */
-.sw-badge{
-  display:inline-block;
-  background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.25);
-  color:var(--gd);font-size:12px;font-weight:700;
-  padding:3px 10px;border-radius:6px;font-style:italic;margin:2px;
-}
+  .step {
+    background: var(--black);
+    padding: 36px 28px;
+    position: relative;
+  }
+
+  .step-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 3rem; font-weight: 500;
+    color: #222;
+    margin-bottom: 16px;
+    line-height: 1;
+  }
+  .step h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem; font-weight: 700;
+    color: var(--white);
+    margin-bottom: 10px;
+  }
+  .step p { font-size: 0.88rem; color: #888; line-height: 1.6; }
+  .step-tag {
+    display: inline-block;
+    margin-top: 14px;
+    background: var(--green);
+    color: var(--black);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem; font-weight: 500;
+    padding: 4px 10px; border-radius: 4px;
+  }
+
+  /* ── FEATURES ── */
+  .features-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+
+  .feature-list {
+    display: flex; flex-direction: column; gap: 24px;
+  }
+
+  .feature-item {
+    display: flex; gap: 16px; align-items: flex-start;
+  }
+
+  .feature-icon {
+    flex-shrink: 0;
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    border: 2px solid var(--black);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    background: var(--white);
+    box-shadow: 3px 3px 0 var(--black);
+  }
+
+  .feature-item h4 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+  .feature-item p { font-size: 0.88rem; color: var(--grey-600); line-height: 1.6; }
+
+  /* dashboard mockup */
+  .dash-mockup {
+    border: 2px solid var(--black);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 8px 8px 0 var(--black);
+  }
+  .dash-header {
+    background: var(--black);
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .dash-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dash-title { color: #888; font-size: 0.75rem; font-family: 'DM Mono', monospace; margin-left: 4px; }
+
+  .dash-body { padding: 20px; background: var(--white); }
+
+  .stat-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+    margin-bottom: 16px;
+  }
+  .stat-box {
+    border: 1.5px solid var(--grey-200);
+    border-radius: 10px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+  .stat-val { font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 800; }
+  .stat-lbl { font-size: 0.65rem; color: var(--grey-400); margin-top: 2px; }
+  .stat-box.alert { border-color: var(--red); background: #FFF5F5; }
+  .stat-box.alert .stat-val { color: var(--red); }
+  .stat-box.good { border-color: var(--green); background: var(--green-pale); }
+  .stat-box.good .stat-val { color: var(--green-dark); }
+
+  .pipeline {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  }
+  .pipe-col { }
+  .pipe-label {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.05em; color: var(--grey-400);
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .pipe-label .count {
+    background: var(--black); color: var(--white);
+    width: 18px; height: 18px; border-radius: 50%;
+    font-size: 0.65rem; display: flex; align-items: center; justify-content: center;
+  }
+  .pipe-label .count.red-bg { background: var(--red); }
+  .order-card {
+    border: 1.5px solid var(--grey-200);
+    border-radius: 8px; padding: 8px 10px;
+    font-size: 0.72rem; margin-bottom: 6px;
+    background: var(--white);
+  }
+  .order-card .name { font-weight: 700; color: var(--black); }
+  .order-card .item { color: var(--grey-600); font-size: 0.68rem; }
+  .order-card.unpaid { border-left: 3px solid var(--red); }
+  .order-card.packed { border-left: 3px solid var(--orange); }
+  .order-card.done { border-left: 3px solid var(--green); }
+
+  /* ── TESTIMONIALS ── */
+  .testi-bg {
+    background: var(--grey-100);
+    padding: 100px 5%;
+    border-top: 2px solid var(--grey-200);
+    border-bottom: 2px solid var(--grey-200);
+  }
+
+  .testi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 50px;
+  }
+
+  .testi-card {
+    background: var(--white);
+    border: 2px solid var(--black);
+    border-radius: 16px;
+    padding: 28px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .testi-card:hover { transform: translate(-3px,-3px); box-shadow: 6px 6px 0 var(--black); }
+
+  .testi-stars { color: var(--yellow); font-size: 1rem; margin-bottom: 14px; letter-spacing: 2px; }
+  .testi-text {
+    font-size: 0.95rem; line-height: 1.7;
+    margin-bottom: 20px; color: var(--black);
+  }
+  .testi-text em { font-style: normal; font-weight: 700; }
+  .testi-swahili {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.78rem; color: var(--grey-600);
+    background: var(--grey-100);
+    padding: 8px 12px; border-radius: 8px;
+    margin-bottom: 20px;
+    font-style: italic;
+  }
+  .testi-author { display: flex; align-items: center; gap: 12px; }
+  .testi-av {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 0.9rem; color: var(--white);
+    flex-shrink: 0;
+    border: 2px solid var(--black);
+  }
+  .testi-name { font-weight: 700; font-size: 0.9rem; }
+  .testi-role { font-size: 0.78rem; color: var(--grey-600); }
+
+  /* ── PRICING ── */
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 50px;
+    max-width: 900px;
+    margin-left: auto; margin-right: auto;
+  }
+
+  .price-card {
+    border: 2px solid var(--black);
+    border-radius: 16px;
+    padding: 36px 28px;
+    background: var(--white);
+    position: relative;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .price-card:hover { transform: translate(-3px,-3px); box-shadow: 6px 6px 0 var(--black); }
+  .price-card.featured {
+    background: var(--black);
+    color: var(--white);
+  }
+  .price-badge {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: var(--green); color: var(--black);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.7rem; font-weight: 700;
+    padding: 4px 14px; border-radius: 20px;
+    border: 2px solid var(--black);
+    white-space: nowrap;
+  }
+  .price-tier {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem; color: var(--grey-400);
+    margin-bottom: 12px; text-transform: uppercase;
+  }
+  .price-card.featured .price-tier { color: #666; }
+  .price-amount {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.5rem; font-weight: 800;
+    line-height: 1; margin-bottom: 4px;
+  }
+  .price-period { font-size: 0.85rem; color: var(--grey-600); margin-bottom: 24px; }
+  .price-card.featured .price-period { color: #888; }
+  .price-features { list-style: none; margin-bottom: 28px; }
+  .price-features li {
+    font-size: 0.88rem; padding: 7px 0;
+    border-bottom: 1px solid var(--grey-100);
+    display: flex; align-items: center; gap: 8px;
+    color: var(--grey-600);
+  }
+  .price-card.featured .price-features li { border-color: #222; color: #aaa; }
+  .price-features li::before { content: '✓'; color: var(--green); font-weight: 700; flex-shrink: 0; }
+  .price-btn {
+    display: block; text-align: center;
+    padding: 13px 20px; border-radius: 8px;
+    font-weight: 800; font-size: 0.9rem;
+    text-decoration: none;
+    border: 2px solid var(--black);
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .price-btn.dark { background: var(--green); color: var(--black); box-shadow: 3px 3px 0 var(--black); }
+  .price-btn.dark:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--black); }
+  .price-btn.light { background: var(--white); color: var(--black); box-shadow: 3px 3px 0 var(--white); }
+  .price-btn.light:hover { transform: translate(-2px,-2px); box-shadow: 5px 5px 0 var(--white); }
+
+  /* ── CTA STRIP ── */
+  .cta-strip {
+    background: var(--green);
+    border-top: 2px solid var(--black);
+    border-bottom: 2px solid var(--black);
+    padding: 80px 5%;
+    text-align: center;
+  }
+  .cta-strip h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.8rem);
+    font-weight: 800;
+    line-height: 1.1;
+    max-width: 800px; margin: 0 auto 20px;
+    letter-spacing: -0.02em;
+  }
+  .cta-strip p { font-size: 1.05rem; color: rgba(0,0,0,0.65); margin-bottom: 36px; }
+  .cta-strip .btn-primary { background: var(--black); color: var(--white); border-color: var(--black); box-shadow: 4px 4px 0 rgba(0,0,0,0.3); }
+  .cta-strip .btn-primary:hover { box-shadow: 6px 6px 0 rgba(0,0,0,0.3); }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--black);
+    color: #888;
+    padding: 60px 5% 40px;
+  }
+  .footer-top {
+    display: grid; grid-template-columns: 1.5fr 1fr 1fr;
+    gap: 48px; margin-bottom: 48px;
+    padding-bottom: 48px;
+    border-bottom: 1px solid #222;
+  }
+  .footer-brand .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1.2rem;
+    color: var(--white); margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .footer-brand p { font-size: 0.85rem; line-height: 1.7; max-width: 280px; }
+  footer h5 { color: var(--white); font-weight: 700; font-size: 0.85rem; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.06em; }
+  footer a { color: #666; text-decoration: none; font-size: 0.85rem; display: block; margin-bottom: 10px; }
+  footer a:hover { color: var(--white); }
+  .footer-bottom {
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 0.8rem;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { background: var(--black); border-radius: 3px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; padding-bottom: 60px; }
+    .hero-visual { display: none; }
+    .features-grid { grid-template-columns: 1fr; }
+    .footer-top { grid-template-columns: 1fr; gap: 32px; }
+    .nav-links { display: none; }
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .pipeline { grid-template-columns: 1fr; }
+  }
+
+  /* ── FADE IN ANIMATION ── */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .fade-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
 </style>
 </head>
 <body>
 
-<!-- ANNOUNCEMENT BANNER -->
-<div class="ann-banner">
-  🇹🇿 Built for East African sellers &nbsp;·&nbsp; <em>Biashara yako. Chini ya control.</em> &nbsp;·&nbsp; Free to start. No card needed.
-</div>
-
 <!-- NAV -->
-<nav id="navbar">
-  <div class="nav-inner">
-    <a href="#" class="nav-logo">
-      <div class="nav-logo-icon">W</div>
-      WHATSBOARD
-    </a>
-    <div class="nav-links">
-      <a href="#problem">The Problem</a>
-      <a href="#solution">Solution</a>
-      <a href="#workflow">How It Works</a>
-      <a href="#pricing">Pricing</a>
-    </div>
-    <div class="nav-cta">
-      <a href="#" class="nav-login">Login</a>
-      <button class="nav-start" onclick="scrollToCTA()">Start Free</button>
-    </div>
-    <button class="hamburger" onclick="toggleMenu()" aria-label="Menu">
-      <span></span><span></span><span></span>
-    </button>
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="dot"></div>
+    WHATSBOARD
+  </a>
+  <div class="nav-links">
+    <a href="#pain">The Problem</a>
+    <a href="#features">Features</a>
+    <a href="#testimonials">Sellers Say</a>
+    <a href="#pricing">Pricing</a>
+    <a href="https://whatsboard.vercel.app/login">Login</a>
+    <a href="https://whatsboard.vercel.app/register" class="nav-cta">Start Free →</a>
   </div>
 </nav>
 
-<!-- MOBILE MENU -->
-<div class="mobile-menu" id="mobileMenu">
-  <a href="#problem" onclick="toggleMenu()">The Problem</a>
-  <a href="#solution" onclick="toggleMenu()">Solution</a>
-  <a href="#workflow" onclick="toggleMenu()">How It Works</a>
-  <a href="#pricing" onclick="toggleMenu()">Pricing</a>
-  <a href="#" style="color:var(--gd)">Login</a>
-  <button class="btn-primary btn-lg" style="margin-top:8px" onclick="scrollToCTA()">Start Free — No Card Needed</button>
-</div>
-
-<!-- ════════════════════════════════
-     HERO
-════════════════════════════════ -->
-<section class="hero" id="home">
-  <div class="container">
-    <div class="hero-inner">
-      <div class="hero-left">
-        <div class="hero-badge-row">
-          <div class="hero-live-dot"><span></span> WhatsApp-First</div>
-          <div class="tag">Tanzania &amp; East Africa</div>
-        </div>
-        <h1>You already have customers.<br>The chaos starts after<br><em>"bei gani?"</em></h1>
-        <p class="hero-sub">
-          WhatsBoard is the order control layer that lives <strong>after the chat starts</strong> — tracking every order from inquiry to delivery so you stop losing money to confusion, screenshots, and memory.
-        </p>
-        <div class="hero-actions">
-          <button class="btn-primary btn-lg" onclick="scrollToCTA()">
-            Track Orders Free
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="btn-ghost btn-lg" onclick="document.getElementById('workflow').scrollIntoView({behavior:'smooth'})">See How It Works</button>
-        </div>
-        <div class="hero-microcopy">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#6B7280" stroke-width="1.4"/><path d="M7 4.5V7l1.5 1.5" stroke="#6B7280" stroke-width="1.4" stroke-linecap="round"/></svg>
-          Free to start · No credit card · Setup in 5 minutes
-        </div>
-        <div class="hero-stats" style="margin-top:32px">
-          <div class="hero-stat">
-            <div class="hero-stat-num"><span class="plus">+</span>18%</div>
-            <div class="hero-stat-label">Orders recovered</div>
-          </div>
-          <div class="hero-stat">
-            <div class="hero-stat-num">TZS 0</div>
-            <div class="hero-stat-label">Lost to forgetfulness</div>
-          </div>
-          <div class="hero-stat">
-            <div class="hero-stat-num">5 min</div>
-            <div class="hero-stat-label">Setup time</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="hero-right" style="position:relative">
-        <!-- Dashboard Mockup -->
-        <div class="dash-mockup">
-          <div class="dash-topbar">
-            <div class="dash-dot r"></div>
-            <div class="dash-dot y"></div>
-            <div class="dash-dot g"></div>
-            <span class="dash-title">WhatsBoard Dashboard</span>
-          </div>
-          <div class="dash-body">
-            <div class="dash-header">
-              <div>
-                <div class="dash-greeting">Good morning, Amina 👋</div>
-                <div class="dash-date">Today — 14 active orders</div>
-              </div>
-              <span class="tag">Live</span>
-            </div>
-            <div class="dash-metrics">
-              <div class="dash-metric green">
-                <div class="dash-m-label">Paid today</div>
-                <div class="dash-m-val green-val">21</div>
-                <div class="dash-m-note">↑ 4 from yesterday</div>
-              </div>
-              <div class="dash-metric red">
-                <div class="dash-m-label">Unpaid value</div>
-                <div class="dash-m-val red-val">480K</div>
-                <div class="dash-m-note">TZS · needs action</div>
-              </div>
-              <div class="dash-metric">
-                <div class="dash-m-label">Follow-ups due</div>
-                <div class="dash-m-val">13</div>
-                <div class="dash-m-note">Today</div>
-              </div>
-              <div class="dash-metric">
-                <div class="dash-m-label">Repeat customers</div>
-                <div class="dash-m-val">11</div>
-                <div class="dash-m-note">This week</div>
-              </div>
-            </div>
-            <div class="dash-pipeline">
-              <div class="dash-pipeline-title">Order pipeline</div>
-              <div class="pipeline-cols">
-                <div class="p-col urgent">
-                  <div class="p-col-count">07</div>
-                  <div class="p-col-label">Waiting</div>
-                </div>
-                <div class="p-col">
-                  <div class="p-col-count">04</div>
-                  <div class="p-col-label">Packing</div>
-                </div>
-                <div class="p-col">
-                  <div class="p-col-count">09</div>
-                  <div class="p-col-label">Dispatched</div>
-                </div>
-                <div class="p-col">
-                  <div class="p-col-count">12</div>
-                  <div class="p-col-label">Delivered</div>
-                </div>
-              </div>
-            </div>
-            <div class="dash-messages">
-              <div class="dash-msg-title">Needs attention</div>
-              <div class="dash-msg">
-                <div class="dash-msg-av" style="background:#FEE2E2;color:#EF4444">AM</div>
-                <span class="dash-msg-name">Amina</span>
-                <span class="dash-msg-text" style="color:#EF4444;font-style:italic">"nimetuma pesa"</span>
-                <div class="dash-msg-tag"><span class="tag tag-red" style="font-size:9px;padding:3px 8px">Verify</span></div>
-              </div>
-              <div class="dash-msg">
-                <div class="dash-msg-av" style="background:#FEF3C7;color:#D97706">KO</div>
-                <span class="dash-msg-name">Kelvin</span>
-                <span class="dash-msg-text">"nitachukua kesho"</span>
-                <div class="dash-msg-tag"><span class="tag tag-amber" style="font-size:9px;padding:3px 8px">Follow up</span></div>
-              </div>
-              <div class="dash-msg">
-                <div class="dash-msg-av" style="background:#EEF2FF;color:#6366F1">NB</div>
-                <span class="dash-msg-name">Neema</span>
-                <span class="dash-msg-text">"ume-dispatch?"</span>
-                <div class="dash-msg-tag"><span class="tag" style="font-size:9px;padding:3px 8px">Reply</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- Floating alerts -->
-        <div class="float-alert">
-          <div class="float-alert-icon">⚠️</div>
-          <div class="float-alert-text">
-            <strong>Unpaid order</strong>
-            <span>Kelvin — TZS 85,000 · 2 days old</span>
-          </div>
-        </div>
-        <div class="float-alert2">
-          <div class="float-alert2-icon">✓</div>
-          <div class="float-alert2-text">Payment confirmed!</div>
-        </div>
-      </div>
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-badge">
+      🇹🇿 Built for East African Sellers &nbsp;•&nbsp; WA + TikTok + IG + FB
     </div>
-  </div>
-</section>
-
-<!-- TRUST BAR -->
-<div class="trust-bar">
-  <div class="container">
-    <div class="trust-inner">
-      <span class="trust-label">Orders from</span>
-      <div class="trust-pills">
-        <div class="trust-pill"><span class="icon">💬</span> WhatsApp</div>
-        <div class="trust-pill"><span class="icon">📸</span> Instagram</div>
-        <div class="trust-pill"><span class="icon">🎵</span> TikTok</div>
-        <div class="trust-pill"><span class="icon">👥</span> Facebook</div>
-        <div class="trust-pill"><span class="icon">📱</span> DM &amp; Chat</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ════════════════════════════════
-     PAIN SECTION
-════════════════════════════════ -->
-<section class="pain" id="problem">
-  <div class="container">
-    <div class="pain-header animate-on-scroll">
-      <div class="section-label">The Problem</div>
-      <h2>This is how <span>profit disappears</span><br>after the first message.</h2>
-      <p>Sound familiar? These are not edge cases. This is every Tuesday at 2pm for thousands of WhatsApp sellers across East Africa.</p>
-    </div>
-
-    <div class="chat-grid">
-      <!-- Card 1 -->
-      <div class="chat-card animate-on-scroll delay-1">
-        <div class="chat-card-tag"><span class="tag tag-red">Payment confusion</span></div>
-        <div class="chat-bubble">
-          <div class="chat-name">Amina · 10:14am</div>
-          <span class="sw-badge">nimetuma</span> pesa — screenshot ukangoja
-        </div>
-        <div class="chat-bubble highlight">
-          <div class="chat-name">Your staff · 10:22am</div>
-          Umituma kwa namba gani? <strong>Hatujaona</strong>
-        </div>
-        <div class="chat-bubble">
-          <div class="chat-name">Amina · 10:35am</div>
-          Nilipiga simu saa hizi 😤
-        </div>
-        <div class="chat-card-footer">Customer almost gone. Payment still unconfirmed.</div>
-      </div>
-      <!-- Card 2 -->
-      <div class="chat-card animate-on-scroll delay-2">
-        <div class="chat-card-tag"><span class="tag tag-amber">Lost follow-up</span></div>
-        <div class="chat-bubble">
-          <div class="chat-name">Kelvin · Yesterday</div>
-          <span class="sw-badge">nitachukua kesho</span> baada ya mchana 👍
-        </div>
-        <div class="chat-bubble green-bubble">
-          <div class="chat-name">You · Yesterday</div>
-          Sawa! Tutakusubiri 🙂
-        </div>
-        <div class="chat-bubble" style="background:#FEF9C3;border-color:#FDE68A">
-          <div class="chat-name">3 days later...</div>
-          <em style="color:#92400E">No follow-up was sent. Kelvin bought from your competitor.</em>
-        </div>
-        <div class="chat-card-footer">TZS 85,000 order. Forgotten because life got busy.</div>
-      </div>
-      <!-- Card 3 -->
-      <div class="chat-card animate-on-scroll delay-3">
-        <div class="chat-card-tag"><span class="tag tag-red">Dispatch panic</span></div>
-        <div class="chat-bubble">
-          <div class="chat-name">Neema · 3:41pm</div>
-          <span class="sw-badge">ume-dispatch?</span> nimekupigia simu mara tatu
-        </div>
-        <div class="chat-bubble highlight">
-          <div class="chat-name">Staff A → Staff B</div>
-          Umesend delivery ya Neema?
-        </div>
-        <div class="chat-bubble highlight">
-          <div class="chat-name">Staff B → Staff A</div>
-          <strong>Nilidhani wewe umeifanya</strong> 😬
-        </div>
-        <div class="chat-card-footer">Nobody dispatched. Blame game in full swing now.</div>
-      </div>
-    </div>
-
-    <!-- Chaos breakdown -->
-    <div class="pain-chaos animate-on-scroll" style="margin-top:40px">
-      <div class="chaos-left">
-        <div class="chaos-title">📱 Where your "system" lives</div>
-        <div class="chaos-item">
-          <div class="chaos-icon red-bg">📋</div>
-          <div class="chaos-text"><strong>Orders</strong>Scattered across WhatsApp, DMs, and Instagram messages</div>
-        </div>
-        <div class="chaos-item">
-          <div class="chaos-icon red-bg">📸</div>
-          <div class="chaos-text"><strong>Payment proof</strong>"The screenshot is somewhere in my gallery." <em style="color:var(--red)">Screenshot si system.</em></div>
-        </div>
-        <div class="chaos-item">
-          <div class="chaos-icon amber-bg">🧠</div>
-          <div class="chaos-text"><strong>Dispatch status</strong>Lives in someone's head. Or doesn't. <em style="color:var(--amber)">Kumbukumbu si workflow.</em></div>
-        </div>
-        <div class="chaos-item">
-          <div class="chaos-icon red-bg">😬</div>
-          <div class="chaos-text"><strong>Follow-ups</strong>Depends on whoever remembered. Today, nobody did.</div>
-        </div>
-      </div>
-      <div class="chaos-right">
-        <div class="chaos-title">💸 What this costs you</div>
-        <div class="chaos-item">
-          <div class="chaos-icon red-bg">💰</div>
-          <div class="chaos-text"><strong>Unpaid orders vanish</strong>Customer says <em class="sw-badge">nimetuma</em> and then disappears. You have no record.</div>
-        </div>
-        <div class="chaos-item">
-          <div class="chaos-icon amber-bg">⏳</div>
-          <div class="chaos-text"><strong>Hours wasted on investigation</strong><em style="color:var(--amber)">Kazi imekuwa upelelezi sasa.</em> Your staff is a detective agency.</div>
-        </div>
-        <div class="chaos-item">
-          <div class="chaos-icon red-bg">📉</div>
-          <div class="chaos-text"><strong>Repeat customers lost</strong>No one followed up. They felt ignored. They won't be back.</div>
-        </div>
-        <div class="chaos-item">
-          <div class="chaos-icon red-bg">🤯</div>
-          <div class="chaos-text"><strong>Your team is confused constantly</strong><em style="color:var(--red)">Hii order iko kwenye chat gani?</em> — asked 7 times today.</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════
-     AWKWARD TRUTH
-════════════════════════════════ -->
-<section class="truth" id="truth">
-  <div class="container">
-    <div class="truth-header animate-on-scroll">
-      <div class="section-label" style="color:rgba(37,211,102,.7)">Awkward truth</div>
-      <h2>You're not running <em>operations.</em><br>You're running <em>investigations.</em></h2>
-      <p>We're laughing, but the numbers aren't funny. <em style="font-style:normal;color:rgba(255,255,255,.4)">Tunacheka, lakini ukweli unauma.</em></p>
-    </div>
-    <div class="truth-grid">
-      <div class="truth-card animate-on-scroll delay-1">
-        <div class="truth-card-icon">🔍</div>
-        <h3>Every "nimetuma" is a crime scene</h3>
-        <p>Payment said to have been sent. Nobody can confirm it. Staff checking phones, checking M-Pesa, calling the customer. Business at a halt.</p>
-        <div class="swahili-hook">"Tulishamlipia huyu?" — asked twice a day, every day.</div>
-      </div>
-      <div class="truth-card animate-on-scroll delay-2">
-        <div class="truth-card-icon">🎲</div>
-        <h3>You're running a guessing game</h3>
-        <p>Which orders are paid? Which are not? Which were dispatched? Which need follow-up? Nobody has a definitive answer. Not even you.</p>
-        <div class="swahili-hook">"Biashara si scavenger hunt." But here we are.</div>
-      </div>
-      <div class="truth-card animate-on-scroll delay-3">
-        <div class="truth-card-icon">📱</div>
-        <h3>Screenshots are your "database"</h3>
-        <p>Your order history is a gallery of screenshots, starred WhatsApp messages, and voice notes from 3 months ago that nobody can find again.</p>
-        <div class="swahili-hook">"Screenshot zimetutosha." Completely, entirely, forever.</div>
-      </div>
-    </div>
-    <div class="truth-quote animate-on-scroll">
-      <blockquote>
-        "Memory is not a workflow.<br>WhatsApp is not a CRM.<br>Screenshots are not a <em>system.</em>"
-      </blockquote>
-      <cite>— Every East African seller who has lost an order this week. Including you.</cite>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════
-     SOLUTION
-════════════════════════════════ -->
-<section class="solution" id="solution">
-  <div class="container">
-    <div class="solution-header animate-on-scroll">
-      <div class="section-label">The Solution</div>
-      <h2>WhatsBoard gives you <span>control</span><br>after the chat starts.</h2>
-      <p>This is not a CRM. This is not trying to replace WhatsApp. This is the layer of order control that every chat-based seller has been missing.</p>
-    </div>
-    <div class="solution-grid">
-      <div class="solution-card animate-on-scroll delay-1">
-        <div class="sol-icon">📦</div>
-        <div class="sol-title">Track every order, start to finish</div>
-        <div class="sol-desc">From the first <em class="sw-badge">bei gani?</em> to final delivery — every order is visible, named, tracked, and assigned. No more chat archaeology.</div>
-      </div>
-      <div class="solution-card animate-on-scroll delay-2">
-        <div class="sol-icon">💰</div>
-        <div class="sol-title">Catch unpaid orders immediately</div>
-        <div class="sol-desc">See unpaid orders before they disappear. Know who paid, who said <em class="sw-badge">nimetuma</em>, and who is still avoiding your messages.</div>
-      </div>
-      <div class="solution-card animate-on-scroll delay-3">
-        <div class="sol-icon">🔔</div>
-        <div class="sol-title">Follow up without depending on memory</div>
-        <div class="sol-desc"><em class="sw-badge">Nitachukua kesho</em> automatically becomes a follow-up reminder. Not a prayer. A scheduled action with a name attached.</div>
-      </div>
-      <div class="solution-card animate-on-scroll delay-1">
-        <div class="sol-icon">🚚</div>
-        <div class="sol-title">Dispatch clarity for your team</div>
-        <div class="sol-desc">Packing, dispatched, delivered — everyone sees the same pipeline. <em class="sw-badge">Ume-dispatch?</em> becomes a one-look answer instead of three phone calls.</div>
-      </div>
-      <div class="solution-card animate-on-scroll delay-2">
-        <div class="sol-icon">👥</div>
-        <div class="sol-title">Your whole team, one view</div>
-        <div class="sol-desc">Staff A does not need to call Staff B about an order. They open WhatsBoard. The answer is there. The chaos ends.</div>
-      </div>
-      <div class="solution-card animate-on-scroll delay-3">
-        <div class="sol-icon">🔁</div>
-        <div class="sol-title">See repeat customers automatically</div>
-        <div class="sol-desc">Repeat customers are flagged. You know who to thank, who to offer a discount, and who is likely to buy again this month.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════
-     WORKFLOW
-════════════════════════════════ -->
-<section class="workflow" id="workflow">
-  <div class="container">
-    <div class="workflow-header animate-on-scroll">
-      <div class="section-label">How It Works</div>
-      <h2>From <span>"bei gani?"</span> to delivered — fully tracked.</h2>
-    </div>
-    <div class="flow-steps animate-on-scroll">
-      <div class="flow-step">
-        <div class="flow-step-icon s1">💬</div>
-        <div class="flow-step-label">Inquiry</div>
-        <div class="flow-step-sub">"bei gani?"</div>
-      </div>
-      <div class="flow-step">
-        <div class="flow-step-icon s2">⏳</div>
-        <div class="flow-step-label">Waiting Payment</div>
-        <div class="flow-step-sub">Order created</div>
-      </div>
-      <div class="flow-step">
-        <div class="flow-step-icon s3">💳</div>
-        <div class="flow-step-label">Payment Check</div>
-        <div class="flow-step-sub">"nimetuma"</div>
-      </div>
-      <div class="flow-step">
-        <div class="flow-step-icon s4">✅</div>
-        <div class="flow-step-label">Paid &amp; Confirmed</div>
-        <div class="flow-step-sub">Money tracked</div>
-      </div>
-      <div class="flow-step">
-        <div class="flow-step-icon s5">📦</div>
-        <div class="flow-step-label">Packing</div>
-        <div class="flow-step-sub">Staff assigned</div>
-      </div>
-      <div class="flow-step">
-        <div class="flow-step-icon s6">🚚</div>
-        <div class="flow-step-label">Dispatched</div>
-        <div class="flow-step-sub">Rider notified</div>
-      </div>
-      <div class="flow-step">
-        <div class="flow-step-icon s7">⭐</div>
-        <div class="flow-step-label">Delivered + Follow-up</div>
-        <div class="flow-step-sub">Repeat flagged</div>
-      </div>
-    </div>
-    <div class="flow-detail">
-      <div class="flow-detail-card animate-on-scroll delay-1">
-        <div class="fdc-top">
-          <div class="fdc-icon" style="background:#EEF2FF;font-size:16px">📋</div>
-          <div class="fdc-title">Order is created instantly</div>
-        </div>
-        <div class="fdc-items">
-          <div class="fdc-item">Customer name + item captured</div>
-          <div class="fdc-item">Source channel recorded (WhatsApp, IG, TikTok)</div>
-          <div class="fdc-item">Assigned to the right staff member</div>
-          <div class="fdc-item">Visible to the whole team immediately</div>
-        </div>
-      </div>
-      <div class="flow-detail-card animate-on-scroll delay-2">
-        <div class="fdc-top">
-          <div class="fdc-icon" style="background:#FEF2F2;font-size:16px">💰</div>
-          <div class="fdc-title">Payment is tracked, not assumed</div>
-        </div>
-        <div class="fdc-items">
-          <div class="fdc-item">Unpaid orders flagged in red immediately</div>
-          <div class="fdc-item">"nimetuma" triggers a verification step</div>
-          <div class="fdc-item">Total unpaid value visible at a glance</div>
-          <div class="fdc-item">No more customer disputes from confusion</div>
-        </div>
-      </div>
-      <div class="flow-detail-card animate-on-scroll delay-3">
-        <div class="fdc-top">
-          <div class="fdc-icon" style="background:#F0FDF4;font-size:16px">🔔</div>
-          <div class="fdc-title">Follow-up is automatic, not manual</div>
-        </div>
-        <div class="fdc-items">
-          <div class="fdc-item">"nitachukua kesho" → reminder set automatically</div>
-          <div class="fdc-item">Delivery follow-up triggered after dispatch</div>
-          <div class="fdc-item">Repeat customers flagged for re-engagement</div>
-          <div class="fdc-item">Nothing falls through the cracks again</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════
-     BEFORE / AFTER
-════════════════════════════════ -->
-<section class="transformation" id="transformation">
-  <div class="container">
-    <div class="transformation-header animate-on-scroll">
-      <div class="section-label">What Changes</div>
-      <h2>The transformation is real.<br>And it starts on day one.</h2>
-    </div>
-    <div class="ba-grid animate-on-scroll">
-      <div class="ba-col">
-        <div class="ba-header before-header">
-          <span class="ba-icon">😰</span>
-          <h3>Before WhatsBoard</h3>
-        </div>
-        <div class="ba-items">
-          <div class="ba-item before-item">
-            <span class="ba-bullet">✗</span>
-            <div class="ba-text">
-              <strong>Orders live in chats</strong>
-              <span>"Hii order iko kwenye chat gani?" — daily question.</span>
-            </div>
-          </div>
-          <div class="ba-item before-item">
-            <span class="ba-bullet">✗</span>
-            <div class="ba-text">
-              <strong>Payment is a mystery</strong>
-              <span>Screenshot. Gallery search. Phone call. Still unsure.</span>
-            </div>
-          </div>
-          <div class="ba-item before-item">
-            <span class="ba-bullet">✗</span>
-            <div class="ba-text">
-              <strong>Follow-ups depend on memory</strong>
-              <span>"Nitachukua kesho" quietly becomes a lost sale.</span>
-            </div>
-          </div>
-          <div class="ba-item before-item">
-            <span class="ba-bullet">✗</span>
-            <div class="ba-text">
-              <strong>Staff blame each other for dispatch</strong>
-              <span>"Nilidhani wewe umeifanya." Nobody did it.</span>
-            </div>
-          </div>
-          <div class="ba-item before-item">
-            <span class="ba-bullet">✗</span>
-            <div class="ba-text">
-              <strong>Unpaid money invisible</strong>
-              <span>You don't know how much is owed until it hurts.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="ba-col">
-        <div class="ba-header after-header">
-          <span class="ba-icon">😌</span>
-          <h3>After WhatsBoard</h3>
-        </div>
-        <div class="ba-items">
-          <div class="ba-item after-item">
-            <span class="ba-bullet">✓</span>
-            <div class="ba-text">
-              <strong>Every order is visible</strong>
-              <span>One board. Every order. Every stage. Everyone aligned.</span>
-            </div>
-          </div>
-          <div class="ba-item after-item">
-            <span class="ba-bullet">✓</span>
-            <div class="ba-text">
-              <strong>Payment is tracked, not assumed</strong>
-              <span>Paid vs unpaid — clear instantly. No investigation needed.</span>
-            </div>
-          </div>
-          <div class="ba-item after-item">
-            <span class="ba-bullet">✓</span>
-            <div class="ba-text">
-              <strong>Follow-ups happen automatically</strong>
-              <span>Reminder fires before the customer forgets about you.</span>
-            </div>
-          </div>
-          <div class="ba-item after-item">
-            <span class="ba-bullet">✓</span>
-            <div class="ba-text">
-              <strong>Dispatch is crystal clear</strong>
-              <span>Who packed it. Who sent it. Where it is now. One look.</span>
-            </div>
-          </div>
-          <div class="ba-item after-item">
-            <span class="ba-bullet">✓</span>
-            <div class="ba-text">
-              <strong>Unpaid value always visible</strong>
-              <span>Know exactly how much to chase — and who to chase.</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════
-     TESTIMONIALS
-════════════════════════════════ -->
-<section class="testimonials" id="testimonials">
-  <div class="container">
-    <div class="testimonials-header animate-on-scroll">
-      <div class="section-label">Real sellers. Real results.</div>
-      <h2>They were skeptical too.</h2>
-      <p>Until the first week of no lost orders, no missed payments, and no panicked calls about dispatch.</p>
-    </div>
-    <div class="testi-grid">
-      <div class="testi-card animate-on-scroll delay-1">
-        <div class="testi-top">
-          <div class="testi-author">
-            <div class="testi-av" style="background:#EC4899">AF</div>
-            <div>
-              <div class="testi-name">Amina's Fashion House</div>
-              <div class="testi-biz">Instagram seller · Dar es Salaam</div>
-            </div>
-          </div>
-          <div class="testi-stars">★★★★★</div>
-        </div>
-        <div class="testi-body">
-          "We were getting customers every day, but we kept losing control after the chat started. The payment confusion alone was making me crazy. Now I can see every unpaid order the moment I open my phone. I wish we had this two years ago."
-        </div>
-        <div class="testi-hook">"Hapo awali tulifikiri tutabaki na WhatsApp tu. Lakini sasa tunaona faida halisi." 🙌</div>
-      </div>
-      <div class="testi-card animate-on-scroll delay-2">
-        <div class="testi-top">
-          <div class="testi-author">
-            <div class="testi-av" style="background:#8B5CF6">GB</div>
-            <div>
-              <div class="testi-name">Glow Beauty Store</div>
-              <div class="testi-biz">WhatsApp Business · Mwanza</div>
-            </div>
-          </div>
-          <div class="testi-stars">★★★★★</div>
-        </div>
-        <div class="testi-body">
-          "Before this, 'nimetuma' messages used to cause an hour of back and forth. Now payment verification is one click and it's done. My team is not fighting anymore. Packing and dispatch are clear. We sleep better honestly."
-        </div>
-        <div class="testi-hook">"Screenshot zimetutosha kabisa. Tumesema bye kabisa." 😂</div>
-      </div>
-      <div class="testi-card animate-on-scroll delay-3">
-        <div class="testi-top">
-          <div class="testi-author">
-            <div class="testi-av" style="background:#0EA5E9">MG</div>
-            <div>
-              <div class="testi-name">Mbezi Gadgets</div>
-              <div class="testi-biz">TikTok &amp; WhatsApp seller · Mbezi</div>
-            </div>
-          </div>
-          <div class="testi-stars">★★★★★</div>
-        </div>
-        <div class="testi-body">
-          "The best thing is that WhatsBoard does not try to replace how we sell. We still use WhatsApp. We still get orders from TikTok. But now after that first message, everything is organized. Our repeat customer number went up by 30% in two months."
-        </div>
-        <div class="testi-hook">"Kazi ilikuwa upelelezi. Sasa ni kazi halisi." 💪</div>
-      </div>
-      <div class="testi-card animate-on-scroll delay-4">
-        <div class="testi-top">
-          <div class="testi-author">
-            <div class="testi-av" style="background:#F59E0B">NK</div>
-            <div>
-              <div class="testi-name">Neema's Kitchen</div>
-              <div class="testi-biz">Food delivery · Kinondoni</div>
-            </div>
-          </div>
-          <div class="testi-stars">★★★★★</div>
-        </div>
-        <div class="testi-body">
-          "I used to spend two hours every evening trying to figure out which orders were done and which were not. Now I look at WhatsBoard for five minutes in the morning and I know everything. It's embarrassingly simple and it works."
-        </div>
-        <div class="testi-hook">"Hatuwezi ku-run biashara kwa kumbukumbu tena. Impossible." 🎯</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════
-     OBJECTIONS
-════════════════════════════════ -->
-<section class="objections" id="objections">
-  <div class="container">
-    <div class="objections-header animate-on-scroll">
-      <div class="section-label">We know what you're thinking</div>
-      <h2>Your objections are valid.<br>Let's address them honestly.</h2>
-    </div>
-    <div class="obj-grid">
-      <div class="obj-card animate-on-scroll delay-1">
-        <div class="obj-q">But we already use WhatsApp.</div>
-        <div class="obj-a">That's the point. WhatsBoard does not replace WhatsApp — it organizes what happens after the chat starts. You still sell on WhatsApp. You just stop losing orders in it. <strong>WhatsApp for selling. WhatsBoard for controlling.</strong></div>
-      </div>
-      <div class="obj-card animate-on-scroll delay-2">
-        <div class="obj-q">My team is small. Just me and one other person.</div>
-        <div class="obj-a">That's exactly who WhatsBoard is built for. <strong>One person running a business from a phone</strong> benefits more from order clarity than a team of twenty. Stop keeping orders in your head. Your brain has better things to do.</div>
-      </div>
-      <div class="obj-card animate-on-scroll delay-3">
-        <div class="obj-q">We are not tech people. This looks complicated.</div>
-        <div class="obj-a">Setup takes 5 minutes. If you can add a contact on WhatsApp, you can use WhatsBoard. <strong>There is no training needed.</strong> The whole design is built around how East African sellers already think and work.</div>
-      </div>
-      <div class="obj-card animate-on-scroll delay-4">
-        <div class="obj-q">Can't we just continue using chats and notes?</div>
-        <div class="obj-a">You can. But you already know you're losing orders. You already know <em class="sw-badge">nimetuma</em> creates confusion. You already know "nitachukua kesho" becomes nothing. <strong>The cost of continuing is real money.</strong> Not a hypothetical.</div>
-      </div>
-      <div class="obj-card animate-on-scroll delay-1">
-        <div class="obj-q">What if my customers don't want to change how they order?</div>
-        <div class="obj-a">Your customers keep ordering on WhatsApp, Instagram, TikTok — exactly as before. <strong>Nothing changes for them.</strong> You are the only one who gets a better system behind the scenes. They just notice you are now more organized and faster to respond.</div>
-      </div>
-      <div class="obj-card animate-on-scroll delay-2">
-        <div class="obj-q">Is this only for big businesses?</div>
-        <div class="obj-a">No. WhatsBoard was specifically designed for <strong>small and medium sellers in East Africa</strong> — fashion sellers, beauty stores, food sellers, gadget traders, and anyone else who gets customers on social media and chat. The more "small" you are, the more you benefit.</div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════
-     PRICING
-════════════════════════════════ -->
-<section class="pricing" id="pricing">
-  <div class="container">
-    <div class="pricing-header animate-on-scroll">
-      <div class="section-label">Pricing</div>
-      <h2>Honest pricing. No tricks.</h2>
-      <p style="color:var(--text3);margin-top:14px;font-size:16px">Start free. Upgrade when your orders outgrow your memory.</p>
-    </div>
-    <div class="pricing-grid">
-      <!-- Starter -->
-      <div class="price-card animate-on-scroll delay-1">
-        <div class="price-plan">Starter</div>
-        <div class="price-amount">
-          <span class="price-currency">TZS</span>
-          <span class="price-num">0</span>
-          <span class="price-period">/ month</span>
-        </div>
-        <div class="price-desc">For sellers testing WhatsBoard and getting used to tracking orders properly.</div>
-        <div class="price-features">
-          <div class="price-feat">Up to 30 orders/month</div>
-          <div class="price-feat">Basic order pipeline</div>
-          <div class="price-feat">Payment tracking</div>
-          <div class="price-feat">1 staff account</div>
-          <div class="price-feat no">Follow-up reminders</div>
-          <div class="price-feat no">Analytics &amp; reports</div>
-        </div>
-        <button class="price-btn" onclick="scrollToCTA()">Start Free</button>
-      </div>
-      <!-- Growth — FEATURED -->
-      <div class="price-card featured animate-on-scroll delay-2">
-        <div class="price-badge">Most Popular</div>
-        <div class="price-plan" style="color:var(--gd)">Growth</div>
-        <div class="price-amount">
-          <span class="price-currency">TZS</span>
-          <span class="price-num">25K</span>
-          <span class="price-period">/ month</span>
-        </div>
-        <div class="price-desc">For active sellers with real volume and a team that needs to stay aligned.</div>
-        <div class="price-features">
-          <div class="price-feat">Unlimited orders</div>
-          <div class="price-feat">Full order pipeline</div>
-          <div class="price-feat">Payment + dispatch tracking</div>
-          <div class="price-feat">Up to 3 staff accounts</div>
-          <div class="price-feat">Automatic follow-up reminders</div>
-          <div class="price-feat">Unpaid order alerts</div>
-          <div class="price-feat">Basic analytics</div>
-          <div class="price-feat no">Priority support</div>
-        </div>
-        <button class="price-btn green" onclick="scrollToCTA()">Start Growing</button>
-      </div>
-      <!-- Pro -->
-      <div class="price-card animate-on-scroll delay-3">
-        <div class="price-plan">Pro</div>
-        <div class="price-amount">
-          <span class="price-currency">TZS</span>
-          <span class="price-num">60K</span>
-          <span class="price-period">/ month</span>
-        </div>
-        <div class="price-desc">For serious operations with multiple staff, channels, and high daily volume.</div>
-        <div class="price-features">
-          <div class="price-feat">Everything in Growth</div>
-          <div class="price-feat">Unlimited staff accounts</div>
-          <div class="price-feat">Advanced analytics + reports</div>
-          <div class="price-feat">Repeat customer CRM</div>
-          <div class="price-feat">Multi-channel order intake</div>
-          <div class="price-feat">Priority WhatsApp support</div>
-        </div>
-        <button class="price-btn" onclick="scrollToCTA()">Go Pro</button>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ════════════════════════════════
-     FINAL CTA
-════════════════════════════════ -->
-<section class="final-cta" id="cta">
-  <div class="container-sm">
-    <div class="section-label" style="color:rgba(37,211,102,.6);justify-content:center;display:flex;margin-bottom:20px">Enough is enough</div>
-    <h2>
-      Tumekuwa tukipoteza hela.<br>
-      <em>Let's fix that. Today.</em>
-    </h2>
-    <p class="final-cta-sub">
-      One more week of screenshots, memory-based follow-ups, and "nimetuma" confusion is one more week of lost money. Start free in 5 minutes.
+    <h1>
+      Stop running your<br>
+      business from <span class="strike">screenshots</span><br>
+      and <span class="highlight">vibes</span>.
+    </h1>
+    <p class="hero-sub">
+      You've got customers — <strong>bado unashindwa kupata pesa.</strong><br>
+      WhatsBoard turns your WhatsApp chaos into a real order pipeline. Paid, tracked, followed-up. Automatically.
     </p>
-    <div class="final-cta-btns">
-      <button class="btn-primary btn-lg" style="font-size:17px;padding:18px 40px">
-        Track Orders Free — No Card
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9h12M11 5l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-      <button class="btn-ghost btn-lg" style="color:rgba(255,255,255,.5);border-color:rgba(255,255,255,.1);font-size:17px" onclick="document.getElementById('problem').scrollIntoView({behavior:'smooth'})">See The Problem Again</button>
+    <div class="hero-ctas">
+      <a href="https://whatsboard.vercel.app/register" class="btn-primary">
+        💚 Anza Bure — Start Free
+      </a>
+      <a href="#features" class="btn-ghost">See how it works →</a>
     </div>
-    <div class="final-cta-note">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1a6 6 0 100 12A6 6 0 007 1zm0 9V6.5m0-2.5v.5" stroke="rgba(255,255,255,.3)" stroke-width="1.4" stroke-linecap="round"/></svg>
-      Free forever plan available · No credit card needed · Cancel anytime
+    <div class="hero-proof">
+      <div class="avatars">
+        <div class="avatar" style="background:#E67E22;">A</div>
+        <div class="avatar" style="background:#9B59B6;">K</div>
+        <div class="avatar" style="background:#E74C3C;">N</div>
+        <div class="avatar" style="background:#2ECC71;">B</div>
+        <div class="avatar" style="background:#3498DB;">M</div>
+      </div>
+      <span>500+ sellers in TZ already stopped panicking</span>
     </div>
-    <div class="cta-shout">Screenshot si system. Kumbukumbu si workflow. WhatsBoard ni solution.</div>
+  </div>
+
+  <!-- PHONE MOCKUP -->
+  <div class="hero-visual">
+    <div class="phone-chaos">
+      <!-- Chaos bubbles floating around the phone -->
+      <div class="chaos-bubble red cb1">😰 "nimetuma" — ni kweli??</div>
+      <div class="chaos-bubble yellow cb2">📸 screenshot #47</div>
+      <div class="chaos-bubble green cb3">✅ Order tracked!</div>
+      <div class="chaos-bubble red cb4">💸 Unpaid: TZS 480k</div>
+
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="phone-wa-header">
+            <div class="wa-avatar">A</div>
+            <div>
+              <div class="wa-name">Amina Fashion 🛍️</div>
+              <div class="wa-status">online</div>
+            </div>
+          </div>
+          <div class="chat-messages">
+            <div class="msg msg-in" style="animation-delay:0.1s">bei gani bei gani? 👀<span class="msg-time">10:02</span></div>
+            <div class="msg msg-out" style="animation-delay:0.3s">1,500/= dress<span class="msg-time">10:03</span></div>
+            <div class="msg msg-in" style="animation-delay:0.5s">nataka 2<span class="msg-time">10:04</span></div>
+            <div class="msg msg-in" style="animation-delay:0.7s">nitachukua kesho 🙃<span class="msg-time">10:05</span></div>
+            <div class="msg msg-out" style="animation-delay:0.9s">sawa kabisa 👍<span class="msg-time">10:06</span></div>
+            <div class="msg msg-in" style="animation-delay:1.1s">nimetuma pesa! ✅<span class="msg-time">14:32</span></div>
+            <div class="msg msg-out" style="animation-delay:1.3s">...imeenda kweli?<span class="msg-time">16:01</span></div>
+            <div class="msg msg-in" style="animation-delay:1.5s">ume-dispatch bado? 😤<span class="msg-time">Day 3</span></div>
+            <div class="msg msg-out" style="animation-delay:1.7s">niko nayo... nadhani<span class="msg-time">Day 3</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════
-     FOOTER
-════════════════════════════════ -->
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-inner" id="ticker">
+    <div class="ticker-item">📸 Your business isn't in screenshots</div>
+    <div class="ticker-item">"Nimetuma" is not a payment confirmation</div>
+    <div class="ticker-item">💸 Stop losing TZS 480,000 to "nitachukua kesho"</div>
+    <div class="ticker-item">📦 Dispatch tracking that isn't someone's memory</div>
+    <div class="ticker-item">🚨 18% of orders are recoverable. Are you recovering yours?</div>
+    <div class="ticker-item">WhatsApp + TikTok + IG + FB — one dashboard</div>
+    <div class="ticker-item">📸 Your business isn't in screenshots</div>
+    <div class="ticker-item">"Nimetuma" is not a payment confirmation</div>
+    <div class="ticker-item">💸 Stop losing TZS 480,000 to "nitachukua kesho"</div>
+    <div class="ticker-item">📦 Dispatch tracking that isn't someone's memory</div>
+    <div class="ticker-item">🚨 18% of orders are recoverable. Are you recovering yours?</div>
+    <div class="ticker-item">WhatsApp + TikTok + IG + FB — one dashboard</div>
+  </div>
+</div>
+
+<!-- PAIN SECTION -->
+<section class="section" id="pain">
+  <div class="fade-up">
+    <div class="section-label">The Diagnosis</div>
+    <h2 class="section-title">You didn't lose the customer.<br>You lost control of the chat. 😮</h2>
+    <p class="section-sub">
+      Every online seller in Tanzania knows this feeling. Business is "going," but money isn't adding up. Here's exactly where it's leaking.
+    </p>
+  </div>
+
+  <div class="pain-grid fade-up">
+    <div class="pain-card bad" data-emoji="📸">
+      <div class="pain-num">Pain 01</div>
+      <h3>The Screenshot Archive Problem</h3>
+      <p>Your order history is 600 screenshots in your gallery. Looking for a customer's delivery address takes 15 minutes and a prayer.</p>
+      <div class="pain-quote">"Nitatuma picha ya receipt..." — and now it's buried under 400 memes.</div>
+    </div>
+    <div class="pain-card bad" data-emoji="💸">
+      <div class="pain-num">Pain 02</div>
+      <h3>"Nimetuma" Sent. Payment: ??</h3>
+      <p>They said they sent money. Maybe they did. Maybe they didn't. You feel awkward asking again. So you pack the order and... hope.</p>
+      <div class="pain-quote">"Nimetuma!" — 3 hours ago. M-Pesa notification: still nothing.</div>
+    </div>
+    <div class="pain-card bad" data-emoji="🧠">
+      <div class="pain-num">Pain 03</div>
+      <h3>Memory-Based Operations</h3>
+      <p>You are the database. Your brain holds 40 pending orders, 12 unpaid customers, and 7 "nitachukua kesho" promises. One WhatsApp notification wipes it all.</p>
+      <div class="pain-quote">"Nilikuambia wiki iliyopita... hujakumbuka?" 😅</div>
+    </div>
+    <div class="pain-card bad" data-emoji="📦">
+      <div class="pain-num">Pain 04</div>
+      <h3>Dispatch Became a Phone Call</h3>
+      <p>"Ume-dispatch?" turns into 3 calls, 2 chats, and someone walking to the packing room. In 2025. For a business with real customers.</p>
+      <div class="pain-quote">"Niko karibu Mbezi, order yangu iko wapi?" — nightmare.</div>
+    </div>
+    <div class="pain-card bad" data-emoji="🔁">
+      <div class="pain-num">Pain 05</div>
+      <h3>The "Nitachukua Kesho" Graveyard</h3>
+      <p>They said tomorrow. Tomorrow came. Nobody followed up. The sale died quietly while you were managing 30 other chats.</p>
+      <div class="pain-quote">Repeat customers exist. You just don't know who they are.</div>
+    </div>
+    <div class="pain-card bad" data-emoji="🌐">
+      <div class="pain-num">Pain 06</div>
+      <h3>5 Apps, Zero Visibility</h3>
+      <p>Orders from WhatsApp, TikTok comments, Instagram DMs, Facebook inbox, Telegram. Your "dashboard" is five apps open at once and a notepad.</p>
+      <div class="pain-quote">"Aliniumia kwenye TikTok, sijui aliweka comment gani..." 😶</div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-bg" id="features">
+  <div class="fade-up">
+    <div class="section-label" style="color:#666; border-color:#333">How It Fixes It</div>
+    <h2 class="section-title" style="color:white">From "bei gani?" to<br><span style="color:var(--green)">delivered & paid.</span></h2>
+    <p class="section-sub">Not magic. Just your existing WhatsApp workflow — but with actual structure.</p>
+  </div>
+
+  <div class="steps fade-up">
+    <div class="step">
+      <div class="step-num">01</div>
+      <h3>Order Comes In (Anywhere)</h3>
+      <p>WhatsApp, Instagram, TikTok comment, FB inbox — you create the order in seconds. No copy-paste chaos, no switching apps.</p>
+      <span class="step-tag">WA + IG + TikTok + FB</span>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <h3>Board Tracks It Automatically</h3>
+      <p>Your Kanban pipeline moves: Inquiry → Payment Pending → Confirmed → Packing → Dispatched → Delivered. You see everything, always.</p>
+      <span class="step-tag">Live Pipeline</span>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <h3>Payment Gets Confirmed</h3>
+      <p>"Nimetuma" gets a real answer. Unpaid orders glow red. You know exactly who owes you money — without being a detective.</p>
+      <span class="step-tag">No More Guessing</span>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <h3>Follow-ups Happen (Not Just Planned)</h3>
+      <p>The system reminds you. "Nitachukua kesho" customers get followed up on kesho, automatically. Recovered orders = recovered money.</p>
+      <span class="step-tag">+18% Recovered</span>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES WITH DASHBOARD MOCKUP -->
+<section class="section">
+  <div class="features-grid fade-up">
+    <!-- Dashboard mockup -->
+    <div class="dash-mockup">
+      <div class="dash-header">
+        <div class="dash-dot" style="background:#FF5F57"></div>
+        <div class="dash-dot" style="background:#FFBD2E"></div>
+        <div class="dash-dot" style="background:#28C840"></div>
+        <span class="dash-title">whatsboard — dashboard</span>
+      </div>
+      <div class="dash-body">
+        <div class="stat-row">
+          <div class="stat-box good">
+            <div class="stat-val">36</div>
+            <div class="stat-lbl">Orders Today</div>
+          </div>
+          <div class="stat-box good">
+            <div class="stat-val">21</div>
+            <div class="stat-lbl">Paid ✓</div>
+          </div>
+          <div class="stat-box alert">
+            <div class="stat-val">480K</div>
+            <div class="stat-lbl">Unpaid TZS</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val">+16%</div>
+            <div class="stat-lbl">Revenue ↑</div>
+          </div>
+        </div>
+        <div class="pipeline">
+          <div class="pipe-col">
+            <div class="pipe-label">
+              Waiting Payment
+              <span class="count red-bg">7</span>
+            </div>
+            <div class="order-card unpaid">
+              <div class="name">Amina H.</div>
+              <div class="item">2x dresses — 3,000/=</div>
+            </div>
+            <div class="order-card unpaid">
+              <div class="name">Kelvin M.</div>
+              <div class="item">Bluetooth speaker</div>
+            </div>
+            <div class="order-card unpaid">
+              <div class="name">Zawadi T.</div>
+              <div class="item">3x hijabs</div>
+            </div>
+          </div>
+          <div class="pipe-col">
+            <div class="pipe-label">
+              Packing
+              <span class="count" style="background:var(--orange)">4</span>
+            </div>
+            <div class="order-card packed">
+              <div class="name">Neema K.</div>
+              <div class="item">Serum bundle</div>
+            </div>
+            <div class="order-card packed">
+              <div class="name">Beda O.</div>
+              <div class="item">3x handbags</div>
+            </div>
+          </div>
+          <div class="pipe-col">
+            <div class="pipe-label">
+              Dispatched
+              <span class="count">9</span>
+            </div>
+            <div class="order-card done">
+              <div class="name">Mariam S.</div>
+              <div class="item">Shoes — Mbezi</div>
+            </div>
+            <div class="order-card done">
+              <div class="name">Farida A.</div>
+              <div class="item">Blender — Sinza</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature list -->
+    <div>
+      <div class="section-label">What You Actually Get</div>
+      <h2 class="section-title" style="font-size:2rem; margin-bottom:32px">Control you could only dream about — before.</h2>
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">📋</div>
+          <div>
+            <h4>Kanban Order Board</h4>
+            <p>Every order visible. Every stage clear. No more "niko wapi na hii order?" moments. Drag, drop, done.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🔴</div>
+          <div>
+            <h4>Unpaid Order Alerts</h4>
+            <p>Red flags, not awkward conversations. Know who hasn't paid before you pack their order. Ukweli bila drama.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🔁</div>
+          <div>
+            <h4>Auto Follow-up Reminders</h4>
+            <p>"Nitachukua kesho" customers get followed up on kesho. The system remembers so your brain doesn't have to.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📊</div>
+          <div>
+            <h4>Live Revenue Visibility</h4>
+            <p>See what's paid, what's pending, what's in dispatch — in real time. Not at month-end when it's too late.</p>
+          </div>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🌍</div>
+          <div>
+            <h4>Multi-Channel Ready</h4>
+            <p>WhatsApp, TikTok, Instagram, Facebook, Telegram — one board to rule them all. Cheza chini na busara.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TESTIMONIALS -->
+<section class="testi-bg" id="testimonials">
+  <div class="fade-up" style="text-align:center">
+    <div class="section-label" style="display:block; text-align:center; border:none; padding-bottom:0">Real Sellers, Real Relief</div>
+    <h2 class="section-title" style="max-width:600px; margin:0 auto 12px">"Nilikuwa na wasiwasi kila siku — sasa? Hapana."</h2>
+    <p style="color:var(--grey-600); font-size:1rem; margin-bottom:0">What East African sellers actually say after switching.</p>
+  </div>
+
+  <div class="testi-grid fade-up">
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">We were getting customers, but <em>losing control after the chat started.</em> Now unpaid orders flash red immediately. Hatuwezi kukosa tena.</p>
+      <div class="testi-swahili">"Kabla ya WhatsBoard nilikuwa na wasiwasi kila siku. Sasa najua kila order iko wapi."</div>
+      <div class="testi-author">
+        <div class="testi-av" style="background:#E67E22;">A</div>
+        <div>
+          <div class="testi-name">Amina Fashion House</div>
+          <div class="testi-role">Instagram Seller • Dar es Salaam</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">Before, "nimetuma" messages turned my brain into an M-Pesa investigator. <em>Now payments, packing, and dispatch are in one place.</em> Stress imekwisha.</p>
+      <div class="testi-swahili">"Maumivu ya kutuma pesa na kuthibitisha — imekwisha kabisa. Rahisi sana."</div>
+      <div class="testi-author">
+        <div class="testi-av" style="background:#9B59B6;">G</div>
+        <div>
+          <div class="testi-name">Glow Beauty Store</div>
+          <div class="testi-role">WhatsApp Business • Arusha</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="testi-card">
+      <div class="testi-stars">★★★★★</div>
+      <p class="testi-text">The best part? <em>It works with how we already sell.</em> It doesn't try to replace WhatsApp — it organizes what happens after. Ni kama kuwa na PA bila kulipa mshahara.</p>
+      <div class="testi-swahili">"Inaelewa jinsi tunavyofanya biashara Afrika. Si kama software za wazungu."</div>
+      <div class="testi-author">
+        <div class="testi-av" style="background:#E74C3C;">M</div>
+        <div>
+          <div class="testi-name">Mbezi Gadgets</div>
+          <div class="testi-role">TikTok Seller • Dar es Salaam</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section" id="pricing" style="background:var(--white)">
+  <div class="fade-up" style="text-align:center">
+    <div class="section-label" style="display:block; text-align:center; border:none;">Bei Rahisi</div>
+    <h2 class="section-title" style="max-width:600px; margin:0 auto 12px">Cheaper than one lost order.</h2>
+    <p style="color:var(--grey-600); font-size:1rem; margin-bottom:0">No annual lock-in. Cancel anytime. Start free — seriously.</p>
+  </div>
+
+  <div class="pricing-grid fade-up">
+    <div class="price-card">
+      <div class="price-tier">Starter</div>
+      <div class="price-amount">Free</div>
+      <div class="price-period">Forever. Not a trial.</div>
+      <ul class="price-features">
+        <li>Up to 30 orders/month</li>
+        <li>Order pipeline board</li>
+        <li>Payment confirmation tracking</li>
+        <li>Basic follow-up reminders</li>
+        <li>1 seller account</li>
+      </ul>
+      <a href="https://whatsboard.vercel.app/register" class="price-btn dark">Anza Bure →</a>
+    </div>
+
+    <div class="price-card featured">
+      <div class="price-badge">⭐ Most Popular</div>
+      <div class="price-tier">Pro</div>
+      <div class="price-amount" style="color:var(--green)">TZS 15K</div>
+      <div class="price-period">/month — skip one bad coffee</div>
+      <ul class="price-features">
+        <li>Unlimited orders</li>
+        <li>Multi-channel (WA + TikTok + IG + FB)</li>
+        <li>Auto follow-up system</li>
+        <li>Unpaid order alerts</li>
+        <li>Revenue analytics</li>
+        <li>Customer repeat tracking</li>
+        <li>Team access (3 seats)</li>
+      </ul>
+      <a href="https://whatsboard.vercel.app/register" class="price-btn light">Get Pro — Lipa Sasa →</a>
+    </div>
+
+    <div class="price-card">
+      <div class="price-tier">Business</div>
+      <div class="price-amount">Custom</div>
+      <div class="price-period">For larger operations</div>
+      <ul class="price-features">
+        <li>Everything in Pro</li>
+        <li>Unlimited team seats</li>
+        <li>White-label dashboard</li>
+        <li>API access</li>
+        <li>Priority support</li>
+        <li>Custom integrations</li>
+      </ul>
+      <a href="mailto:hello@whatsboard.app" class="price-btn dark">Wasiliana Nasi →</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA STRIP -->
+<section class="cta-strip fade-up">
+  <h2>Biashara yako ina wateja.<br>Sasa ipate mfumo wa kukusanya pesa. 💚</h2>
+  <p>Your business deserves better than screenshots and memory-based operations.</p>
+  <a href="https://whatsboard.vercel.app/register" class="btn-primary" style="font-size:1.1rem; padding:16px 36px;">
+    💚 Anza Bure — No Credit Card Needed
+  </a>
+  <p style="margin-top:16px; font-size:0.85rem; color:rgba(0,0,0,0.5);">2 minutes to set up. Works with your existing WhatsApp number.</p>
+</section>
+
+<!-- FOOTER -->
 <footer>
-  <div class="container">
-    <div class="footer-inner">
-      <div class="footer-brand">
-        <div class="footer-logo">
-          <div class="nav-logo-icon">W</div>
-          WHATSBOARD
-        </div>
-        <div class="footer-tagline">
-          WhatsApp-first order control for East African sellers. Track orders from inquiry to delivery — without replacing how you already sell.
-        </div>
-        <div class="footer-social">
-          <a href="#" class="social-btn">𝕏</a>
-          <a href="#" class="social-btn">in</a>
-          <a href="#" class="social-btn">f</a>
-          <a href="#" class="social-btn">▶</a>
-        </div>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <div class="logo">
+        <div class="dot" style="background:var(--wa-green); animation:pulse 2s infinite;"></div>
+        WHATSBOARD
       </div>
-      <div class="footer-col">
-        <h4>Product</h4>
-        <a href="#solution">How It Works</a>
-        <a href="#workflow">Workflow</a>
-        <a href="#pricing">Pricing</a>
-        <a href="#">Changelog</a>
-      </div>
-      <div class="footer-col">
-        <h4>Company</h4>
-        <a href="#">About</a>
-        <a href="#">Blog</a>
-        <a href="#">Careers</a>
-        <a href="#">Contact</a>
-      </div>
-      <div class="footer-col">
-        <h4>Support</h4>
-        <a href="#">Help Center</a>
-        <a href="#">WhatsApp Us</a>
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms</a>
+      <p>WhatsApp-first order control for East African online sellers. Built in Tanzania, for Tanzania — and the rest of Africa.</p>
+      <div style="margin-top:16px; font-size:0.8rem; color:#444; font-family:'DM Mono',monospace;">
+        🇹🇿 Made in Dar es Salaam
       </div>
     </div>
-    <div class="footer-bottom">
-      <div class="footer-copy">© 2026 WhatsBoard. Built with love for East African sellers. 🇹🇿</div>
-      <div class="footer-legal">
-        <a href="#">Privacy</a>
-        <a href="#">Terms</a>
-        <a href="#">Cookies</a>
-      </div>
+    <div>
+      <h5>Product</h5>
+      <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
+      <a href="https://whatsboard.vercel.app/login">Login</a>
+      <a href="https://whatsboard.vercel.app/register">Start Free</a>
     </div>
+    <div>
+      <h5>For Sellers</h5>
+      <a href="#">WhatsApp Sellers</a>
+      <a href="#">TikTok Sellers</a>
+      <a href="#">Instagram Sellers</a>
+      <a href="#">Facebook Sellers</a>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 WHATSBOARD — Usimamizi wa Orders kwa Biashara za Afrika.</span>
+    <span style="color:#444; font-family:'DM Mono',monospace; font-size:0.75rem;">v2.0 · Dar es Salaam 🇹🇿</span>
   </div>
 </footer>
 
-<!-- ════════════════════════════════
-     JAVASCRIPT
-════════════════════════════════ -->
 <script>
-// ── NAV scroll effect
-const navbar = document.getElementById('navbar');
-window.addEventListener('scroll', () => {
-  navbar.classList.toggle('scrolled', window.scrollY > 20);
-});
+  // Fade up on scroll
+  const faders = document.querySelectorAll('.fade-up');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(el => {
+      if (el.isIntersecting) {
+        el.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.12 });
+  faders.forEach(el => observer.observe(el));
 
-// ── Mobile menu
-function toggleMenu() {
-  const menu = document.getElementById('mobileMenu');
-  menu.classList.toggle('open');
-}
-
-// ── Scroll to CTA
-function scrollToCTA() {
-  document.getElementById('cta').scrollIntoView({ behavior: 'smooth' });
-}
-
-// ── Intersection Observer for scroll animations
-const observerOptions = { threshold: 0.12, rootMargin: '0px 0px -40px 0px' };
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('visible');
-      observer.unobserve(entry.target);
-    }
+  // Trigger hero elements immediately
+  document.querySelectorAll('.hero .fade-up, .hero-content').forEach(el => {
+    el.classList.add('visible');
   });
-}, observerOptions);
 
-document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
-
-// ── Close mobile menu on outside click
-document.addEventListener('click', (e) => {
-  const menu = document.getElementById('mobileMenu');
-  if (menu.classList.contains('open') && !e.target.closest('#mobileMenu') && !e.target.closest('.hamburger')) {
-    menu.classList.remove('open');
-  }
-});
-
-// ── Animate hero stats counter
-function animateCount(el, target, prefix, suffix, duration) {
-  const start = 0;
-  const step = (timestamp) => {
-    const progress = Math.min((timestamp - startTime) / duration, 1);
-    const val = Math.floor(progress * target);
-    el.textContent = prefix + val.toLocaleString() + suffix;
-    if (progress < 1) requestAnimationFrame(step);
-    else el.textContent = prefix + target.toLocaleString() + suffix;
-  };
-  let startTime;
-  requestAnimationFrame((t) => { startTime = t; step(t); });
-}
-
-// Trigger stat animation when hero comes into view
-const heroStats = document.querySelector('.hero-stats');
-if (heroStats) {
-  const heroObserver = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting) {
-      heroObserver.disconnect();
-    }
-  }, { threshold: 0.5 });
-  heroObserver.observe(heroStats);
-}
-
-// ── Smooth link behavior for nav
-document.querySelectorAll('a[href^="#"]').forEach(a => {
-  a.addEventListener('click', (e) => {
-    const target = document.querySelector(a.getAttribute('href'));
-    if (target) {
-      e.preventDefault();
-      target.scrollIntoView({ behavior: 'smooth' });
-      document.getElementById('mobileMenu').classList.remove('open');
-    }
-  });
-});
+  // Duplicate ticker for seamless loop
+  const ticker = document.getElementById('ticker');
 </script>
 </body>
 </html>
