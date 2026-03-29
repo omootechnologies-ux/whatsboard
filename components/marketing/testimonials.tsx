@@ -22,28 +22,28 @@ export function Testimonials() {
   return (
     <section id="testimonials" className="container-pad py-20">
       <div className="mb-10 max-w-2xl">
-        <p className="text-sm font-medium text-emerald-300">Loved by fast-moving sellers</p>
-        <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+        <p className="text-sm font-medium text-green-600">Loved by fast-moving sellers</p>
+        <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">
           It feels like clarity, not just software.
         </h2>
-        <p className="mt-4 text-slate-300">
+        <p className="mt-4 text-slate-600">
           Built for real East African selling behavior — not generic CRM dashboards that do not understand chat commerce.
         </p>
       </div>
 
       <div className="grid gap-5 md:grid-cols-3">
-        {testimonials.map((item) => (
+        {testimonials.map((item, idx) => (
           <Card key={item.name} className="p-6">
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-400/10 font-semibold text-emerald-300">
+              <div className={`flex h-11 w-11 items-center justify-center rounded-2xl font-semibold ${idx === 1 ? "bg-red-50 text-red-500" : "bg-green-50 text-green-600"}`}>
                 {item.name.charAt(0)}
               </div>
               <div>
-                <p className="font-semibold text-white">{item.name}</p>
-                <p className="text-sm text-slate-400">{item.role}</p>
+                <p className="font-semibold text-slate-900">{item.name}</p>
+                <p className="text-sm text-slate-500">{item.role}</p>
               </div>
             </div>
-            <p className="leading-7 text-slate-300">“{item.quote}”</p>
+            <p className="leading-7 text-slate-600">“{item.quote}”</p>
           </Card>
         ))}
       </div>
