@@ -113,5 +113,7 @@ export async function updateOrderStageAction(orderId: string, stage: string) {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/orders");
+  revalidatePath("/dashboard/customers");
+  revalidatePath("/dashboard/follow-ups");
   return { success: true };
 }

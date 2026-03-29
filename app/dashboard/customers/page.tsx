@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { getCustomersData } from "@/lib/queries";
 import { formatTZS } from "@/lib/utils";
 

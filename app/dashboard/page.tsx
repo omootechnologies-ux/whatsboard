@@ -4,6 +4,9 @@ import { formatTZS } from "@/lib/utils";
 import { getDashboardData } from "@/lib/queries";
 import { OrderForm } from "@/components/forms/order-form";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function DashboardPage() {
   const { orders, metrics } = await getDashboardData();
 
