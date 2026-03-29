@@ -4,22 +4,22 @@ import { Card } from "@/components/ui/card";
 const items = [
   {
     title: "Chats everywhere",
-    copy: "The order is in WhatsApp, the payment proof is in screenshots, and the delivery update is in someone’s head.",
+    copy: "Orders live in WhatsApp, payments sit in screenshots, and delivery status stays in somebody’s head.",
     icon: MessageCircleMore
   },
   {
     title: "Payment confusion",
-    copy: "‘nimetuma’ arrives and suddenly everyone becomes a part-time detective.",
+    copy: "‘nimetuma’ comes in, then everybody starts investigating like CID.",
     icon: AlertTriangle
   },
   {
     title: "Dispatch panic",
-    copy: "‘ume-dispatch?’ turns into phone calls, shouting, and 8 tabs open for no reason.",
+    copy: "‘ume-dispatch?’ and suddenly three people are checking five phones.",
     icon: Truck
   },
   {
     title: "Lost follow-ups",
-    copy: "‘nitachukua kesho’ quietly becomes ‘we lost that sale.’",
+    copy: "‘nitachukua kesho’ becomes ‘we lost that sale’ because no one followed up.",
     icon: Clock3
   }
 ];
@@ -28,11 +28,11 @@ export function PainGrid() {
   return (
     <section className="container-pad py-16">
       <div className="mb-10 max-w-2xl">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+        <h2 className="text-3xl font-bold tracking-tight text-white">
           This is how profit disappears after the chat starts.
         </h2>
-        <p className="mt-3 text-slate-600">
-          WHATSBOARD understands the daily comedy and tragedy of selling through WhatsApp.
+        <p className="mt-3 text-slate-300">
+          WHATSBOARD understands the real daily comedy and tragedy of selling through WhatsApp.
         </p>
       </div>
 
@@ -40,12 +40,12 @@ export function PainGrid() {
         {items.map((item) => {
           const Icon = item.icon;
           return (
-            <Card key={item.title} className="group p-6 transition hover:-translate-y-1 hover:shadow-lg">
-              <div className="mb-4 inline-flex rounded-2xl bg-slate-100 p-3 text-emerald-600 transition group-hover:bg-emerald-50">
+            <Card key={item.title} className="group p-6 transition hover:-translate-y-1 hover:bg-white/10 hover:shadow-xl">
+              <div className="mb-4 inline-flex rounded-2xl bg-emerald-400/10 p-3 text-emerald-300 transition group-hover:scale-105">
                 <Icon className="h-5 w-5" />
               </div>
-              <h3 className="text-lg font-semibold text-slate-900">{item.title}</h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{item.copy}</p>
+              <h3 className="text-lg font-semibold text-white">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-300">{item.copy}</p>
             </Card>
           );
         })}

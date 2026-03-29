@@ -3,15 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
-  --border: 214 32% 91%;
+  --background: 222 47% 4%;
+  --foreground: 210 40% 98%;
+  --card: 222 47% 8%;
+  --card-foreground: 210 40% 98%;
+  --muted: 215 27% 17%;
+  --muted-foreground: 217 10% 70%;
+  --border: 215 27% 17%;
   --primary: 142 71% 45%;
-  --primary-foreground: 0 0% 100%;
+  --primary-foreground: 144 61% 8%;
 }
 
 body {
@@ -24,5 +24,33 @@ body {
 }
 
 .glass {
-  @apply border border-slate-200 bg-white/90 backdrop-blur;
+  @apply border border-white/10 bg-white/5 backdrop-blur;
+}
+
+@keyframes floaty {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(0.5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+@keyframes bounceSoft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 rgba(16,185,129,0.0); }
+  50% { box-shadow: 0 0 30px rgba(16,185,129,0.18); }
+}
+
+.floaty {
+  animation: floaty 5s ease-in-out infinite;
+}
+
+.bounce-soft {
+  animation: bounceSoft 3.2s ease-in-out infinite;
+}
+
+.glow-soft {
+  animation: pulseGlow 4s ease-in-out infinite;
 }
