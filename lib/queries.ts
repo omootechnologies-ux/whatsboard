@@ -6,20 +6,33 @@ export async function getViewerContext() {
   const user = userData.user;
 
   if (!user) {
-    return { supabase, user: null, businessId: null, profile: null };
+    return { supabase, user: null, businessId: null, profile: null, business: null };
   }
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("business_id, full_name")
+    .select("business_id, full_name, email")
     .eq("id", user.id)
     .single();
+
+  let business = null;
+
+  if (profile?.business_id) {
+    const { data: businessData } = await supabase
+      .from("businesses")
+      .select("id, name, phone, brand_color, currency, created_at")
+      .eq("id", profile.business_id)
+      .single();
+
+    business = businessData ?? null;
+  }
 
   return {
     supabase,
     user,
     businessId: profile?.business_id ?? null,
-    profile
+    profile,
+    business
   };
 }
 
@@ -164,4 +177,14 @@ export async function getFollowUpsData() {
       phone: customer?.phone ?? ""
     };
   });
+}
+
+export async function getAccountData() {
+  const { user, profile, business } = await getViewerContext();
+
+  return {
+    user,
+    profile,
+    business
+  };
 }
