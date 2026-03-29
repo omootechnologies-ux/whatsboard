@@ -1,0 +1,36 @@
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+
+export function Navbar() {
+  return (
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/70 backdrop-blur-xl">
+      <div className="container-pad flex h-16 items-center justify-between">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-400 text-slate-950 font-bold shadow-lg shadow-emerald-500/20">
+            W
+          </div>
+          <div>
+            <p className="text-sm font-semibold tracking-wide text-white">WHATSBOARD</p>
+            <p className="text-[11px] text-slate-400">WhatsApp Order Control</p>
+          </div>
+        </Link>
+
+        <nav className="hidden items-center gap-6 md:flex">
+          <a href="#problem" className="text-sm text-slate-300 hover:text-white">Problem</a>
+          <a href="#preview" className="text-sm text-slate-300 hover:text-white">Preview</a>
+          <a href="#testimonials" className="text-sm text-slate-300 hover:text-white">Testimonials</a>
+          <Link href="/pricing" className="text-sm text-slate-300 hover:text-white">Pricing</Link>
+        </nav>
+
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" asChild className="hidden sm:inline-flex">
+            <Link href="/login">Login</Link>
+          </Button>
+          <Button asChild className="pulse-border">
+            <Link href="/register">Start Free</Link>
+          </Button>
+        </div>
+      </div>
+    </header>
+  );
+}

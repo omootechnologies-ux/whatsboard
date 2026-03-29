@@ -14,8 +14,15 @@
   --primary-foreground: 144 61% 8%;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background: hsl(var(--background));
+  background:
+    radial-gradient(circle at top right, rgba(16,185,129,0.12), transparent 20%),
+    radial-gradient(circle at left, rgba(59,130,246,0.08), transparent 20%),
+    hsl(var(--background));
   color: hsl(var(--foreground));
 }
 
@@ -28,29 +35,37 @@ body {
 }
 
 @keyframes floaty {
-  0% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-8px) rotate(0.5deg); }
-  100% { transform: translateY(0px) rotate(0deg); }
-}
-
-@keyframes bounceSoft {
-  0%, 100% { transform: translateY(0); }
+  0% { transform: translateY(0px); }
   50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
 }
 
-@keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 rgba(16,185,129,0.0); }
-  50% { box-shadow: 0 0 30px rgba(16,185,129,0.18); }
+@keyframes drift {
+  0% { transform: translate3d(0,0,0); }
+  50% { transform: translate3d(0,-8px,0); }
+  100% { transform: translate3d(0,0,0); }
+}
+
+@keyframes pulseBorder {
+  0%,100% { box-shadow: 0 0 0 rgba(16,185,129,0); }
+  50% { box-shadow: 0 0 30px rgba(16,185,129,0.14); }
 }
 
 .floaty {
-  animation: floaty 5s ease-in-out infinite;
+  animation: floaty 4.8s ease-in-out infinite;
 }
 
-.bounce-soft {
-  animation: bounceSoft 3.2s ease-in-out infinite;
+.drift {
+  animation: drift 6s ease-in-out infinite;
 }
 
-.glow-soft {
-  animation: pulseGlow 4s ease-in-out infinite;
+.pulse-border {
+  animation: pulseBorder 4s ease-in-out infinite;
+}
+
+.grid-glow {
+  background-image:
+    linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
 }
