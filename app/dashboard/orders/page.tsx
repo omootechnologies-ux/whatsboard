@@ -10,11 +10,20 @@ export default async function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-slate-900">Orders</h2>
-        <p className="mt-2 text-slate-600">
-          Search, filter, and update the orders that started in chat.
-        </p>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold text-slate-900">Orders</h2>
+          <p className="mt-2 text-slate-600">
+            Search, filter, and update the orders that started in chat.
+          </p>
+        </div>
+
+        <Link
+          href="/dashboard/orders/new"
+          className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-medium text-white shadow-sm hover:bg-emerald-600"
+        >
+          Create Order
+        </Link>
       </div>
 
       <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">

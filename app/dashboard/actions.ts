@@ -46,26 +46,48 @@ export async function createOrderAction(
 
   const { supabase, businessId } = await getBusinessId();
 
-  const { data: customer, error: customerError } = await supabase
+  const { data: existingCustomer } = await supabase
     .from("customers")
-    .insert({
-      business_id: businessId,
-      name: parsed.data.customerName,
-      phone: parsed.data.phone,
-      area: parsed.data.area
-    })
     .select("id")
-    .single();
+    .eq("business_id", businessId)
+    .eq("phone", parsed.data.phone)
+    .maybeSingle();
 
-  if (customerError || !customer) {
-    return { error: customerError?.message ?? "Unable to create customer", success: false };
+  let customerId = existingCustomer?.id ?? null;
+
+  if (!customerId) {
+    const { data: customer, error: customerError } = await supabase
+      .from("customers")
+      .insert({
+        business_id: businessId,
+        name: parsed.data.customerName,
+        phone: parsed.data.phone,
+        area: parsed.data.area
+      })
+      .select("id")
+      .single();
+
+    if (customerError || !customer) {
+      return { error: customerError?.message ?? "Unable to create customer", success: false };
+    }
+
+    customerId = customer.id;
+  } else {
+    await supabase
+      .from("customers")
+      .update({
+        name: parsed.data.customerName,
+        area: parsed.data.area,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", customerId);
   }
 
   const { data: order, error: orderError } = await supabase
     .from("orders")
     .insert({
       business_id: businessId,
-      customer_id: customer.id,
+      customer_id: customerId,
       product_name: parsed.data.productName,
       amount: parsed.data.amount,
       delivery_area: parsed.data.area,
@@ -90,9 +112,56 @@ export async function createOrderAction(
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/orders");
   revalidatePath("/dashboard/customers");
-  revalidatePath("/dashboard/follow-ups");
+  revalidatePath(`/dashboard/orders/${order.id}`);
 
   return { error: "", success: true };
+}
+
+export async function updateOrderAction(formData: FormData) {
+  const { supabase, businessId } = await getBusinessId();
+
+  const orderId = String(formData.get("orderId") ?? "");
+  const productName = String(formData.get("productName") ?? "").trim();
+  const area = String(formData.get("area") ?? "").trim();
+  const amount = Number(formData.get("amount") ?? 0);
+  const stage = String(formData.get("stage") ?? "new_order");
+  const paymentStatus = String(formData.get("paymentStatus") ?? "unpaid");
+  const notes = String(formData.get("notes") ?? "");
+
+  if (!orderId || !productName || !area || Number.isNaN(amount)) {
+    return { error: "Missing required order fields" };
+  }
+
+  const { error } = await supabase
+    .from("orders")
+    .update({
+      product_name: productName,
+      delivery_area: area,
+      amount,
+      stage,
+      payment_status: paymentStatus,
+      notes,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", orderId)
+    .eq("business_id", businessId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  await supabase.from("order_activity").insert({
+    order_id: orderId,
+    business_id: businessId,
+    action: "order_updated",
+    metadata: { stage, payment_status: paymentStatus }
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/orders");
+  revalidatePath(`/dashboard/orders/${orderId}`);
+
+  return { success: true };
 }
 
 export async function updateOrderStageAction(orderId: string, stage: string) {
@@ -115,6 +184,7 @@ export async function updateOrderStageAction(orderId: string, stage: string) {
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/orders");
+  revalidatePath(`/dashboard/orders/${orderId}`);
   return { success: true };
 }
 
