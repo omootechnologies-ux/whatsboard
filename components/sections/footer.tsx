@@ -6,7 +6,7 @@ import { MessageCircle, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from 
 const footerLinks = {
   product: [
     { label: "Features", href: "#" },
-    { label: "Pricing", href: "#" },
+    { label: "Pricing", href: "/pricing" },
     { label: "Integrations", href: "#" },
     { label: "API", href: "#" },
   ],
