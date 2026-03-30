@@ -103,7 +103,7 @@ export default function WhatsboardLandingPage() {
                 Start Free
               </button>
               <button className="rounded-2xl border border-slate-200 bg-white px-6 py-4 text-sm font-bold text-slate-800 transition hover:border-slate-300 hover:bg-slate-50">
-                See How It Works
+                View Pricing
               </button>
             </div>
 
