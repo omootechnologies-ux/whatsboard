@@ -1,5 +1,1 @@
-import WhatsboardLandingPage from "@/components/marketing/whatsboard-landing-page";
-
-export default function MarketingHomePage() {
-  return <WhatsboardLandingPage />;
-}
+export { default } from "@/components/marketing/whatsboard-homepage/app/page";

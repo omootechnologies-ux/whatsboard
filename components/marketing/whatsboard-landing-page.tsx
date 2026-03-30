@@ -1,3 +1,4 @@
+import * as motion from "motion/react-client";
 export default function WhatsboardLandingPage() {
   const painCards = [
     {
