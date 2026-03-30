@@ -1,62 +1,109 @@
 import { NextResponse } from "next/server";
-import { orderSchema } from "@/lib/validations";
+import { z } from "zod";
 import { getViewerContext } from "@/lib/queries";
 
-export async function GET() {
-  const { supabase, businessId } = await getViewerContext();
-  if (!businessId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  const { data, error } = await supabase
-    .from("orders")
-    .select("id, product_name, amount, delivery_area, stage, payment_status, created_at, updated_at, customers(name, phone)")
-    .eq("business_id", businessId)
-    .order("created_at", { ascending: false });
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
-}
+const createOrderSchema = z.object({
+  customerName: z.string().min(1),
+  phone: z.string().min(1),
+  area: z.string().optional().default(""),
+  product: z.string().min(1),
+  amount: z.coerce.number().min(0),
+  stage: z.string().optional().default("new_order"),
+  paymentStatus: z.string().optional().default("unpaid"),
+  notes: z.string().optional().default(""),
+});
 
 export async function POST(request: Request) {
-  const body = await request.json();
-  const parsed = orderSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message }, { status: 400 });
+  try {
+    const body = await request.json();
+    const parsed = createOrderSchema.safeParse(body);
 
-  const { supabase, businessId } = await getViewerContext();
-  if (!businessId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? "Invalid order data" },
+        { status: 400 }
+      );
+    }
 
-  const { data: existingCustomer } = await supabase
-    .from("customers")
-    .select("id")
-    .eq("business_id", businessId)
-    .eq("phone", parsed.data.phone.trim())
-    .maybeSingle();
+    const { supabase, businessId } = await getViewerContext();
 
-  let customerId = existingCustomer?.id;
+    if (!businessId) {
+      return NextResponse.json({ error: "Business not found" }, { status: 401 });
+    }
 
-  if (!customerId) {
-    const { data: customer, error: customerError } = await supabase
+    const customerName = parsed.data.customerName.trim();
+    const phone = parsed.data.phone.trim();
+    const area = parsed.data.area?.trim() ?? "";
+
+    let customerId: string | null = null;
+
+    const { data: existingCustomer } = await supabase
       .from("customers")
-      .insert({ business_id: businessId, name: parsed.data.customerName, phone: parsed.data.phone.trim(), area: parsed.data.area })
       .select("id")
+      .eq("business_id", businessId)
+      .eq("phone", phone)
+      .maybeSingle();
+
+    if (existingCustomer?.id) {
+      customerId = existingCustomer.id;
+
+      await supabase
+        .from("customers")
+        .update({
+          name: customerName,
+          area,
+        })
+        .eq("id", customerId);
+    } else {
+      const { data: newCustomer, error: customerError } = await supabase
+        .from("customers")
+        .insert({
+          business_id: businessId,
+          name: customerName,
+          phone,
+          area,
+          status: "active",
+        })
+        .select("id")
+        .single();
+
+      if (customerError || !newCustomer) {
+        return NextResponse.json(
+          { error: customerError?.message ?? "Unable to create customer" },
+          { status: 500 }
+        );
+      }
+
+      customerId = newCustomer.id;
+    }
+
+    const { data: order, error: orderError } = await supabase
+      .from("orders")
+      .insert({
+        business_id: businessId,
+        customer_id: customerId,
+        product_name: parsed.data.product.trim(),
+        amount: parsed.data.amount,
+        delivery_area: area,
+        stage: parsed.data.stage,
+        payment_status: parsed.data.paymentStatus,
+        notes: parsed.data.notes?.trim() ?? "",
+      })
+      .select("*")
       .single();
 
-    if (customerError || !customer) {
-      return NextResponse.json({ error: customerError?.message ?? "Unable to create customer" }, { status: 400 });
+    if (orderError) {
+      return NextResponse.json(
+        { error: orderError.message ?? "Unable to create order" },
+        { status: 500 }
+      );
     }
-    customerId = customer.id;
+
+    return NextResponse.json({ success: true, order });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Something went wrong" },
+      { status: 500 }
+    );
   }
-
-  const { data, error } = await supabase.from("orders").insert({
-    business_id: businessId,
-    customer_id: customerId,
-    product_name: parsed.data.productName,
-    amount: parsed.data.amount,
-    delivery_area: parsed.data.area,
-    stage: parsed.data.stage,
-    payment_status: parsed.data.paymentStatus,
-    notes: parsed.data.notes
-  }).select().single();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  return NextResponse.json(data, { status: 201 });
 }
