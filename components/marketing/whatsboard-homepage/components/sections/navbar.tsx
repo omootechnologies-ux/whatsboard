@@ -20,7 +20,14 @@ export function Navbar() {
           </div>
         </Link>
 
-        <nav className="hidden items-center gap-3 md:flex">
+        <nav className="hidden items-center gap-5 md:flex">
+          <Link
+            href="/pricing"
+            className="text-sm font-semibold text-slate-600 transition hover:text-slate-900"
+          >
+            Pricing
+          </Link>
+
           <Link
             href="/login"
             className="inline-flex items-center justify-center rounded-2xl px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-slate-900"
@@ -37,6 +44,13 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2 md:hidden">
+          <Link
+            href="/pricing"
+            className="inline-flex items-center justify-center rounded-2xl px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+          >
+            Pricing
+          </Link>
+
           <Link
             href="/login"
             className="inline-flex items-center justify-center rounded-2xl px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
