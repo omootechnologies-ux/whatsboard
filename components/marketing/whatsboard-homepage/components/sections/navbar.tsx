@@ -1,5 +1,19 @@
 "use client"
+<Button asChild variant="ghost">
+  <Link href="/login">Log in</Link>
+</Button>
 
+<Button asChild>
+  <Link href="/register">Get Started</Link>
+</Button>
+<Button asChild variant="ghost" className="w-full">
+  <Link href="/login">Log in</Link>
+</Button>
+
+<Button asChild className="w-full">
+  <Link href="/register">Get Started</Link>
+</Button>
+import Link from "next/link";
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Menu, X, ArrowRight } from "lucide-react"
