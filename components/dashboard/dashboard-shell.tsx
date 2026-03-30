@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 const NAV = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
+  { href: "/dashboard", label: "Home", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/orders", label: "Orders", icon: ShoppingBag },
   { href: "/dashboard/customers", label: "Customers", icon: Users },
   { href: "/dashboard/follow-ups", label: "Follow-ups", icon: Bell },
@@ -53,7 +53,7 @@ function NavItem({ href, label, icon: Icon, exact }: (typeof NAV)[0]) {
   );
 }
 
-function MobileNavItem({ href, label, icon: Icon, exact }: (typeof NAV)[0]) {
+function MobileBottomNavItem({ href, label, icon: Icon, exact }: (typeof NAV)[0]) {
   const pathname = usePathname();
   const active = exact ? pathname === href : pathname.startsWith(href);
 
@@ -61,11 +61,18 @@ function MobileNavItem({ href, label, icon: Icon, exact }: (typeof NAV)[0]) {
     <Link
       href={href}
       className={[
-        "flex min-w-[72px] shrink-0 flex-col items-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition-all",
-        active ? "bg-emerald-50 text-emerald-700" : "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
+        "flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-2 py-2 text-[10px] font-medium transition-all",
+        active ? "text-emerald-600" : "text-slate-400 hover:text-slate-700",
       ].join(" ")}
     >
-      <Icon className="h-4 w-4" />
+      <span
+        className={[
+          "inline-flex h-9 w-9 items-center justify-center rounded-2xl transition-all",
+          active ? "bg-emerald-50 text-emerald-600" : "text-inherit",
+        ].join(" ")}
+      >
+        <Icon className="h-4 w-4" />
+      </span>
       <span className="truncate">{label}</span>
     </Link>
   );
@@ -139,6 +146,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
+          {/* Mobile top header only, no menu */}
           <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur lg:hidden">
             <div className="flex items-center justify-between px-4 py-3">
               <Link href="/dashboard" className="flex items-center gap-2">
@@ -154,17 +162,21 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 New
               </Link>
             </div>
-
-            <nav className="scrollbar-none flex gap-2 overflow-x-auto px-3 pb-3">
-              {NAV.map((item) => (
-                <MobileNavItem key={item.href} {...item} />
-              ))}
-            </nav>
           </header>
 
-          <main className="w-full max-w-[1600px] flex-1 px-3 py-4 sm:px-4 lg:px-8 lg:py-8">
+          {/* Main content with bottom padding for mobile nav */}
+          <main className="w-full max-w-[1600px] flex-1 px-3 py-4 pb-24 sm:px-4 lg:px-8 lg:py-8 lg:pb-8">
             {children}
           </main>
+
+          {/* Mobile bottom nav */}
+          <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur lg:hidden">
+            <div className="mx-auto flex max-w-screen-sm items-stretch justify-between px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
+              {NAV.slice(0, 5).map((item) => (
+                <MobileBottomNavItem key={item.href} {...item} />
+              ))}
+            </div>
+          </nav>
         </div>
       </div>
     </div>
