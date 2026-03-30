@@ -65,7 +65,6 @@ function OrderCard({ order }: { order: Order }) {
 
   const currentIndex = STAGES.findIndex((s) => s.key === order.stage);
   const nextStage = STAGES[currentIndex + 1];
-
   const isUrgent = order.paymentStatus === "unpaid" && order.stage !== "new_order";
 
   function advance() {
@@ -109,8 +108,8 @@ function OrderCard({ order }: { order: Order }) {
       </div>
 
       <div className="mb-3 flex items-center justify-between gap-3">
-        <span className="truncate text-xs text-slate-400">{order.area || "No area"}</span>
-        <span className="text-sm font-black text-emerald-600">{formatTZS(order.amount)}</span>
+        <span className="min-w-0 truncate text-xs text-slate-400">{order.area || "No area"}</span>
+        <span className="shrink-0 text-sm font-black text-emerald-600">{formatTZS(order.amount)}</span>
       </div>
 
       {nextStage ? (
@@ -119,12 +118,12 @@ function OrderCard({ order }: { order: Order }) {
           disabled={isPending}
           className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 disabled:opacity-50"
         >
-          {isPending ? "Moving..." : `Move to ${nextStage.label}`}
-          {!isPending && <ArrowRight className="h-3.5 w-3.5" />}
+          <span className="truncate">{isPending ? "Moving..." : `Move to ${nextStage.label}`}</span>
+          {!isPending && <ArrowRight className="h-3.5 w-3.5 shrink-0" />}
         </button>
       ) : (
         <div className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-50 px-3 py-2.5 text-xs font-semibold text-emerald-700">
-          <Star className="h-3.5 w-3.5" />
+          <Star className="h-3.5 w-3.5 shrink-0" />
           Delivered
         </div>
       )}
@@ -138,15 +137,15 @@ export function KanbanBoard({ orders }: { orders: Order[] }) {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">Pipeline</p>
-          <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-900">
+          <h3 className="mt-2 text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
             Orders moving across the board
           </h3>
         </div>
         <p className="text-sm text-slate-500">Swipe sideways on mobile.</p>
       </div>
 
-      <div className="overflow-x-auto pb-2">
-        <div className="flex min-w-max gap-4">
+      <div className="-mx-1 overflow-x-auto pb-2">
+        <div className="flex min-w-max gap-3 px-1 sm:gap-4">
           {STAGES.map((stage) => {
             const items = orders.filter((o) => o.stage === stage.key);
             const hasUnpaid = items.some((o) => o.paymentStatus === "unpaid");
@@ -154,16 +153,16 @@ export function KanbanBoard({ orders }: { orders: Order[] }) {
             return (
               <div
                 key={stage.key}
-                className={`w-[290px] shrink-0 rounded-[28px] border p-3 ${stage.shell}`}
+                className={`w-[280px] shrink-0 rounded-[28px] border p-3 sm:w-[290px] ${stage.shell}`}
               >
                 <div className="mb-3 rounded-3xl bg-white/80 px-3 py-3 backdrop-blur">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <span className={`h-2.5 w-2.5 rounded-full ${stage.dot}`} />
-                      <span className="text-sm font-bold text-slate-900">{stage.label}</span>
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${stage.dot}`} />
+                      <span className="truncate text-sm font-bold text-slate-900">{stage.label}</span>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex shrink-0 items-center gap-2">
                       {hasUnpaid && <AlertCircle className="h-4 w-4 text-red-500" />}
                       <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${stage.pill}`}>
                         {items.length}

@@ -33,21 +33,20 @@ export default async function DashboardPage() {
   ).length;
 
   const deliveredCount = orders.filter((o) => o.stage === "delivered").length;
-
   const recentOrders = [...orders].slice(0, 5);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 lg:space-y-8">
       <section className="grid gap-4 xl:grid-cols-[1.3fr_0.7fr]">
-        <div className="overflow-hidden rounded-[32px] border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 p-6 lg:p-8">
+        <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-100 p-5 sm:p-6 lg:p-8">
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-600">
               Overview
             </p>
-            <h1 className="mt-3 text-3xl font-black tracking-tight text-slate-900 lg:text-4xl">
+            <h1 className="mt-3 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
               Your seller control room.
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 lg:text-base">
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
               See what needs payment, what needs packing, and what needs follow-up before a customer
               disappears into another inbox.
             </p>
@@ -71,7 +70,7 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 p-6 md:grid-cols-3 lg:p-8">
+          <div className="grid gap-3 p-4 sm:grid-cols-3 sm:p-6 lg:p-8">
             <MiniInsight
               label="Orders today"
               value={String(todayOrders)}
@@ -90,11 +89,11 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <div className="rounded-[32px] border border-slate-200 bg-slate-950 p-6 text-white shadow-sm lg:p-7">
+        <div className="rounded-[28px] border border-slate-200 bg-slate-950 p-5 text-white shadow-sm sm:p-6 lg:p-7">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/55">
             Attention needed
           </p>
-          <h2 className="mt-3 text-2xl font-black tracking-tight">
+          <h2 className="mt-3 text-xl font-black tracking-tight sm:text-2xl">
             {urgentUnpaid > 0 ? `${urgentUnpaid} unpaid orders` : "No unpaid pressure right now"}
           </h2>
           <p className="mt-3 text-sm leading-7 text-white/70">
@@ -103,7 +102,7 @@ export default async function DashboardPage() {
               : "Clean. Your unpaid queue looks calm at the moment."}
           </p>
 
-          <div className="mt-6 space-y-3">
+          <div className="mt-5 space-y-3">
             <AlertLine
               tone={urgentUnpaid > 0 ? "danger" : "ok"}
               text={
@@ -124,7 +123,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Total Orders"
           value={String(metrics?.totalOrders ?? 0)}
@@ -156,23 +155,23 @@ export default async function DashboardPage() {
         />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-        <div className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+      <section className="grid gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+        <div className="min-w-0 rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5 lg:p-6">
           <KanbanBoard orders={orders} />
         </div>
 
-        <div className="space-y-6">
-          <div className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
-            <div className="flex items-center justify-between">
-              <div>
+        <div className="space-y-5">
+          <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5 lg:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
                 <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">
                   Quick pressure check
                 </p>
-                <h3 className="mt-2 text-xl font-black tracking-tight text-slate-900">
+                <h3 className="mt-2 text-lg font-black tracking-tight text-slate-900 sm:text-xl">
                   Follow-ups and unpaid heat
                 </h3>
               </div>
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+              <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                 <BellRing className="h-5 w-5" />
               </span>
             </div>
@@ -201,20 +200,20 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
-            <div className="flex items-center justify-between">
-              <div>
+          <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm sm:p-5 lg:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
                 <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-400">
                   Recent activity
                 </p>
-                <h3 className="mt-2 text-xl font-black tracking-tight text-slate-900">
+                <h3 className="mt-2 text-lg font-black tracking-tight text-slate-900 sm:text-xl">
                   Latest orders
                 </h3>
               </div>
 
               <Link
                 href="/dashboard/orders"
-                className="text-sm font-semibold text-emerald-600 hover:text-emerald-700"
+                className="shrink-0 text-sm font-semibold text-emerald-600 hover:text-emerald-700"
               >
                 See all
               </Link>
@@ -238,7 +237,9 @@ export default async function DashboardPage() {
                       <p className="text-sm font-bold text-emerald-600">
                         {formatTZS(order.amount)}
                       </p>
-                      <p className="text-xs text-slate-400">{order.stage.replaceAll("_", " ")}</p>
+                      <p className="text-xs capitalize text-slate-400">
+                        {order.stage.replaceAll("_", " ")}
+                      </p>
                     </div>
                   </div>
                 ))
@@ -310,9 +311,9 @@ function QuickRow({
   };
 
   return (
-    <div className="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3">
-      <p className="text-sm font-medium text-slate-600">{label}</p>
-      <span className={`rounded-xl px-3 py-1 text-sm font-bold ${toneMap[tone]}`}>{value}</span>
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 px-4 py-3">
+      <p className="min-w-0 text-sm font-medium text-slate-600">{label}</p>
+      <span className={`shrink-0 rounded-xl px-3 py-1 text-sm font-bold ${toneMap[tone]}`}>{value}</span>
     </div>
   );
 }
@@ -342,18 +343,18 @@ function StatCard({
   return (
     <div
       className={[
-        "rounded-[28px] border bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md",
+        "rounded-[24px] border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-5",
         urgent ? "border-red-200 ring-1 ring-red-100" : "border-slate-200",
       ].join(" ")}
     >
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">{label}</p>
-        <span className={`inline-flex h-10 w-10 items-center justify-center rounded-2xl ${colorMap[tone]}`}>
+        <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${colorMap[tone]}`}>
           {icon}
         </span>
       </div>
 
-      <p className="text-3xl font-black tracking-tight text-slate-900">{value}</p>
+      <p className="break-words text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">{value}</p>
       {hint && <p className="mt-2 text-sm text-slate-500">{hint}</p>}
     </div>
   );
