@@ -6,12 +6,19 @@ export async function getViewerContext() {
   const user = userData.user;
 
   if (!user) {
-    return { supabase, user: null, businessId: null, profile: null, business: null };
+    return {
+      supabase,
+      user: null,
+      businessId: null,
+      profile: null,
+      business: null,
+      isAdmin: false,
+    };
   }
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("business_id, full_name, email")
+    .select("business_id, full_name, email, is_admin")
     .eq("id", user.id)
     .single();
 
@@ -32,7 +39,8 @@ export async function getViewerContext() {
     user,
     businessId: profile?.business_id ?? null,
     profile,
-    business
+    business,
+    isAdmin: profile?.is_admin ?? false,
   };
 }
 
@@ -180,11 +188,12 @@ export async function getFollowUpsData() {
 }
 
 export async function getAccountData() {
-  const { user, profile, business } = await getViewerContext();
+  const { user, profile, business, isAdmin } = await getViewerContext();
 
   return {
     user,
     profile,
-    business
+    business,
+    isAdmin
   };
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { logoutAction } from "@/app/(auth)/actions";
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -78,7 +79,17 @@ function MobileBottomNavItem({ href, label, icon: Icon, exact }: (typeof NAV)[0]
   );
 }
 
-export function DashboardShell({ children }: { children: React.ReactNode }) {
+export function DashboardShell({
+  children,
+  isAdmin,
+  profile,
+  business,
+}: {
+  children: React.ReactNode;
+  isAdmin: boolean;
+  profile?: { full_name?: string | null; email?: string | null } | null;
+  business?: { name?: string | null } | null;
+}) {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <div className="flex min-h-screen">
@@ -128,25 +139,40 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="border-t border-slate-100 p-4">
+            {isAdmin && (
+              <div className="mb-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
+                <p className="text-xs font-semibold text-emerald-700">Admin Access</p>
+                <p className="mt-1 text-xs text-emerald-600">
+                  Signed in as {profile?.full_name || profile?.email || "Admin"}.
+                </p>
+                {business?.name ? (
+                  <p className="mt-1 text-[11px] text-emerald-500">
+                    Business: {business.name}
+                  </p>
+                ) : null}
+              </div>
+            )}
+
             <div className="mb-3 rounded-2xl bg-slate-50 p-3">
               <p className="text-xs font-semibold text-slate-900">Starter Plan</p>
               <p className="mt-1 text-xs text-slate-500">Built for fast-moving online sellers.</p>
             </div>
 
-            <Link
-              href="/api/auth/signout"
-              className="flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-slate-500 transition hover:bg-red-50 hover:text-red-600"
-            >
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100">
-                <LogOut className="h-4 w-4" />
-              </span>
-              Sign out
-            </Link>
+            <form action={logoutAction}>
+              <button
+                type="submit"
+                className="flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm font-medium text-slate-500 transition hover:bg-red-50 hover:text-red-600"
+              >
+                <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100">
+                  <LogOut className="h-4 w-4" />
+                </span>
+                Sign out
+              </button>
+            </form>
           </div>
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          {/* Mobile top header only, no menu */}
           <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur lg:hidden">
             <div className="flex items-center justify-between px-4 py-3">
               <Link href="/dashboard" className="flex items-center gap-2">
@@ -164,12 +190,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          {/* Main content with bottom padding for mobile nav */}
           <main className="w-full max-w-[1600px] flex-1 px-3 py-4 pb-24 sm:px-4 lg:px-8 lg:py-8 lg:pb-8">
             {children}
           </main>
 
-          {/* Mobile bottom nav */}
           <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur lg:hidden">
             <div className="mx-auto flex max-w-screen-sm items-stretch justify-between px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
               {NAV.slice(0, 5).map((item) => (
