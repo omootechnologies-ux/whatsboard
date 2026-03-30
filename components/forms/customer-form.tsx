@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useFormState } from "react-dom";
 import { updateCustomerAction } from "@/app/dashboard/actions";
 
 type CustomerRecord = {
@@ -24,7 +24,7 @@ const initialState: ActionState = {
 
 export default function CustomerForm({ customer }: { customer: CustomerRecord }) {
   const action = updateCustomerAction.bind(null, customer.id);
-  const [state, formAction, isPending] = useActionState(action, initialState);
+  const [state, formAction, isPending] = useFormState(action, initialState);
 
   return (
     <form action={formAction} className="grid gap-4 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
