@@ -155,7 +155,7 @@ export function DashboardShell({
       .join("") || "WB";
 
   return (
-    <div className="min-h-screen bg-[#fafaf7] text-[#111111]">
+    <div className="min-h-screen bg-background font-sans text-foreground">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute left-[-12rem] top-[-10rem] h-[24rem] w-[24rem] rounded-full bg-[#0f5d46]/5 blur-3xl" />
         <div className="absolute right-[-8rem] top-[8rem] h-[20rem] w-[20rem] rounded-full bg-black/5 blur-3xl" />
@@ -163,7 +163,7 @@ export function DashboardShell({
       </div>
 
       <div className="relative flex min-h-screen">
-        <aside className="hidden w-[20rem] shrink-0 border-r border-[#e8e8e2] bg-white xl:flex xl:flex-col 2xl:w-[22rem]">
+        <aside className="hidden w-[20rem] shrink-0 border-r border-border bg-card xl:flex xl:flex-col 2xl:w-[22rem]">
           <div className="border-b border-[#e8e8e2] px-6 py-6">
             <Link href="/dashboard" className="flex items-center gap-3">
               <span className="inline-flex h-12 w-12 items-center justify-center rounded-3xl border border-[#e8e8e2] bg-[#0f5d46] text-white shadow-[0_16px_30px_rgba(15,93,70,0.12)]">
@@ -179,7 +179,7 @@ export function DashboardShell({
           </div>
 
           <div className="px-5 pt-5">
-            <div className="rounded-[30px] border border-[#e8e8e2] bg-[#fcfcfa] p-5 text-[#111111] shadow-[0_24px_80px_rgba(17,17,17,0.05)]">
+            <div className="rounded-[30px] border border-border bg-secondary/40 p-5 text-foreground shadow-[0_24px_80px_rgba(17,17,17,0.05)]">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#e8e8e2] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#0f5d46]">
                 <ShoppingBag className="h-3.5 w-3.5" />
                 Daily workflow
@@ -194,9 +194,9 @@ export function DashboardShell({
                 Made for WhatsApp sellers who need less screenshot hunting and clearer daily control.
               </p>
 
-              <div className="mt-4 rounded-2xl border border-[#e8e8e2] bg-white px-4 py-3">
+              <div className="mt-4 rounded-2xl border border-border bg-card px-4 py-3">
                 <p className="text-[10px] uppercase tracking-[0.18em] text-[#5e6461]">Current plan</p>
-                <p className="mt-2 text-sm font-semibold text-[#111111]">
+                <p className="mt-2 text-sm font-semibold text-foreground">
                   {getPlanName(effectivePlan)}
                 </p>
               </div>
@@ -214,13 +214,13 @@ export function DashboardShell({
               </Link>
 
               <div className="mt-5 grid grid-cols-1 gap-3 2xl:grid-cols-2">
-                <div className="rounded-2xl border border-[#e8e8e2] bg-white p-3">
+                <div className="rounded-2xl border border-border bg-card p-3">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-[#5e6461]">Focus</p>
-                  <p className="mt-2 text-sm font-semibold text-[#111111]">Order control</p>
+                  <p className="mt-2 text-sm font-semibold text-foreground">Order control</p>
                 </div>
-                <div className="rounded-2xl border border-[#e8e8e2] bg-white p-3">
+                <div className="rounded-2xl border border-border bg-card p-3">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-[#5e6461]">Priority</p>
-                  <p className="mt-2 text-sm font-semibold text-[#111111]">Fast follow-up</p>
+                  <p className="mt-2 text-sm font-semibold text-foreground">Fast follow-up</p>
                 </div>
               </div>
             </div>
@@ -240,7 +240,7 @@ export function DashboardShell({
             </div>
 
             {isAdmin && (
-              <div className="mb-3 rounded-2xl border border-[#e8e8e2] bg-white p-4">
+              <div className="mb-3 rounded-2xl border border-border bg-card p-4">
                 <div className="flex items-center gap-2 text-[#111111]">
                   <ShieldCheck className="h-4 w-4" />
                   <p className="text-xs font-semibold">Admin Access</p>
@@ -254,8 +254,8 @@ export function DashboardShell({
               </div>
             )}
 
-            <div className="mb-3 rounded-2xl border border-[#e8e8e2] bg-white p-4">
-              <p className="text-xs font-semibold text-[#111111]">Operations Mode</p>
+            <div className="mb-3 rounded-2xl border border-border bg-card p-4">
+              <p className="text-xs font-semibold text-foreground">Operations Mode</p>
               <p className="mt-1 text-xs text-[#5e6461]">
                 Focused on orders, payments, customers, and follow-ups.
               </p>
@@ -264,9 +264,9 @@ export function DashboardShell({
             <form action={logoutAction}>
               <button
                 type="submit"
-                className="flex w-full items-center gap-3 rounded-2xl border border-[#e8e8e2] px-3 py-3 text-sm font-medium text-[#5e6461] transition hover:bg-[#f2f3ee] hover:text-[#111111]"
+                className="flex w-full items-center gap-3 rounded-2xl border border-border px-3 py-3 text-sm font-medium text-[#5e6461] transition hover:bg-secondary hover:text-foreground"
               >
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#f4f6f1]">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-secondary">
                   <LogOut className="h-4 w-4" />
                 </span>
                 Sign out
@@ -276,7 +276,7 @@ export function DashboardShell({
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 border-b border-[#e8e8e2] bg-[#fafaf7]/92 backdrop-blur-xl">
+          <header className="sticky top-0 z-20 border-b border-border bg-background/92 backdrop-blur-xl">
             <div className="mx-auto flex w-full max-w-[1600px] flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-5 lg:px-8">
               <div className="flex min-w-0 items-center gap-3">
                 <button
@@ -354,11 +354,11 @@ export function DashboardShell({
             ) : null}
           </header>
 
-          <main className="w-full max-w-[1600px] flex-1 px-3 py-4 pb-24 sm:px-4 lg:px-8 lg:py-8 lg:pb-8">
+          <main className="w-full max-w-[1600px] flex-1 px-3 py-4 pb-24 font-sans sm:px-4 lg:px-8 lg:py-8 lg:pb-8">
             {children}
           </main>
 
-          <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-[#173728]/10 bg-white/95 backdrop-blur-xl lg:hidden">
+          <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 backdrop-blur-xl lg:hidden">
             <div className="mx-auto flex max-w-screen-sm items-stretch justify-between px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
               {visiblePrimaryNav.slice(0, 5).map((item) => (
                 <MobileBottomNavItem key={item.href} {...item} />

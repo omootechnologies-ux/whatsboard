@@ -4,6 +4,7 @@ import { ProblemSection } from "@/components/landing/problem-section";
 import { HowItWorksSection } from "@/components/landing/how-it-works-section";
 import { TransformationSection } from "@/components/landing/transformation-section";
 import { AppShowcaseSection } from "@/components/landing/app-showcase-section";
+import { PricingSection } from "@/components/landing/pricing-section";
 import { TestimonialsSection } from "@/components/landing/testimonials-section";
 import { CTASection } from "@/components/landing/cta-section";
 import { Footer } from "@/components/landing/footer";
@@ -18,6 +19,7 @@ export default function WhatsboardLanding() {
       <TransformationSection />
       <AppShowcaseSection />
       <TestimonialsSection />
+      <PricingSection />
       <CTASection />
       <Footer />
     </main>

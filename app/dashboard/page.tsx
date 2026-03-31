@@ -28,14 +28,14 @@ function StatCard({
   icon: React.ReactNode;
 }) {
   return (
-    <div className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
+    <div className="rounded-[26px] border border-border bg-card p-5 shadow-[0_20px_60px_rgba(15,23,42,0.06)]">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{label}</p>
-          <h2 className="mt-3 break-words text-3xl font-black tracking-tight text-slate-950">{value}</h2>
-          <p className="mt-2 text-sm text-slate-500">{detail}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
+          <h2 className="mt-3 break-words text-3xl font-black tracking-tight text-foreground">{value}</h2>
+          <p className="mt-2 text-sm text-muted-foreground">{detail}</p>
         </div>
-        <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+        <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           {icon}
         </span>
       </div>
@@ -129,31 +129,31 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-7">
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-slate-400">What needs attention</p>
+        <div className="rounded-[32px] border border-border bg-card p-6 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-7">
+          <p className="text-xs font-bold uppercase tracking-[0.22em] text-muted-foreground">What needs attention</p>
           <div className="mt-5 space-y-3">
-            <div className="rounded-[22px] bg-amber-50 p-4">
-              <p className="text-sm font-semibold text-slate-900">Waiting payment</p>
-              <p className="mt-1 text-2xl font-black text-slate-950">
+            <div className="rounded-[22px] bg-[#f7f7f3] p-4">
+              <p className="text-sm font-semibold text-foreground">Waiting payment</p>
+              <p className="mt-1 text-2xl font-black text-foreground">
                 {canTrackPayments ? unpaidOrders : `${orderCountThisMonth}/${monthlyOrderLimit ?? totalOrders}`}
               </p>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {canTrackPayments
                   ? `${formatTZS(unpaidValue)} still not collected.`
                   : `${remainingMonthlyOrders ?? 0} free orders left this month.`}
               </p>
             </div>
-            <div className="rounded-[22px] bg-sky-50 p-4">
-              <p className="text-sm font-semibold text-slate-900">Ready for packing or dispatch</p>
-              <p className="mt-1 text-2xl font-black text-slate-950">{packingCount}</p>
-              <p className="mt-1 text-sm text-slate-600">Orders already moving after payment.</p>
+            <div className="rounded-[22px] bg-[#f7f7f3] p-4">
+              <p className="text-sm font-semibold text-foreground">Ready for packing or dispatch</p>
+              <p className="mt-1 text-2xl font-black text-foreground">{packingCount}</p>
+              <p className="mt-1 text-sm text-muted-foreground">Orders already moving after payment.</p>
             </div>
-            <div className="rounded-[22px] bg-emerald-50 p-4">
-              <p className="text-sm font-semibold text-slate-900">Pending follow-ups</p>
-              <p className="mt-1 text-2xl font-black text-slate-950">
+            <div className="rounded-[22px] bg-[#f7f7f3] p-4">
+              <p className="text-sm font-semibold text-foreground">Pending follow-ups</p>
+              <p className="mt-1 text-2xl font-black text-foreground">
                 {canSeeFollowUps ? pendingFollowUps.length : "Starter"}
               </p>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {canSeeFollowUps
                   ? "Customers still waiting for a reply or reminder."
                   : "Follow-up reminders unlock on Starter."}
@@ -191,15 +191,15 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
-        <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
+        <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Pipeline</p>
-              <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-900">Order flow overview</h3>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Pipeline</p>
+              <h3 className="mt-2 text-2xl font-black tracking-tight text-foreground">Order flow overview</h3>
             </div>
             <Link
               href="/dashboard/orders"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 transition hover:text-emerald-700"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-primary transition hover:text-[#0a3d2e]"
             >
               Open full order board
               <ArrowRight className="h-4 w-4" />
@@ -208,41 +208,41 @@ export default async function DashboardPage() {
 
           <div className="mt-5 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
             {pipelineSnapshot.map((stage) => (
-              <div key={stage.label} className="rounded-[22px] border border-slate-200 bg-slate-50/80 p-4">
-                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">{stage.label}</p>
-                <p className="mt-3 text-2xl font-black tracking-tight text-slate-950">{stage.value}</p>
+              <div key={stage.label} className="rounded-[22px] border border-border bg-secondary/50 p-4">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{stage.label}</p>
+                <p className="mt-3 text-2xl font-black tracking-tight text-foreground">{stage.value}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
+        <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 text-slate-900">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-secondary/50 text-foreground">
               <Truck className="h-5 w-5" />
             </span>
             <div>
-              <p className="text-sm font-semibold text-slate-900">Dispatch tracker</p>
-              <p className="text-xs text-slate-500">What is ready to move after payment and packing.</p>
+              <p className="text-sm font-semibold text-foreground">Dispatch tracker</p>
+              <p className="text-xs text-muted-foreground">What is ready to move after payment and packing.</p>
             </div>
           </div>
 
           <div className="mt-4 space-y-3">
-            <div className="rounded-[22px] bg-slate-50 p-4">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ready for packing</p>
-              <p className="mt-2 text-2xl font-black text-slate-950">
+            <div className="rounded-[22px] bg-secondary/50 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Ready for packing</p>
+              <p className="mt-2 text-2xl font-black text-foreground">
                 {orders.filter((order) => order.stage === "paid").length}
               </p>
             </div>
-            <div className="rounded-[22px] bg-slate-50 p-4">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">In packing</p>
-              <p className="mt-2 text-2xl font-black text-slate-950">
+            <div className="rounded-[22px] bg-secondary/50 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">In packing</p>
+              <p className="mt-2 text-2xl font-black text-foreground">
                 {orders.filter((order) => order.stage === "packing").length}
               </p>
             </div>
-            <div className="rounded-[22px] bg-slate-50 p-4">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Out for dispatch</p>
-              <p className="mt-2 text-2xl font-black text-slate-950">
+            <div className="rounded-[22px] bg-secondary/50 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Out for dispatch</p>
+              <p className="mt-2 text-2xl font-black text-foreground">
                 {orders.filter((order) => order.stage === "dispatched").length}
               </p>
             </div>
@@ -251,15 +251,15 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
+        <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Recent orders</p>
-              <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-900">Latest activity</h3>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Recent orders</p>
+              <h3 className="mt-2 text-2xl font-black tracking-tight text-foreground">Latest activity</h3>
             </div>
             <Link
               href="/dashboard/orders"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 transition hover:text-emerald-700"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-primary transition hover:text-[#0a3d2e]"
             >
               View all orders
               <ArrowRight className="h-4 w-4" />
@@ -271,11 +271,11 @@ export default async function DashboardPage() {
               recentOrders.map((order) => (
                 <div
                   key={order.id}
-                  className="grid gap-3 rounded-[22px] border border-slate-200 bg-slate-50/80 p-4 sm:grid-cols-[1.2fr_0.9fr_auto] sm:items-center"
+                  className="grid gap-3 rounded-[22px] border border-border bg-secondary/50 p-4 sm:grid-cols-[1.2fr_0.9fr_auto] sm:items-center"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-semibold text-slate-900">{order.customerName}</p>
-                    <p className="mt-1 truncate text-sm text-slate-500">
+                    <p className="truncate font-semibold text-foreground">{order.customerName}</p>
+                    <p className="mt-1 truncate text-sm text-muted-foreground">
                       {order.product} {order.area ? `• ${order.area}` : ""}
                     </p>
                   </div>
@@ -287,8 +287,8 @@ export default async function DashboardPage() {
                       <span
                         className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
                           order.paymentStatus === "paid"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "bg-amber-50 text-amber-700"
+                            ? "bg-primary/10 text-primary"
+                            : "bg-[#f4e5e2] text-[#8f3e36]"
                         }`}
                       >
                         {order.paymentStatus === "paid" ? "Paid" : "Unpaid"}
@@ -296,10 +296,10 @@ export default async function DashboardPage() {
                     ) : null}
                   </div>
                   <div className="flex items-center justify-between gap-3 sm:justify-end">
-                    <p className="text-sm font-bold text-slate-900">{formatTZS(order.amount)}</p>
+                    <p className="text-sm font-bold text-foreground">{formatTZS(order.amount)}</p>
                     <Link
                       href={`/dashboard/orders/${order.id}/edit`}
-                      className="inline-flex rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-700"
+                      className="inline-flex rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground transition hover:border-primary/30 hover:text-primary"
                     >
                       Edit
                     </Link>
@@ -307,14 +307,14 @@ export default async function DashboardPage() {
                 </div>
               ))
             ) : (
-              <div className="rounded-[24px] border border-dashed border-slate-300 px-4 py-10 text-center">
-                <p className="font-semibold text-slate-900">No orders yet</p>
-                <p className="mt-1 text-sm text-slate-500">
+              <div className="rounded-[24px] border border-dashed border-border px-4 py-10 text-center">
+                <p className="font-semibold text-foreground">No orders yet</p>
+                <p className="mt-1 text-sm text-muted-foreground">
                   Start with your first order and WhatsBoard will build customers and follow-ups from there.
                 </p>
                 <Link
                   href={canCreateOrders ? "/dashboard/orders/new" : "/pricing?status=upgrade&message=Upgrade%20to%20Starter%20for%20unlimited%20orders"}
-                  className="mt-4 inline-flex rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:opacity-95"
+                  className="mt-4 inline-flex rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0a3d2e]"
                 >
                   {canCreateOrders ? "Add order" : "Upgrade to add more orders"}
                 </Link>
@@ -324,26 +324,26 @@ export default async function DashboardPage() {
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
+          <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f4e5e2] text-[#8f3e36]">
                 <CreditCard className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-slate-900">Payment control</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-sm font-semibold text-foreground">Payment control</p>
+                <p className="text-xs text-muted-foreground">
                   {canTrackPayments ? "Know exactly what still needs collection." : "Unlock payment tracking on Starter."}
                 </p>
               </div>
             </div>
-            <div className="mt-4 rounded-[22px] bg-slate-50 p-4">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
+            <div className="mt-4 rounded-[22px] bg-secondary/50 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
                 {canTrackPayments ? "Unpaid value" : "Free usage"}
               </p>
-              <p className="mt-2 break-words text-2xl font-black text-slate-950">
+              <p className="mt-2 break-words text-2xl font-black text-foreground">
                 {canTrackPayments ? formatTZS(unpaidValue) : `${orderCountThisMonth}/${monthlyOrderLimit ?? totalOrders}`}
               </p>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-muted-foreground">
                 {canTrackPayments
                   ? `${unpaidOrders} orders still need payment confirmation.`
                   : `${remainingMonthlyOrders ?? 0} free orders left this month.`}
@@ -351,14 +351,14 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
+          <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
             <div className="flex items-center gap-3">
-              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+              <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                 <PackageCheck className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-slate-900">Next follow-ups</p>
-                <p className="text-xs text-slate-500">
+                <p className="text-sm font-semibold text-foreground">Next follow-ups</p>
+                <p className="text-xs text-muted-foreground">
                   {canSeeFollowUps ? "Keep delayed chats and orders moving." : "Follow-up reminders unlock on Starter."}
                 </p>
               </div>
@@ -367,16 +367,16 @@ export default async function DashboardPage() {
             <div className="mt-4 space-y-3">
               {canSeeFollowUps && nextFollowUps.length ? (
                 nextFollowUps.map((item) => (
-                  <div key={item.id} className="rounded-[22px] bg-slate-50 p-4">
-                    <p className="font-semibold text-slate-900">{item.customerName}</p>
-                    <p className="mt-1 text-sm text-slate-500">
+                  <div key={item.id} className="rounded-[22px] bg-secondary/50 p-4">
+                    <p className="font-semibold text-foreground">{item.customerName}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {item.product || "No product"} {item.area ? `• ${item.area}` : ""}
                     </p>
-                    <p className="mt-2 text-sm text-slate-700">{item.note || "No note added yet."}</p>
+                    <p className="mt-2 text-sm text-foreground/75">{item.note || "No note added yet."}</p>
                   </div>
                 ))
               ) : (
-                <div className="rounded-[22px] border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
+                <div className="rounded-[22px] border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
                   {canSeeFollowUps ? "No follow-ups pending right now." : "Follow-up reminders unlock on Starter."}
                 </div>
               )}
@@ -385,7 +385,7 @@ export default async function DashboardPage() {
             {canSeeFollowUps ? (
               <Link
                 href="/dashboard/follow-ups"
-                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 transition hover:text-emerald-700"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary transition hover:text-[#0a3d2e]"
               >
                 Open follow-ups
                 <ArrowRight className="h-4 w-4" />
@@ -398,10 +398,10 @@ export default async function DashboardPage() {
       <section className="grid gap-4 lg:grid-cols-3">
         <Link
           href={canCreateOrders ? "/dashboard/orders/new" : "/pricing?status=upgrade&message=Upgrade%20to%20Starter%20for%20unlimited%20orders"}
-          className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-emerald-200 hover:bg-emerald-50/30"
+          className="rounded-[26px] border border-border bg-card p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-primary/20 hover:bg-primary/5"
         >
-          <p className="text-sm font-semibold text-slate-900">{canCreateOrders ? "Create order" : "Upgrade for more orders"}</p>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="text-sm font-semibold text-foreground">{canCreateOrders ? "Create order" : "Upgrade for more orders"}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
             {canCreateOrders
               ? "Start from a fresh sale and let WhatsBoard create or match the customer automatically."
               : "Free gives you 30 orders per month. Upgrade to Starter for unlimited orders and deeper workflows."}
@@ -410,30 +410,30 @@ export default async function DashboardPage() {
         {canSeeCustomers ? (
           <Link
             href="/dashboard/customers"
-            className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-emerald-200 hover:bg-emerald-50/30"
+            className="rounded-[26px] border border-border bg-card p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-primary/20 hover:bg-primary/5"
           >
-            <p className="text-sm font-semibold text-slate-900">Customer list</p>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="text-sm font-semibold text-foreground">Customer list</p>
+            <p className="mt-2 text-sm text-muted-foreground">
               See repeat buyers and dormant customers who may need a quick follow-up.
             </p>
           </Link>
         ) : (
           <Link
             href="/pricing?status=upgrade&message=Upgrade%20to%20Starter%20to%20unlock%20customer%20profiles"
-            className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-emerald-200 hover:bg-emerald-50/30"
+            className="rounded-[26px] border border-border bg-card p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-primary/20 hover:bg-primary/5"
           >
-            <p className="text-sm font-semibold text-slate-900">Customer profiles</p>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="text-sm font-semibold text-foreground">Customer profiles</p>
+            <p className="mt-2 text-sm text-muted-foreground">
               Upgrade to Starter to unlock customer history, follow-ups, and profile editing.
             </p>
           </Link>
         )}
         <Link
           href={canSeeAnalytics ? "/dashboard/analytics" : "/dashboard/settings"}
-          className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-emerald-200 hover:bg-emerald-50/30"
+          className="rounded-[26px] border border-border bg-card p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-primary/20 hover:bg-primary/5"
         >
-          <p className="text-sm font-semibold text-slate-900">{canSeeAnalytics ? "Reports & analytics" : "Settings"}</p>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="text-sm font-semibold text-foreground">{canSeeAnalytics ? "Reports & analytics" : "Settings"}</p>
+          <p className="mt-2 text-sm text-muted-foreground">
             {canSeeAnalytics
               ? "Growth and Business can track reports from live order and customer data."
               : "Keep business details, defaults, and contact info clean for daily operations."}
@@ -442,15 +442,15 @@ export default async function DashboardPage() {
       </section>
 
       {canSeeCustomers && customers.length > 0 && dormantCustomers.length > 0 ? (
-        <section className="rounded-[28px] border border-amber-200 bg-amber-50 p-5 shadow-sm">
-          <p className="text-sm font-semibold text-slate-900">Dormant customers to re-engage</p>
-          <p className="mt-2 text-sm text-slate-600">
+        <section className="rounded-[28px] border border-[#e9d4d1] bg-[#f9efed] p-5 shadow-sm">
+          <p className="text-sm font-semibold text-foreground">Dormant customers to re-engage</p>
+          <p className="mt-2 text-sm text-muted-foreground">
             {dormantCustomers.length} customers have not ordered in 30 days or more. Check the customer
             page to send a quick follow-up.
           </p>
           <Link
             href="/dashboard/customers"
-            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-amber-700 transition hover:text-amber-800"
+            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary transition hover:text-[#0a3d2e]"
           >
             Open customers
             <ArrowRight className="h-4 w-4" />
