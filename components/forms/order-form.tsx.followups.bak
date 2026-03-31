@@ -59,17 +59,8 @@ export function OrderForm() {
         <span>Add follow-up</span>
       </label>
 
-      <input
-        name="followUpDate"
-        type="datetime-local"
-        className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3"
-      />
-
-      <input
-        name="followUpNote"
-        placeholder="Follow-up note"
-        className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3"
-      />
+      <input name="followUpDate" type="datetime-local" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3" />
+      <input name="followUpNote" placeholder="Follow-up note" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3" />
 
       <textarea name="notes" placeholder="Notes" className="min-h-28 rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 md:col-span-2" />
 
