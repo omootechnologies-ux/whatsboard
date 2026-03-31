@@ -26,6 +26,7 @@ const NAV = [
   { href: "/dashboard/orders", label: "Orders", icon: ShoppingBag },
   { href: "/dashboard/customers", label: "Customers", icon: Users },
   { href: "/dashboard/follow-ups", label: "Follow-ups", icon: Bell },
+  { href: "/dashboard/ai-order-capture", label: "AI Capture", icon: Sparkles },
   { href: "/dashboard/catalog", label: "Catalog", icon: Boxes },
   { href: "/dashboard/referrals", label: "Referrals", icon: Gift },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },

@@ -17,6 +17,22 @@ type CatalogProductRecord = {
   is_active: boolean | null;
 };
 
+type CreateOrderPayload = {
+  customerName: string;
+  phone: string;
+  productName: string;
+  catalogProductId?: string;
+  amount: number;
+  deliveryArea: string;
+  stage: string;
+  paymentStatus: string;
+  notes: string;
+  addFollowUp?: boolean;
+  followUpDateRaw?: string;
+  followUpNote?: string;
+  tags?: string[];
+};
+
 function normalizeText(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
@@ -72,49 +88,13 @@ async function adjustCatalogStock(
   return { error: updateError };
 }
 
-export async function createOrderAction(
-  _prevState: ActionState,
-  formData: FormData
-): Promise<ActionState> {
-  const { supabase, businessId } = await getViewerContext();
-
-  if (!businessId) return { success: false, error: "Business not found." };
-
-  const customerName = String(formData.get("customerName") || "").trim();
-  const phone = String(formData.get("phone") || "").trim();
-  const productName = String(formData.get("product") || "").trim();
-  const catalogProductId = String(formData.get("catalogProductId") || "").trim();
-  const amount = Number(formData.get("amount") || 0);
-  const deliveryArea = String(formData.get("area") || "").trim();
-  const stage = String(formData.get("stage") || "new_order").trim();
-  const paymentStatus = String(formData.get("paymentStatus") || "unpaid").trim();
-  const notes = String(formData.get("notes") || "").trim();
-  const addFollowUp = String(formData.get("addFollowUp") || "") === "on";
-  const followUpDateRaw = String(formData.get("followUpDate") || "").trim();
-  const followUpNote = String(formData.get("followUpNote") || "").trim();
-
-  if (!customerName) return { success: false, error: "Customer name is required." };
-  if (!phone) return { success: false, error: "Phone number is required." };
-  let resolvedProductName = productName;
-  let resolvedAmount = amount;
-
-  if (catalogProductId) {
-    const { product, error: catalogError } = await getCatalogProductById(supabase, businessId, catalogProductId);
-
-    if (catalogError) return { success: false, error: catalogError.message };
-    if (!product) return { success: false, error: "Selected catalog product was not found." };
-    if (!product.is_active) return { success: false, error: "Selected catalog product is hidden." };
-    if (Number(product.stock_count ?? 0) < 1) return { success: false, error: `${product.name} is out of stock.` };
-
-    resolvedProductName = product.name;
-    resolvedAmount = Number(product.price ?? 0);
-  }
-
-  if (!resolvedProductName) return { success: false, error: "Product is required." };
-  if (!Number.isFinite(resolvedAmount) || resolvedAmount < 0) {
-    return { success: false, error: "Amount must be a valid number." };
-  }
-
+async function upsertCustomerForOrder(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  businessId: string,
+  customerName: string,
+  phone: string,
+  deliveryArea: string
+) {
   const normalizedCustomerName = normalizeText(customerName);
 
   const { data: phoneMatches, error: phoneMatchesError } = await supabase
@@ -123,7 +103,7 @@ export async function createOrderAction(
     .eq("business_id", businessId)
     .eq("phone", phone);
 
-  if (phoneMatchesError) return { success: false, error: phoneMatchesError.message };
+  if (phoneMatchesError) return { customerId: null, error: phoneMatchesError };
 
   const matchedCustomer =
     (phoneMatches ?? []).find(
@@ -143,7 +123,7 @@ export async function createOrderAction(
       })
       .eq("id", customerId);
 
-    if (updateCustomerError) return { success: false, error: updateCustomerError.message };
+    if (updateCustomerError) return { customerId: null, error: updateCustomerError };
   } else {
     const { data: newCustomer, error: newCustomerError } = await supabase
       .from("customers")
@@ -159,12 +139,66 @@ export async function createOrderAction(
 
     if (newCustomerError || !newCustomer) {
       return {
-        success: false,
-        error: newCustomerError?.message || "Unable to create customer.",
+        customerId: null,
+        error: newCustomerError ?? new Error("Unable to create customer."),
       };
     }
 
     customerId = newCustomer.id;
+  }
+
+  return { customerId, error: null };
+}
+
+async function createOrderWithExistingFlow(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  businessId: string,
+  payload: CreateOrderPayload
+): Promise<ActionState> {
+  const customerName = payload.customerName.trim();
+  const phone = payload.phone.trim();
+  const deliveryArea = payload.deliveryArea.trim();
+  const stage = payload.stage.trim() || "new_order";
+  const paymentStatus = payload.paymentStatus.trim() || "unpaid";
+  const notes = payload.notes.trim();
+  const addFollowUp = Boolean(payload.addFollowUp);
+  const followUpDateRaw = payload.followUpDateRaw?.trim() ?? "";
+  const followUpNote = payload.followUpNote?.trim() ?? "";
+  const catalogProductId = payload.catalogProductId?.trim() ?? "";
+
+  if (!customerName) return { success: false, error: "Customer name is required." };
+  if (!phone) return { success: false, error: "Phone number is required." };
+
+  let resolvedProductName = payload.productName.trim();
+  let resolvedAmount = Number(payload.amount ?? 0);
+
+  if (catalogProductId) {
+    const { product, error: catalogError } = await getCatalogProductById(supabase, businessId, catalogProductId);
+
+    if (catalogError) return { success: false, error: catalogError.message };
+    if (!product) return { success: false, error: "Selected catalog product was not found." };
+    if (!product.is_active) return { success: false, error: "Selected catalog product is hidden." };
+    if (Number(product.stock_count ?? 0) < 1) return { success: false, error: `${product.name} is out of stock.` };
+
+    resolvedProductName = product.name;
+    resolvedAmount = Number(product.price ?? 0);
+  }
+
+  if (!resolvedProductName) return { success: false, error: "Product is required." };
+  if (!Number.isFinite(resolvedAmount) || resolvedAmount < 0) {
+    return { success: false, error: "Amount must be a valid number." };
+  }
+
+  const { customerId, error: customerError } = await upsertCustomerForOrder(
+    supabase,
+    businessId,
+    customerName,
+    phone,
+    deliveryArea
+  );
+
+  if (customerError || !customerId) {
+    return { success: false, error: customerError?.message || "Unable to link customer." };
   }
 
   const { data: createdOrder, error: orderError } = await supabase
@@ -179,6 +213,7 @@ export async function createOrderAction(
       stage,
       payment_status: paymentStatus,
       notes,
+      tags: payload.tags?.length ? payload.tags : null,
     })
     .select("id")
     .single();
@@ -216,8 +251,46 @@ export async function createOrderAction(
   revalidatePath("/dashboard/orders");
   revalidatePath("/dashboard/customers");
   revalidatePath("/dashboard/follow-ups");
+  revalidatePath("/dashboard/analytics");
 
   return { success: true, error: null };
+}
+
+export async function createOrderAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, businessId } = await getViewerContext();
+
+  if (!businessId) return { success: false, error: "Business not found." };
+
+  const customerName = String(formData.get("customerName") || "").trim();
+  const phone = String(formData.get("phone") || "").trim();
+  const productName = String(formData.get("product") || "").trim();
+  const catalogProductId = String(formData.get("catalogProductId") || "").trim();
+  const amount = Number(formData.get("amount") || 0);
+  const deliveryArea = String(formData.get("area") || "").trim();
+  const stage = String(formData.get("stage") || "new_order").trim();
+  const paymentStatus = String(formData.get("paymentStatus") || "unpaid").trim();
+  const notes = String(formData.get("notes") || "").trim();
+  const addFollowUp = String(formData.get("addFollowUp") || "") === "on";
+  const followUpDateRaw = String(formData.get("followUpDate") || "").trim();
+  const followUpNote = String(formData.get("followUpNote") || "").trim();
+
+  return createOrderWithExistingFlow(supabase, businessId, {
+    customerName,
+    phone,
+    productName,
+    catalogProductId,
+    amount,
+    deliveryArea,
+    stage,
+    paymentStatus,
+    notes,
+    addFollowUp,
+    followUpDateRaw,
+    followUpNote,
+  });
 }
 
 export async function updateOrderStageAction(id: string, stage: string) {
@@ -589,4 +662,49 @@ export async function completeFollowUpAction(id: string) {
 
   revalidatePath("/dashboard/follow-ups");
   revalidatePath("/dashboard");
+}
+
+export async function saveAiOrderCaptureAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, businessId } = await getViewerContext();
+
+  if (!businessId) return { success: false, error: "Business not found." };
+
+  const customerName = String(formData.get("customerName") || "").trim();
+  const phone = String(formData.get("phone") || "").trim();
+  const productName = String(formData.get("productName") || "").trim();
+  const quantity = String(formData.get("quantity") || "").trim();
+  const variant = String(formData.get("variant") || "").trim();
+  const location = String(formData.get("location") || "").trim();
+  const paymentStatus = String(formData.get("paymentStatus") || "unpaid").trim();
+  const notes = String(formData.get("notes") || "").trim();
+  const amount = Number(formData.get("amount") || 0);
+  const addFollowUp = String(formData.get("addFollowUp") || "") === "on";
+  const rawChat = String(formData.get("rawChat") || "").trim();
+
+  const stage = paymentStatus === "paid" || paymentStatus === "cod" ? "paid" : "waiting_payment";
+  const metadataLines = [
+    quantity ? `Quantity: ${quantity}` : null,
+    variant ? `Variant: ${variant}` : null,
+    "Source: ai_chat_capture",
+    rawChat ? `Captured chat:\n${rawChat.slice(0, 1200)}` : null,
+  ].filter(Boolean);
+
+  const combinedNotes = [notes, ...metadataLines].filter(Boolean).join("\n\n");
+
+  return createOrderWithExistingFlow(supabase, businessId, {
+    customerName,
+    phone,
+    productName,
+    amount,
+    deliveryArea: location,
+    stage,
+    paymentStatus,
+    notes: combinedNotes,
+    addFollowUp,
+    followUpNote: addFollowUp ? `Follow up with ${customerName} from AI chat capture` : "",
+    tags: ["ai_chat_capture"],
+  });
 }
