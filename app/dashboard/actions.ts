@@ -13,6 +13,16 @@ function normalizeText(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+function generateReferralCode(value: string, businessId: string) {
+  const slug = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "")
+    .slice(0, 6)
+    .padEnd(4, "x");
+
+  return `${slug}-${businessId.replace(/-/g, "").slice(0, 6)}`.toUpperCase();
+}
+
 export async function createOrderAction(
   _prevState: ActionState,
   formData: FormData
@@ -374,6 +384,78 @@ export async function updateFollowUpAction(
   revalidatePath("/dashboard");
 
   return { success: true, error: null };
+}
+
+export async function ensureReferralCodeAction() {
+  const { supabase, businessId, business } = await getViewerContext();
+
+  if (!businessId || !business?.name) return;
+  if ((business as any).referral_code) return;
+
+  await supabase
+    .from("businesses")
+    .update({
+      referral_code: generateReferralCode(business.name, businessId),
+    })
+    .eq("id", businessId);
+
+  revalidatePath("/dashboard/referrals");
+}
+
+export async function createCatalogProductAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const { supabase, businessId } = await getViewerContext();
+
+  if (!businessId) return { success: false, error: "Business not found." };
+
+  const name = String(formData.get("name") || "").trim();
+  const description = String(formData.get("description") || "").trim();
+  const imageUrl = String(formData.get("imageUrl") || "").trim();
+  const price = Number(formData.get("price") || 0);
+  const stockCount = Number(formData.get("stockCount") || 0);
+
+  if (!name) return { success: false, error: "Product name is required." };
+  if (!Number.isFinite(price) || price < 0) return { success: false, error: "Price must be valid." };
+  if (!Number.isFinite(stockCount) || stockCount < 0) return { success: false, error: "Stock count must be valid." };
+
+  const { error } = await supabase.from("catalog_products").insert({
+    business_id: businessId,
+    name,
+    description: description || null,
+    image_url: imageUrl || null,
+    price,
+    stock_count: stockCount,
+    is_active: true,
+  });
+
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/dashboard/catalog");
+  revalidatePath("/dashboard");
+
+  return { success: true, error: null };
+}
+
+export async function updateCatalogStockAction(id: string, formData: FormData) {
+  const { supabase, businessId } = await getViewerContext();
+
+  if (!businessId) return;
+
+  const stockCount = Number(formData.get("stockCount") || 0);
+  const isActive = String(formData.get("isActive") || "") === "on";
+
+  await supabase
+    .from("catalog_products")
+    .update({
+      stock_count: Number.isFinite(stockCount) ? stockCount : 0,
+      is_active: isActive,
+    })
+    .eq("business_id", businessId)
+    .eq("id", id);
+
+  revalidatePath("/dashboard/catalog");
 }
 
 export async function completeFollowUpAction(id: string) {

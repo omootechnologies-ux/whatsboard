@@ -20,6 +20,9 @@ create table public.businesses (
   phone text,
   brand_color text default '#22c55e',
   currency text default 'TZS',
+  referral_code text unique,
+  referral_credit_days integer not null default 0,
+  referred_by_business_id uuid references public.businesses(id) on delete set null,
   billing_provider text,
   billing_plan text,
   billing_status text not null default 'inactive',
@@ -123,6 +126,31 @@ create table public.billing_transactions (
   updated_at timestamptz not null default now()
 );
 
+create table public.referral_events (
+  id uuid primary key default gen_random_uuid(),
+  referrer_business_id uuid not null references public.businesses(id) on delete cascade,
+  referred_business_id uuid references public.businesses(id) on delete set null,
+  referred_email text,
+  referral_code text not null,
+  reward_days integer not null default 30,
+  status text not null default 'pending',
+  created_at timestamptz not null default now(),
+  converted_at timestamptz
+);
+
+create table public.catalog_products (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses(id) on delete cascade,
+  name text not null,
+  description text,
+  image_url text,
+  price numeric(12,2) not null default 0,
+  stock_count integer not null default 0,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 alter table public.businesses enable row level security;
 alter table public.profiles enable row level security;
 alter table public.customers enable row level security;
@@ -131,3 +159,5 @@ alter table public.order_notes enable row level security;
 alter table public.order_activity enable row level security;
 alter table public.follow_ups enable row level security;
 alter table public.billing_transactions enable row level security;
+alter table public.referral_events enable row level security;
+alter table public.catalog_products enable row level security;

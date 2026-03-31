@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Pencil, Users } from "lucide-react";
+import { ArrowRight, MessageCircle, Pencil, Users } from "lucide-react";
 import { getCustomersData } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
@@ -8,6 +8,11 @@ export const revalidate = 0;
 export default async function CustomersPage() {
   const customers = await getCustomersData();
   const repeatCustomers = customers.filter((customer) => customer.isRepeat).length;
+  const now = Date.now();
+  const dormantCustomers = customers.filter((customer) => {
+    const lastOrderTime = new Date(customer.lastOrderDate).getTime();
+    return Number.isFinite(lastOrderTime) && now - lastOrderTime >= 30 * 24 * 60 * 60 * 1000;
+  });
 
   return (
     <div className="space-y-6">
@@ -48,6 +53,47 @@ export default async function CustomersPage() {
               <p className="mt-2 text-2xl font-black text-slate-950">{repeatCustomers}</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-slate-900">Customer re-engagement</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Sellers who have not ordered in 30+ days and are ready for a follow-up.
+            </p>
+          </div>
+          <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+            {dormantCustomers.length} dormant customers
+          </span>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          {dormantCustomers.length ? (
+            dormantCustomers.slice(0, 6).map((customer) => (
+              <div key={customer.id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-semibold text-slate-900">{customer.name}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Last order {new Date(customer.lastOrderDate).toLocaleDateString()}
+                  </p>
+                </div>
+                <a
+                  href={`https://wa.me/${encodeURIComponent((customer.phone || "").replace(/[^\d]/g, ""))}?text=${encodeURIComponent(`Hi ${customer.name}, it has been a while since your last order. We have new stock ready for you.`)}`}
+                  target="_blank"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Send follow-up
+                </a>
+              </div>
+            ))
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
+              No dormant customers right now.
+            </div>
+          )}
         </div>
       </section>
 

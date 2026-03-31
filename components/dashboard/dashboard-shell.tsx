@@ -6,7 +6,9 @@ import {
   ArrowUpRight,
   BarChart3,
   Bell,
+  Boxes,
   ChevronRight,
+  Gift,
   LayoutDashboard,
   LogOut,
   Plus,
@@ -24,6 +26,8 @@ const NAV = [
   { href: "/dashboard/orders", label: "Orders", icon: ShoppingBag },
   { href: "/dashboard/customers", label: "Customers", icon: Users },
   { href: "/dashboard/follow-ups", label: "Follow-ups", icon: Bell },
+  { href: "/dashboard/catalog", label: "Catalog", icon: Boxes },
+  { href: "/dashboard/referrals", label: "Referrals", icon: Gift },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];

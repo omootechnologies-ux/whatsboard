@@ -28,7 +28,7 @@ export async function getViewerContext() {
   if (profile?.business_id) {
     const { data: businessData } = await supabase
       .from("businesses")
-      .select("id, name, phone, brand_color, currency, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at, created_at")
+      .select("id, name, phone, brand_color, currency, referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at, created_at")
       .eq("id", profile.business_id)
       .single();
 
@@ -212,5 +212,52 @@ export async function getAccountData() {
     business,
     billingTransaction,
     isAdmin
+  };
+}
+
+export async function getReferralProgramData() {
+  const { supabase, businessId, business } = await getViewerContext();
+
+  if (!businessId) {
+    return { business: null, referralEvents: [] };
+  }
+
+  const { data: referralEvents } = await supabase
+    .from("referral_events")
+    .select("id, referred_email, referral_code, reward_days, status, created_at, converted_at")
+    .eq("referrer_business_id", businessId)
+    .order("created_at", { ascending: false });
+
+  return {
+    business,
+    referralEvents: referralEvents ?? [],
+  };
+}
+
+export async function getCatalogProductsData() {
+  const { supabase, businessId, business } = await getViewerContext();
+
+  if (!businessId) {
+    return { business: null, products: [] };
+  }
+
+  const { data: products } = await supabase
+    .from("catalog_products")
+    .select("id, name, description, image_url, price, stock_count, is_active, created_at")
+    .eq("business_id", businessId)
+    .order("created_at", { ascending: false });
+
+  return {
+    business,
+    products: (products ?? []).map((item: any) => ({
+      id: item.id,
+      name: item.name,
+      description: item.description ?? "",
+      imageUrl: item.image_url ?? "",
+      price: Number(item.price ?? 0),
+      stockCount: Number(item.stock_count ?? 0),
+      isActive: Boolean(item.is_active),
+      createdAt: item.created_at,
+    })),
   };
 }

@@ -2,7 +2,13 @@ import Link from "next/link";
 import { AuthForm } from "@/components/forms/auth-form";
 import { registerAction } from "../actions";
 
-export default function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ ref?: string }>;
+}) {
+  const resolvedSearch = (await searchParams) ?? {};
+
   return (
     <main className="container-pad flex min-h-screen items-center justify-center py-16">
       <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8">
@@ -15,7 +21,8 @@ export default function RegisterPage() {
             { name: "businessName", label: "Business name", placeholder: "Amina Fashion House" },
             { name: "fullName", label: "Full name", placeholder: "Amina Selemani" },
             { name: "email", label: "Email", type: "email", placeholder: "you@business.com" },
-            { name: "password", label: "Password", type: "password", placeholder: "••••••••" }
+            { name: "password", label: "Password", type: "password", placeholder: "••••••••" },
+            { name: "referralCode", label: "Referral code", placeholder: "Optional", defaultValue: resolvedSearch.ref ?? "" },
           ]}
         />
         <p className="mt-4 text-sm text-slate-500">

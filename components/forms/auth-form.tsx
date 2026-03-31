@@ -25,7 +25,7 @@ export function AuthForm({
   submitLabel
 }: {
   action: (state: AuthFormState, payload: FormData) => Promise<AuthFormState>;
-  fields: Array<{ name: string; label: string; type?: string; placeholder: string }>;
+  fields: Array<{ name: string; label: string; type?: string; placeholder: string; defaultValue?: string }>;
   submitLabel: string;
 }) {
   const [state, formAction] = useFormState(action, { error: "" });
@@ -42,6 +42,7 @@ export function AuthForm({
             name={field.name}
             type={field.type ?? "text"}
             placeholder={field.placeholder}
+            defaultValue={field.defaultValue}
             className="w-full rounded-2xl border border-white/10 bg-slate-900 px-4 py-3"
           />
         </div>

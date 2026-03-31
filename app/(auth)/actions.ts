@@ -9,6 +9,16 @@ type AuthFormState = {
   error: string;
 };
 
+function generateReferralCode(businessName: string, userId: string) {
+  const slug = businessName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "")
+    .slice(0, 6)
+    .padEnd(4, "x");
+
+  return `${slug}-${userId.replace(/-/g, "").slice(0, 6)}`.toUpperCase();
+}
+
 export async function registerAction(
   prevState: AuthFormState,
   formData: FormData
@@ -28,6 +38,7 @@ export async function registerAction(
   const password = parsed.data.password;
   const fullName = parsed.data.fullName.trim();
   const businessName = parsed.data.businessName.trim();
+  const referralCode = String(parsed.data.referralCode || "").trim().toUpperCase();
 
   const { data: createdUser, error: createUserError } =
     await adminClient.auth.admin.createUser({
@@ -50,7 +61,8 @@ export async function registerAction(
     .from("businesses")
     .insert({
       owner_id: userId,
-      name: businessName
+      name: businessName,
+      referral_code: generateReferralCode(businessName, userId),
     })
     .select("id")
     .single();
@@ -71,6 +83,51 @@ export async function registerAction(
     await adminClient.from("businesses").delete().eq("id", business.id);
     await adminClient.auth.admin.deleteUser(userId);
     return { error: profileError.message };
+  }
+
+  if (referralCode) {
+    const { data: referrerBusiness } = await adminClient
+      .from("businesses")
+      .select("id, billing_status, billing_current_period_ends_at, referral_credit_days")
+      .eq("referral_code", referralCode)
+      .neq("id", business.id)
+      .maybeSingle();
+
+    if (referrerBusiness?.id) {
+      await adminClient.from("referral_events").insert({
+        referrer_business_id: referrerBusiness.id,
+        referred_business_id: business.id,
+        referred_email: email,
+        referral_code: referralCode,
+        reward_days: 30,
+        status: "converted",
+        converted_at: new Date().toISOString(),
+      });
+
+      const nextCreditDays = Number(referrerBusiness.referral_credit_days ?? 0) + 30;
+      let nextBillingPeriodEnd = referrerBusiness.billing_current_period_ends_at;
+
+      if (referrerBusiness.billing_status === "active" && referrerBusiness.billing_current_period_ends_at) {
+        const end = new Date(referrerBusiness.billing_current_period_ends_at);
+        end.setUTCDate(end.getUTCDate() + 30);
+        nextBillingPeriodEnd = end.toISOString();
+      }
+
+      await adminClient
+        .from("businesses")
+        .update({
+          referral_credit_days: nextCreditDays,
+          billing_current_period_ends_at: nextBillingPeriodEnd,
+        })
+        .eq("id", referrerBusiness.id);
+
+      await adminClient
+        .from("businesses")
+        .update({
+          referred_by_business_id: referrerBusiness.id,
+        })
+        .eq("id", business.id);
+    }
   }
 
   const supabase = await createClient();

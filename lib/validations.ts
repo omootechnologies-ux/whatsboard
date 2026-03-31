@@ -4,7 +4,8 @@ export const registerSchema = z.object({
   businessName: z.string().min(2, "Business name is required"),
   fullName: z.string().min(2, "Full name is required"),
   email: z.string().email("Enter a valid email"),
-  password: z.string().min(6, "Password must be at least 6 characters")
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  referralCode: z.string().trim().optional().or(z.literal(""))
 });
 
 export const loginSchema = z.object({

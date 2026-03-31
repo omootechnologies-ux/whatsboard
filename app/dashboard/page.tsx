@@ -2,8 +2,11 @@ import Link from "next/link";
 import {
   ArrowRight,
   BadgeDollarSign,
+  Boxes,
   Clock3,
   CreditCard,
+  Gift,
+  MessageCircle,
   PackageCheck,
   ShoppingBag,
   Users,
@@ -423,6 +426,44 @@ export default async function DashboardPage() {
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-3">
+        <Link href="/dashboard/referrals" className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-emerald-200 hover:bg-emerald-50/40">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+              <Gift className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Referral program</p>
+              <p className="text-xs text-slate-500">Invite a seller, get 30 days free</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/dashboard/customers" className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-emerald-200 hover:bg-emerald-50/40">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">
+              <MessageCircle className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Customer re-engagement</p>
+              <p className="text-xs text-slate-500">Spot dormant buyers and trigger follow-up</p>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/dashboard/catalog" className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-emerald-200 hover:bg-emerald-50/40">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-50 text-sky-600">
+              <Boxes className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Catalog builder</p>
+              <p className="text-xs text-slate-500">Manage products, stock, and WhatsApp sharing</p>
+            </div>
+          </div>
+        </Link>
       </section>
     </div>
   );
