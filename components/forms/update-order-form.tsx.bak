@@ -7,9 +7,9 @@ type OrderRecord = {
   id: string;
   customer_name?: string | null;
   phone?: string | null;
-  product_name?: string | null;
+  product?: string | null;
   amount?: number | null;
-  delivery_area?: string | null;
+  area?: string | null;
   stage?: string | null;
   payment_status?: string | null;
   notes?: string | null;
@@ -53,7 +53,7 @@ export default function UpdateOrderForm({ order }: { order: OrderRecord }) {
         <Field label="Product">
           <input
             name="product"
-            defaultValue={order.product_name ?? ""}
+            defaultValue={order.product ?? ""}
             placeholder="Product"
             className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
           />
@@ -73,7 +73,7 @@ export default function UpdateOrderForm({ order }: { order: OrderRecord }) {
         <Field label="Area">
           <input
             name="area"
-            defaultValue={order.delivery_area ?? ""}
+            defaultValue={order.area ?? ""}
             placeholder="Area"
             className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
           />
