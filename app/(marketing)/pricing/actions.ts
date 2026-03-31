@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { getViewerContext } from "@/lib/queries";
 import { createSnippeSession, getAppUrl, getPlanConfig } from "@/lib/billing";
+import { isMissingRelationError } from "@/lib/supabase-errors";
 
 export async function startPlanCheckoutAction(planKey: string) {
   const plan = getPlanConfig(planKey);
@@ -42,6 +43,12 @@ export async function startPlanCheckoutAction(planKey: string) {
     .single();
 
   if (transactionError || !transaction) {
+    if (isMissingRelationError(transactionError?.message)) {
+      redirect(
+        "/pricing?status=error&message=Billing%20database%20setup%20is%20not%20applied%20yet.%20Run%20the%20latest%20Supabase%20billing%20migration."
+      );
+    }
+
     redirect(
       `/pricing?status=error&message=${encodeURIComponent(transactionError?.message ?? "Unable to create billing record")}`
     );
@@ -87,17 +94,29 @@ export async function startPlanCheckoutAction(planKey: string) {
       .eq("id", transaction.id);
 
     if (updateError) {
+      if (isMissingRelationError(updateError.message)) {
+        redirect(
+          "/pricing?status=error&message=Billing%20database%20setup%20is%20not%20applied%20yet.%20Run%20the%20latest%20Supabase%20billing%20migration."
+        );
+      }
+
       redirect(`/pricing?status=error&message=${encodeURIComponent(updateError.message)}`);
     }
 
     redirect(session.checkout_url);
   } catch (error) {
-    await supabase
+    const transactionUpdate = await supabase
       .from("billing_transactions")
       .update({
         status: "failed",
       })
       .eq("id", transaction.id);
+
+    if (transactionUpdate.error && isMissingRelationError(transactionUpdate.error.message)) {
+      redirect(
+        "/pricing?status=error&message=Billing%20database%20setup%20is%20not%20applied%20yet.%20Run%20the%20latest%20Supabase%20billing%20migration."
+      );
+    }
 
     redirect(
       `/pricing?status=error&message=${encodeURIComponent(

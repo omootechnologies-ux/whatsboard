@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { isMissingOptionalFieldError } from "@/lib/supabase-errors";
 
 type ViewerBusiness = {
   id: string;
@@ -19,25 +20,6 @@ type ViewerBusiness = {
   billing_current_period_starts_at?: string | null;
   billing_current_period_ends_at?: string | null;
 };
-
-function matchesMissingRelationError(message?: string) {
-  const value = (message || "").toLowerCase();
-  return (
-    value.includes("schema cache") ||
-    value.includes("could not find the table") ||
-    value.includes('relation "public.') ||
-    value.includes("relation ") && value.includes(" does not exist")
-  );
-}
-
-function matchesMissingOptionalFieldError(message?: string) {
-  const value = (message || "").toLowerCase();
-  return (
-    matchesMissingRelationError(message) ||
-    value.includes("column") ||
-    value.includes("does not exist")
-  );
-}
 
 export async function getViewerContext() {
   const supabase = await createClient();
@@ -301,7 +283,7 @@ export async function getReferralProgramData() {
   return {
     business,
     referralEvents: referralEvents ?? [],
-    setupRequired: Boolean(error && matchesMissingRelationError(error.message)),
+    setupRequired: Boolean(error && isMissingOptionalFieldError(error.message)),
   };
 }
 
@@ -330,7 +312,7 @@ export async function getCatalogProductsData() {
       isActive: Boolean(item.is_active),
       createdAt: item.created_at,
     })),
-    setupRequired: Boolean(error && matchesMissingRelationError(error.message)),
+    setupRequired: Boolean(error && isMissingOptionalFieldError(error.message)),
   };
 }
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminClient } from "@/lib/supabase/admin";
 import { getPlanConfig, verifySnippeWebhookSignature } from "@/lib/billing";
+import { isMissingRelationError } from "@/lib/supabase-errors";
 
 function addDays(value: string, days: number) {
   const date = new Date(value);
@@ -58,11 +59,15 @@ export async function POST(request: Request) {
 
   const eventId = event.id ?? `${event.type}:${event.data.reference ?? event.data.session_reference ?? "unknown"}`;
 
-  const { data: existingTransaction } = await adminClient
+  const { data: existingTransaction, error: existingTransactionError } = await adminClient
     .from("billing_transactions")
     .select("id, webhook_event_id")
     .eq("id", billingTransactionId)
     .maybeSingle();
+
+  if (existingTransactionError && isMissingRelationError(existingTransactionError.message)) {
+    return NextResponse.json({ received: true, setupRequired: true });
+  }
 
   if (!existingTransaction) {
     return NextResponse.json({ received: true });
@@ -76,7 +81,7 @@ export async function POST(request: Request) {
     const paidAt = event.data.completed_at ?? new Date().toISOString();
     const periodEndsAt = addDays(paidAt, plan.periodDays);
 
-    await adminClient
+    const completedUpdate = await adminClient
       .from("billing_transactions")
       .update({
         status: "completed",
@@ -91,6 +96,10 @@ export async function POST(request: Request) {
         period_ends_at: periodEndsAt,
       })
       .eq("id", billingTransactionId);
+
+    if (completedUpdate.error && isMissingRelationError(completedUpdate.error.message)) {
+      return NextResponse.json({ received: true, setupRequired: true });
+    }
 
     await adminClient
       .from("businesses")
@@ -108,7 +117,7 @@ export async function POST(request: Request) {
   }
 
   if (event.type === "payment.failed") {
-    await adminClient
+    const failedUpdate = await adminClient
       .from("billing_transactions")
       .update({
         status: "failed",
@@ -117,6 +126,10 @@ export async function POST(request: Request) {
         webhook_event_id: eventId,
       })
       .eq("id", billingTransactionId);
+
+    if (failedUpdate.error && isMissingRelationError(failedUpdate.error.message)) {
+      return NextResponse.json({ received: true, setupRequired: true });
+    }
   }
 
   return NextResponse.json({ received: true });
