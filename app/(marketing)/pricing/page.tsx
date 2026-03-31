@@ -6,6 +6,23 @@ import { startPlanCheckoutAction } from "./actions";
 
 const tiers = [
   {
+    key: "free" as PlanKey,
+    name: "Free",
+    price: "TZS 0",
+    period: "/forever",
+    description: "For new sellers who want to view the dashboard first before paying.",
+    badge: "Default after signup",
+    highlight: false,
+    features: [
+      "Dashboard access after signup",
+      "View orders, customers, and follow-ups",
+      "See payment and delivery status",
+      "Read-only account and settings",
+      "No adding or editing important records",
+      "Upgrade when ready to start working",
+    ],
+  },
+  {
     key: "starter" as PlanKey,
     name: "Starter",
     price: "TZS 29,000",
@@ -14,7 +31,7 @@ const tiers = [
     badge: "Good for beginners",
     highlight: false,
     features: [
-      "Unlocks dashboard access",
+      "Unlocks order and customer updates",
       "Orders, customers, and follow-ups",
       "Payment status tracking",
       "Packing / dispatch / delivery flow",
@@ -69,6 +86,14 @@ function CheckoutButton({
   currentStatus?: string | null;
   tierKey: PlanKey;
 }) {
+  if (tierKey === "free") {
+    return (
+      <span className="mt-6 inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-bold text-slate-700">
+        Included after signup
+      </span>
+    );
+  }
+
   const isCurrentPlan = currentPlan === tierKey && currentStatus === "active";
 
   if (!loggedIn) {
@@ -139,7 +164,7 @@ export default async function PricingPage({
 
           {resolvedSearch.status === "required" ? (
             <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-              {resolvedSearch.message || "Pay for any plan to start using the dashboard."}
+              {resolvedSearch.message || "You are on Free. Upgrade to a paid plan to add or edit records."}
             </div>
           ) : null}
 
@@ -161,10 +186,10 @@ export default async function PricingPage({
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-lg font-black text-slate-950">
-                    {business.billing_plan ? PLAN_CONFIG[business.billing_plan as PlanKey]?.name ?? business.billing_plan : "No active plan"}
+                    {business.billing_plan ? PLAN_CONFIG[business.billing_plan as PlanKey]?.name ?? business.billing_plan : "Free"}
                   </p>
                   <p className="text-sm text-slate-600">
-                    Status: {business.billing_status || "inactive"}
+                    Status: {business.billing_status || "free"}
                     {business.billing_current_period_ends_at
                       ? ` • Paid through ${new Date(business.billing_current_period_ends_at).toLocaleDateString()}`
                       : ""}
@@ -180,7 +205,7 @@ export default async function PricingPage({
             </div>
           ) : null}
 
-          <div className="mt-12 grid gap-6 lg:grid-cols-3">
+          <div className="mt-12 grid gap-6 lg:grid-cols-4">
             {tiers.map((tier) => (
               <div
                 key={tier.name}
@@ -284,7 +309,7 @@ export default async function PricingPage({
               That keeps checkout secure and keeps your plan state tied to the business record already used by the dashboard.
             </p>
             <p className="mt-3 text-sm font-semibold text-slate-700">
-              Dashboard access starts only after at least the Starter plan is active.
+              Free users can view the dashboard, but only paid plans can add or change important records.
             </p>
           </div>
         </div>

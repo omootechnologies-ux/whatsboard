@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useFormState } from "react-dom";
 
 type ActionState = {
@@ -22,6 +23,7 @@ function toLocalDateTime(value?: string | null) {
 export default function EditFollowUpForm({
   followUp,
   action,
+  canManageRecords = true,
 }: {
   followUp: {
     id: string;
@@ -30,11 +32,22 @@ export default function EditFollowUpForm({
     completed?: boolean | null;
   };
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
+  canManageRecords?: boolean;
 }) {
   const [state, formAction, isPending] = useFormState(action, initialState);
 
   return (
     <form action={formAction} className="grid gap-4 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+      {!canManageRecords ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Free plan is view-only. Upgrade to Starter or above to edit follow-ups.
+          <Link href="/pricing" className="ml-2 font-semibold underline">
+            Upgrade now
+          </Link>
+        </div>
+      ) : null}
+
+      <fieldset disabled={!canManageRecords} className="contents disabled:opacity-70">
       <label className="grid gap-2">
         <span className="text-sm font-semibold text-slate-700">Due date</span>
         <input name="dueAt" type="datetime-local" defaultValue={toLocalDateTime(followUp.due_at)} className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
@@ -56,6 +69,7 @@ export default function EditFollowUpForm({
       <button type="submit" disabled={isPending} className="inline-flex items-center justify-center rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">
         {isPending ? "Saving..." : "Save changes"}
       </button>
+      </fieldset>
     </form>
   );
 }

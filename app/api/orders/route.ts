@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getViewerContext } from "@/lib/queries";
-import { canAccessDashboardFeature } from "@/lib/plan-access";
+import { canManageImportantRecords } from "@/lib/plan-access";
 
 const createOrderSchema = z.object({
   customerName: z.string().min(1),
@@ -35,8 +35,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Business not found" }, { status: 401 });
     }
 
-    if (!isAdmin && !canAccessDashboardFeature("overview", business)) {
-      return NextResponse.json({ error: "Dashboard access required" }, { status: 403 });
+    if (!isAdmin && !canManageImportantRecords(business)) {
+      return NextResponse.json({ error: "Upgrade to a paid plan to create orders" }, { status: 403 });
     }
 
     const customerName = parsed.data.customerName.trim();

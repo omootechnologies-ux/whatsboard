@@ -1,4 +1,4 @@
-export type PlanKey = "starter" | "growth" | "business";
+export type PlanKey = "free" | "starter" | "growth" | "business";
 export type DashboardFeature =
   | "overview"
   | "orders"
@@ -23,6 +23,15 @@ export const PLAN_CONFIG: Record<
     description: string;
   }
 > = {
+  free: {
+    key: "free",
+    name: "Free",
+    priceLabel: "TZS 0",
+    amount: 0,
+    currency: "TZS",
+    periodDays: 0,
+    description: "Free read-only dashboard plan",
+  },
   starter: {
     key: "starter",
     name: "Starter",
@@ -53,18 +62,19 @@ export const PLAN_CONFIG: Record<
 };
 
 const PLAN_ORDER: Record<PlanKey, number> = {
+  free: 0,
   starter: 1,
   growth: 2,
   business: 3,
 };
 
 const FEATURE_MIN_PLAN: Record<DashboardFeature, PlanKey> = {
-  overview: "starter",
-  orders: "starter",
-  customers: "starter",
-  followUps: "starter",
-  settings: "starter",
-  account: "starter",
+  overview: "free",
+  orders: "free",
+  customers: "free",
+  followUps: "free",
+  settings: "free",
+  account: "free",
   catalog: "growth",
   aiCapture: "business",
   analytics: "business",
@@ -96,7 +106,7 @@ export function getPlanConfig(planKey: string) {
 }
 
 export function getPlanName(planKey?: string | null) {
-  if (!planKey) return null;
+  if (!planKey) return "Free";
   return getPlanConfig(planKey)?.name ?? planKey;
 }
 
@@ -126,16 +136,30 @@ export function isBillingActive(business?: BillingBusiness | null) {
   return endsAt >= Date.now();
 }
 
+export function getEffectivePlanKey(business?: BillingBusiness | null): PlanKey {
+  const rawPlan = business?.billing_plan?.trim().toLowerCase();
+
+  if (rawPlan === "free") {
+    return "free";
+  }
+
+  if (rawPlan && rawPlan in PLAN_CONFIG && isBillingActive(business)) {
+    return rawPlan as PlanKey;
+  }
+
+  return "free";
+}
+
+export function hasPaidPlan(business?: BillingBusiness | null) {
+  return getEffectivePlanKey(business) !== "free";
+}
+
+export function canManageImportantRecords(business?: BillingBusiness | null) {
+  return hasPaidPlan(business);
+}
+
 export function canAccessDashboardFeature(feature: DashboardFeature, business?: BillingBusiness | null) {
-  if (!isBillingActive(business)) {
-    return false;
-  }
-
-  const currentPlan = business?.billing_plan ? getPlanConfig(business.billing_plan)?.key ?? null : null;
-
-  if (!currentPlan) {
-    return false;
-  }
+  const currentPlan = getEffectivePlanKey(business);
 
   return PLAN_ORDER[currentPlan] >= PLAN_ORDER[FEATURE_MIN_PLAN[feature]];
 }

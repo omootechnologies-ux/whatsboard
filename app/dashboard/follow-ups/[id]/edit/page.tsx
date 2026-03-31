@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getDashboardWriteAccess } from "@/lib/dashboard-access";
 import { getViewerContext } from "@/lib/queries";
 import { updateFollowUpAction } from "@/app/dashboard/actions";
 import EditFollowUpForm from "@/components/forms/edit-follow-up-form";
@@ -12,6 +13,7 @@ export default async function EditFollowUpPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const { canManageRecords } = await getDashboardWriteAccess();
   const { supabase, businessId } = await getViewerContext();
   const { id } = await params;
 
@@ -41,7 +43,7 @@ export default async function EditFollowUpPage({
         </Link>
       </div>
 
-      <EditFollowUpForm followUp={followUp} action={updateFollowUpAction.bind(null, followUp.id)} />
+      <EditFollowUpForm followUp={followUp} action={updateFollowUpAction.bind(null, followUp.id)} canManageRecords={canManageRecords} />
     </div>
   );
 }

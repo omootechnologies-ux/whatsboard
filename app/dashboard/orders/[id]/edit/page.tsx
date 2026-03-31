@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getDashboardWriteAccess } from "@/lib/dashboard-access";
 import { getOrderCatalogOptions, getViewerContext } from "@/lib/queries";
 import UpdateOrderForm from "@/components/forms/update-order-form";
 
@@ -11,6 +12,7 @@ export default async function EditOrderPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const { canManageRecords } = await getDashboardWriteAccess();
   const { supabase, businessId } = await getViewerContext();
   const { id } = await params;
   const catalogProducts = businessId ? await getOrderCatalogOptions() : [];
@@ -67,7 +69,7 @@ export default async function EditOrderPage({
         </Link>
       </div>
 
-      <UpdateOrderForm order={normalizedOrder} catalogProducts={catalogProducts} />
+      <UpdateOrderForm order={normalizedOrder} catalogProducts={catalogProducts} canManageRecords={canManageRecords} />
     </div>
   );
 }

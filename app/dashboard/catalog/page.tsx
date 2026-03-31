@@ -1,7 +1,7 @@
 import { Boxes, MessageCircle } from "lucide-react";
 import CatalogProductForm from "@/components/forms/catalog-product-form";
 import { updateCatalogStockAction } from "@/app/dashboard/actions";
-import { requireDashboardFeatureAccess } from "@/lib/dashboard-access";
+import { getDashboardWriteAccess, requireDashboardFeatureAccess } from "@/lib/dashboard-access";
 import { getCatalogProductsData } from "@/lib/queries";
 import { formatTZS } from "@/lib/utils";
 
@@ -29,6 +29,7 @@ function getWhatsAppShareLink(businessName: string | null | undefined, product: 
 
 export default async function CatalogPage() {
   await requireDashboardFeatureAccess("catalog");
+  const { canManageRecords } = await getDashboardWriteAccess();
   const { business, products, setupRequired } = await getCatalogProductsData();
 
   return (
@@ -56,7 +57,7 @@ export default async function CatalogPage() {
         </div>
       </section>
 
-      <CatalogProductForm />
+      <CatalogProductForm canManageRecords={canManageRecords} />
 
       {setupRequired ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">

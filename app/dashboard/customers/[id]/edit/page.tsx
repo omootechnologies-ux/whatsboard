@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getDashboardWriteAccess } from "@/lib/dashboard-access";
 import { getViewerContext } from "@/lib/queries";
 import { updateCustomerAction } from "@/app/dashboard/actions";
 import EditCustomerForm from "@/components/forms/edit-customer-form";
@@ -12,6 +13,7 @@ export default async function EditCustomerPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const { canManageRecords } = await getDashboardWriteAccess();
   const { supabase, businessId } = await getViewerContext();
   const { id } = await params;
 
@@ -41,7 +43,7 @@ export default async function EditCustomerPage({
         </Link>
       </div>
 
-      <EditCustomerForm customer={customer} action={updateCustomerAction.bind(null, customer.id)} />
+      <EditCustomerForm customer={customer} action={updateCustomerAction.bind(null, customer.id)} canManageRecords={canManageRecords} />
     </div>
   );
 }

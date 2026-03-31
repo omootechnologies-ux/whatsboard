@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import {
   canAccessDashboardFeature,
+  canManageImportantRecords,
   getFeatureLabel,
   getMinimumPlanForFeature,
   getPlanName,
@@ -38,6 +39,25 @@ export async function requireDashboardFeatureAccess(feature: DashboardFeature) {
     const featureLabel = getFeatureLabel(feature);
     const message = `${featureLabel} requires the ${getPlanName(minimumPlan)} plan or higher.`;
     redirect(`/pricing?status=upgrade&message=${encodeURIComponent(message)}`);
+  }
+
+  return context;
+}
+
+export async function getDashboardWriteAccess() {
+  const context = await requireDashboardAccess();
+
+  return {
+    ...context,
+    canManageRecords: context.isAdmin || canManageImportantRecords(context.business),
+  };
+}
+
+export async function requireDashboardWriteAccess() {
+  const context = await getDashboardWriteAccess();
+
+  if (!context.canManageRecords) {
+    redirect("/pricing?status=upgrade&message=Upgrade%20to%20a%20paid%20plan%20to%20add%20or%20edit%20records");
   }
 
   return context;

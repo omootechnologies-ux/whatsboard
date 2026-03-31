@@ -67,15 +67,31 @@ export async function registerAction(
 
   const userId = createdUser.user.id;
 
-  const { data: business, error: businessError } = await adminClient
+  let businessInsert = await adminClient
     .from("businesses")
     .insert({
       owner_id: userId,
       name: businessName,
       referral_code: generateReferralCode(businessName, userId),
+      billing_plan: "free",
+      billing_status: "free",
     })
     .select("id")
     .single();
+
+  if (businessInsert.error && matchesMissingSchemaError(businessInsert.error.message)) {
+    businessInsert = await adminClient
+      .from("businesses")
+      .insert({
+        owner_id: userId,
+        name: businessName,
+        referral_code: generateReferralCode(businessName, userId),
+      })
+      .select("id")
+      .single();
+  }
+
+  const { data: business, error: businessError } = businessInsert;
 
   if (businessError || !business) {
     await adminClient.auth.admin.deleteUser(userId);

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useFormState } from "react-dom";
 
 type ActionState = {
@@ -15,6 +16,7 @@ const initialState: ActionState = {
 export default function EditCustomerForm({
   customer,
   action,
+  canManageRecords = true,
 }: {
   customer: {
     id: string;
@@ -25,11 +27,22 @@ export default function EditCustomerForm({
     status?: string | null;
   };
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
+  canManageRecords?: boolean;
 }) {
   const [state, formAction, isPending] = useFormState(action, initialState);
 
   return (
     <form action={formAction} className="grid gap-4 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+      {!canManageRecords ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Free plan is view-only. Upgrade to Starter or above to edit customers.
+          <Link href="/pricing" className="ml-2 font-semibold underline">
+            Upgrade now
+          </Link>
+        </div>
+      ) : null}
+
+      <fieldset disabled={!canManageRecords} className="contents disabled:opacity-70">
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-2">
           <span className="text-sm font-semibold text-slate-700">Name</span>
@@ -59,6 +72,7 @@ export default function EditCustomerForm({
       <button type="submit" disabled={isPending} className="inline-flex items-center justify-center rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">
         {isPending ? "Saving..." : "Save changes"}
       </button>
+      </fieldset>
     </form>
   );
 }

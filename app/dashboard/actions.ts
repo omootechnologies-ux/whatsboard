@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getViewerContext } from "@/lib/queries";
-import { canAccessDashboardFeature } from "@/lib/plan-access";
+import { canManageImportantRecords } from "@/lib/plan-access";
 
 type ActionState = {
   success: boolean;
@@ -41,11 +41,7 @@ async function getDashboardActionContext() {
     return null;
   }
 
-  if (context.isAdmin) {
-    return context;
-  }
-
-  if (!canAccessDashboardFeature("overview", context.business)) {
+  if (!context.isAdmin && !canManageImportantRecords(context.business)) {
     return null;
   }
 
@@ -280,7 +276,7 @@ export async function createOrderAction(
   formData: FormData
 ): Promise<ActionState> {
   const context = await getDashboardActionContext();
-  if (!context) return { success: false, error: "Dashboard access required." };
+  if (!context) return { success: false, error: "Upgrade to a paid plan to add or edit records." };
   const { supabase, businessId } = context;
 
   const customerName = String(formData.get("customerName") || "").trim();
@@ -314,7 +310,7 @@ export async function createOrderAction(
 
 export async function updateOrderStageAction(id: string, stage: string) {
   const context = await getDashboardActionContext();
-  if (!context) throw new Error("Dashboard access required.");
+  if (!context) throw new Error("Upgrade to a paid plan to update records.");
   const supabase = await createClient();
 
   const { error } = await supabase.from("orders").update({ stage }).eq("id", id);
@@ -332,7 +328,7 @@ export async function updateOrderAction(
   formData: FormData
 ): Promise<ActionState> {
   const context = await getDashboardActionContext();
-  if (!context) return { success: false, error: "Dashboard access required." };
+  if (!context) return { success: false, error: "Upgrade to a paid plan to add or edit records." };
   const { supabase, businessId } = context;
 
   const customerName = String(formData.get("customerName") || "").trim();
@@ -533,7 +529,7 @@ export async function updateCustomerAction(
   formData: FormData
 ): Promise<ActionState> {
   const context = await getDashboardActionContext();
-  if (!context) return { success: false, error: "Dashboard access required." };
+  if (!context) return { success: false, error: "Upgrade to a paid plan to add or edit records." };
   const { supabase, businessId } = context;
 
   const payload = {
@@ -567,7 +563,7 @@ export async function updateFollowUpAction(
   formData: FormData
 ): Promise<ActionState> {
   const context = await getDashboardActionContext();
-  if (!context) return { success: false, error: "Dashboard access required." };
+  if (!context) return { success: false, error: "Upgrade to a paid plan to add or edit records." };
   const { supabase, businessId } = context;
 
   const dueAtRaw = String(formData.get("dueAt") || "").trim();
@@ -603,7 +599,7 @@ export async function createCatalogProductAction(
   formData: FormData
 ): Promise<ActionState> {
   const context = await getDashboardActionContext();
-  if (!context) return { success: false, error: "Dashboard access required." };
+  if (!context) return { success: false, error: "Upgrade to a paid plan to add or edit records." };
   const { supabase, businessId } = context;
 
   const name = String(formData.get("name") || "").trim();
@@ -667,7 +663,7 @@ export async function updateCatalogStockAction(id: string, formData: FormData) {
 
 export async function completeFollowUpAction(id: string) {
   const context = await getDashboardActionContext();
-  if (!context) throw new Error("Dashboard access required.");
+  if (!context) throw new Error("Upgrade to a paid plan to update records.");
   const { supabase, businessId } = context;
 
   const { error } = await supabase
@@ -690,7 +686,7 @@ export async function saveAiOrderCaptureAction(
   formData: FormData
 ): Promise<ActionState> {
   const context = await getDashboardActionContext();
-  if (!context) return { success: false, error: "Dashboard access required." };
+  if (!context) return { success: false, error: "Upgrade to a paid plan to add or edit records." };
   const { supabase, businessId } = context;
 
   const customerName = String(formData.get("customerName") || "").trim();

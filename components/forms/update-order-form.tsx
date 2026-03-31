@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useFormState } from "react-dom";
 import { updateOrderAction } from "@/app/dashboard/actions";
@@ -38,9 +39,11 @@ const initialState: ActionState = {
 export default function UpdateOrderForm({
   order,
   catalogProducts = [],
+  canManageRecords = true,
 }: {
   order: OrderRecord;
   catalogProducts?: CatalogOption[];
+  canManageRecords?: boolean;
 }) {
   const action = updateOrderAction.bind(null, order.id);
   const [state, formAction, isPending] = useFormState(action, initialState);
@@ -51,6 +54,16 @@ export default function UpdateOrderForm({
 
   return (
     <form action={formAction} className="grid gap-4 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+      {!canManageRecords ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Free plan is view-only. Upgrade to Starter or above to edit orders.
+          <Link href="/pricing" className="ml-2 font-semibold underline">
+            Upgrade now
+          </Link>
+        </div>
+      ) : null}
+
+      <fieldset disabled={!canManageRecords} className="contents disabled:opacity-70">
       <div className="grid gap-4 md:grid-cols-2">
         <label className="grid gap-2">
           <span className="text-sm font-semibold text-slate-700">Customer name</span>
@@ -165,6 +178,7 @@ export default function UpdateOrderForm({
       <button type="submit" disabled={isPending} className="inline-flex items-center justify-center rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">
         {isPending ? "Saving..." : "Save changes"}
       </button>
+      </fieldset>
     </form>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { createOrderAction } from "@/app/dashboard/actions";
@@ -35,8 +36,10 @@ function SubmitButton() {
 
 export function OrderForm({
   catalogProducts = [],
+  canManageRecords = true,
 }: {
   catalogProducts?: CatalogOption[];
+  canManageRecords?: boolean;
 }) {
   const [state, formAction] = useFormState(createOrderAction, {
     error: null,
@@ -49,6 +52,16 @@ export function OrderForm({
 
   return (
     <form action={formAction} className="grid gap-4 md:grid-cols-2">
+      {!canManageRecords ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 md:col-span-2">
+          You are on the Free plan. Upgrade to Starter or above to create orders and follow-ups.
+          <Link href="/pricing" className="ml-2 font-semibold underline">
+            Upgrade now
+          </Link>
+        </div>
+      ) : null}
+
+      <fieldset disabled={!canManageRecords} className="contents disabled:opacity-70">
       <input name="customerName" placeholder="Customer name" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3" />
       <input name="phone" placeholder="Phone number" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3" />
       <input name="area" placeholder="Delivery area" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3" />
@@ -142,6 +155,7 @@ export function OrderForm({
       <div className="md:col-span-2">
         <SubmitButton />
       </div>
+      </fieldset>
     </form>
   );
 }

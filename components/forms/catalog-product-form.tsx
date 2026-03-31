@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useFormState } from "react-dom";
 import { createCatalogProductAction } from "@/app/dashboard/actions";
@@ -16,7 +17,11 @@ const initialState: ActionState = {
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 
-export default function CatalogProductForm() {
+export default function CatalogProductForm({
+  canManageRecords = true,
+}: {
+  canManageRecords?: boolean;
+}) {
   const [state, formAction, isPending] = useFormState(createCatalogProductAction, initialState);
   const [imageUrl, setImageUrl] = useState("");
   const [fileError, setFileError] = useState<string | null>(null);
@@ -51,6 +56,16 @@ export default function CatalogProductForm() {
 
   return (
     <form action={formAction} className="grid gap-4 rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
+      {!canManageRecords ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Upgrade to Growth or above to add catalog products and manage stock.
+          <Link href="/pricing" className="ml-2 font-semibold underline">
+            Upgrade now
+          </Link>
+        </div>
+      ) : null}
+
+      <fieldset disabled={!canManageRecords} className="contents disabled:opacity-70">
       <div>
         <p className="text-sm font-semibold text-slate-900">Add product</p>
         <p className="mt-1 text-xs text-slate-500">Upload one product image smaller than 5MB or paste a direct image URL.</p>
@@ -101,6 +116,7 @@ export default function CatalogProductForm() {
       >
         {isPending ? "Saving..." : "Add product"}
       </button>
+      </fieldset>
     </form>
   );
 }

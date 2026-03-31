@@ -2,7 +2,7 @@ import Link from "next/link";
 import { UserCircle2, Building2, Mail, Phone, Palette, Coins, CalendarDays, CreditCard, LogOut } from "lucide-react";
 import { getAccountData } from "@/lib/queries";
 import { logoutAction } from "@/app/(auth)/actions";
-import { canAccessDashboardFeature } from "@/lib/plan-access";
+import { canAccessDashboardFeature, getPlanName } from "@/lib/plan-access";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -135,11 +135,13 @@ export default async function AccountPage() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs text-slate-500">Current plan</p>
-            <p className="mt-2 font-medium capitalize text-slate-900">{business?.billing_plan ?? "No active plan"}</p>
+            <p className="mt-2 font-medium capitalize text-slate-900">
+              {getPlanName(business?.billing_plan)}
+            </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs text-slate-500">Billing status</p>
-            <p className="mt-2 font-medium capitalize text-slate-900">{business?.billing_status ?? "inactive"}</p>
+            <p className="mt-2 font-medium capitalize text-slate-900">{business?.billing_status ?? "free"}</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs text-slate-500">Paid through</p>

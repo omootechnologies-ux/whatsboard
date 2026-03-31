@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, BellRing, Pencil, Plus, Wallet } from "lucide-react";
+import { getDashboardWriteAccess } from "@/lib/dashboard-access";
 import { getDashboardData } from "@/lib/queries";
 import { formatTZS } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ function badge(stage: string) {
 }
 
 export default async function OrdersPage() {
+  const { canManageRecords } = await getDashboardWriteAccess();
   const { orders } = await getDashboardData();
   const unpaidValue = orders
     .filter((order) => order.paymentStatus !== "paid")
@@ -37,11 +39,11 @@ export default async function OrdersPage() {
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link
-              href="/dashboard/orders/new"
+              href={canManageRecords ? "/dashboard/orders/new" : "/pricing?status=upgrade&message=Upgrade%20to%20a%20paid%20plan%20to%20create%20orders"}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:opacity-95"
             >
               <Plus className="h-4 w-4" />
-              New Order
+              {canManageRecords ? "New Order" : "Upgrade to create"}
             </Link>
             <Link
               href="/dashboard/follow-ups"
@@ -74,6 +76,15 @@ export default async function OrdersPage() {
           <p className="mt-2 text-sm text-slate-500">{orders.length} total orders currently tracked.</p>
         </div>
       </section>
+
+      {!canManageRecords ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          You are on Free. You can review orders here, but adding or editing records needs a paid plan.
+          <Link href="/pricing" className="ml-2 font-semibold underline">
+            Upgrade now
+          </Link>
+        </div>
+      ) : null}
 
       <section className="space-y-4 md:hidden">
         {orders.length > 0 ? (

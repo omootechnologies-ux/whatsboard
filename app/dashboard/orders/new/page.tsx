@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { OrderForm } from "@/components/forms/order-form";
+import { getDashboardWriteAccess } from "@/lib/dashboard-access";
 import { getOrderCatalogOptions } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function NewOrderPage() {
+  const { canManageRecords } = await getDashboardWriteAccess();
   const catalogProducts = await getOrderCatalogOptions();
 
   return (
@@ -29,7 +31,7 @@ export default async function NewOrderPage() {
       </div>
 
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <OrderForm catalogProducts={catalogProducts} />
+        <OrderForm catalogProducts={catalogProducts} canManageRecords={canManageRecords} />
       </section>
     </div>
   );
