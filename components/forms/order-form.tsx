@@ -35,7 +35,7 @@ export function OrderForm() {
       <input name="customerName" placeholder="Customer name" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3" />
       <input name="phone" placeholder="Phone number" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3" />
       <input name="area" placeholder="Delivery area" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3" />
-      <input name="productName" placeholder="Product or service" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3" />
+      <input name="product" placeholder="Product or service" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3" />
       <input name="amount" type="number" placeholder="Amount" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3" />
       <select name="stage" defaultValue="new_order" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3">
         {ORDER_STAGES.map((stage) => (

@@ -6,7 +6,9 @@ const createOrderSchema = z.object({
   customerName: z.string().min(1),
   phone: z.string().min(1),
   area: z.string().optional().default(""),
-  product: z.string().min(1),
+  product: z.string().optional(),
+  productName: z.string().optional(),
+  product_name: z.string().optional(),
   amount: z.coerce.number().min(0),
   stage: z.string().optional().default("new_order"),
   paymentStatus: z.string().optional().default("unpaid"),
@@ -34,6 +36,18 @@ export async function POST(request: Request) {
     const customerName = parsed.data.customerName.trim();
     const phone = parsed.data.phone.trim();
     const area = parsed.data.area?.trim() ?? "";
+    const product =
+      parsed.data.product?.trim() ||
+      parsed.data.productName?.trim() ||
+      parsed.data.product_name?.trim() ||
+      "";
+
+    if (!product) {
+      return NextResponse.json(
+        { error: "Product name is required" },
+        { status: 400 }
+      );
+    }
 
     let customerId: string | null = null;
 
@@ -82,7 +96,7 @@ export async function POST(request: Request) {
       .insert({
         business_id: businessId,
         customer_id: customerId,
-        product_name: parsed.data.product.trim(),
+        product_name: product,
         amount: parsed.data.amount,
         delivery_area: area,
         stage: parsed.data.stage,
