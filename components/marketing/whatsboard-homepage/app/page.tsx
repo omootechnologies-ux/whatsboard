@@ -247,8 +247,8 @@ export default function WhatsBoardHomepage() {
 function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-[#E8E8E2]/80 bg-[#FAFAF7]/88 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-        <Link href="/" className="text-sm font-semibold uppercase tracking-[0.28em] text-[#111111]">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
+        <Link href="/" className="text-xs font-semibold uppercase tracking-[0.24em] text-[#111111] sm:text-sm sm:tracking-[0.28em]">
           WhatsBoard
         </Link>
 
@@ -270,13 +270,13 @@ function Navbar() {
         <div className="flex items-center gap-2">
           <Link
             href="/login"
-            className="rounded-full border border-[#E8E8E2] bg-white px-4 py-2 text-sm text-[#0A3D2E] transition hover:bg-[#F2F3EE]"
+            className="rounded-full border border-[#E8E8E2] bg-white px-3 py-2 text-xs text-[#0A3D2E] transition hover:bg-[#F2F3EE] sm:px-4 sm:text-sm"
           >
             Log in
           </Link>
           <Link
             href="/register"
-            className="rounded-full bg-[#0F5D46] px-4 py-2 text-sm text-white transition hover:bg-[#0A3D2E]"
+            className="rounded-full bg-[#0F5D46] px-3 py-2 text-xs text-white transition hover:bg-[#0A3D2E] sm:px-4 sm:text-sm"
           >
             Start Free
           </Link>
@@ -289,7 +289,7 @@ function Navbar() {
 function Hero() {
   return (
     <section className="relative overflow-hidden">
-      <div className="mx-auto grid max-w-7xl gap-14 px-4 py-18 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:py-24">
+      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:py-20 xl:gap-14 xl:py-24">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -300,7 +300,7 @@ function Hero() {
           <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-[#5E6461]">
             Commerce operating system
           </p>
-          <h1 className="mt-5 text-5xl leading-[0.94] font-semibold tracking-[-0.08em] text-[#111111] sm:text-7xl">
+          <h1 className="mt-5 text-[2.6rem] leading-[0.96] font-semibold tracking-[-0.07em] text-[#111111] sm:text-6xl lg:text-[4.25rem] xl:text-7xl">
             WhatsBoard turns sales from messy chats into a clear business system.
           </h1>
           <p className="mt-6 max-w-xl text-base leading-8 text-[#5E6461]">
@@ -323,22 +323,22 @@ function Hero() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.55, ease: "easeOut", delay: 0.05 }}
-          className="relative min-h-[32rem]"
+          className="relative min-h-[36rem] sm:min-h-[40rem] lg:min-h-[32rem] xl:min-h-[36rem]"
         >
           <div className="absolute inset-0 rounded-[2.6rem] bg-[radial-gradient(circle_at_top_right,rgba(15,93,70,0.16),transparent_32%),linear-gradient(180deg,#ffffff,#f4f5ef)]" />
-          <FloatingPanel className="left-0 top-6 w-[56%]">
+          <FloatingPanel className="left-0 top-6 w-[68%] sm:w-[56%]">
             <OrderPreviewCard order={orders[0]} />
           </FloatingPanel>
-          <FloatingPanel className="right-0 top-0 w-[48%] delay-100">
+          <FloatingPanel className="right-0 top-0 w-[58%] sm:w-[48%] delay-100">
             <PaymentPreviewCard order={orders[1]} />
           </FloatingPanel>
-          <FloatingPanel className="left-[8%] top-[41%] w-[52%] delay-150">
+          <FloatingPanel className="left-[4%] top-[38%] w-[64%] sm:left-[8%] sm:top-[41%] sm:w-[52%] delay-150">
             <CustomerPreviewCard customer={customers[0]} />
           </FloatingPanel>
-          <FloatingPanel className="right-[4%] top-[38%] w-[42%] delay-200">
+          <FloatingPanel className="right-[2%] top-[34%] w-[54%] sm:right-[4%] sm:top-[38%] sm:w-[42%] delay-200">
             <FollowUpPreviewCard item={followUps[0]} />
           </FloatingPanel>
-          <FloatingPanel className="left-[18%] bottom-0 w-[60%] delay-300">
+          <FloatingPanel className="left-[10%] bottom-0 w-[72%] sm:left-[18%] sm:w-[60%] delay-300">
             <DispatchPreviewCard delivery={deliveries[1]} />
           </FloatingPanel>
         </motion.div>
@@ -361,7 +361,7 @@ function ChaosSection() {
           <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5E6461]">
             Social commerce chaos
           </p>
-          <h2 className="mt-4 text-4xl leading-[0.98] font-semibold tracking-[-0.07em] text-[#111111] sm:text-6xl">
+          <h2 className="mt-4 text-[2.3rem] leading-[1] font-semibold tracking-[-0.06em] text-[#111111] sm:text-5xl xl:text-6xl">
             Your business is growing. Your system is not.
           </h2>
           <p className="mt-5 text-base leading-8 text-[#5E6461]">
@@ -423,7 +423,7 @@ function TransformationSection() {
           <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5E6461]">
             Product transformation
           </p>
-          <h2 className="mt-4 text-4xl leading-[0.98] font-semibold tracking-[-0.07em] text-[#111111] sm:text-6xl">
+          <h2 className="mt-4 text-[2.3rem] leading-[1] font-semibold tracking-[-0.06em] text-[#111111] sm:text-5xl xl:text-6xl">
             WhatsBoard organizes the business into one clean operational flow.
           </h2>
           <p className="mt-5 text-base leading-8 text-[#5E6461]">
@@ -431,7 +431,7 @@ function TransformationSection() {
           </p>
         </motion.div>
 
-        <div className="mt-12 grid gap-4 lg:grid-cols-5">
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {steps.map((step, index) => (
             <motion.div
               key={step}
@@ -442,7 +442,7 @@ function TransformationSection() {
               className="rounded-[1.6rem] border border-[#E8E8E2] bg-white p-5 shadow-[0_18px_40px_rgba(17,17,17,0.04)]"
             >
               <p className="text-[11px] uppercase tracking-[0.2em] text-[#5E6461]">Step {index + 1}</p>
-              <p className="mt-6 text-2xl font-semibold tracking-[-0.05em] text-[#111111]">{step}</p>
+              <p className="mt-6 text-xl font-semibold tracking-[-0.04em] text-[#111111] sm:text-2xl">{step}</p>
             </motion.div>
           ))}
         </div>
@@ -465,7 +465,7 @@ function ProductShowcase() {
           <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5E6461]">
             Product showcase
           </p>
-          <h2 className="mt-4 text-4xl leading-[0.98] font-semibold tracking-[-0.07em] text-[#111111] sm:text-6xl">
+          <h2 className="mt-4 text-[2.3rem] leading-[1] font-semibold tracking-[-0.06em] text-[#111111] sm:text-5xl xl:text-6xl">
             Real product surfaces, not decorative screenshots.
           </h2>
           <p className="mt-5 text-base leading-8 text-[#5E6461]">
@@ -474,7 +474,7 @@ function ProductShowcase() {
           </p>
         </motion.div>
 
-        <div className="mt-12 grid gap-5 lg:grid-cols-[1.12fr_0.88fr]">
+        <div className="mt-12 grid gap-5 xl:grid-cols-[1.12fr_0.88fr]">
           <ShowcasePanel title="Order pipeline" meta="Structured flow">
             <PipelinePreview />
           </ShowcasePanel>
@@ -507,7 +507,7 @@ function FeatureGrid() {
           <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5E6461]">
             Feature grid
           </p>
-          <h2 className="mt-4 text-4xl leading-[0.98] font-semibold tracking-[-0.07em] text-[#111111] sm:text-6xl">
+          <h2 className="mt-4 text-[2.3rem] leading-[1] font-semibold tracking-[-0.06em] text-[#111111] sm:text-5xl xl:text-6xl">
             Built for the real pain of chat-first selling.
           </h2>
         </motion.div>
@@ -594,7 +594,7 @@ function TestimonialsSection() {
           <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5E6461]">
             Testimonials
           </p>
-          <h2 className="mt-4 text-4xl leading-[0.98] font-semibold tracking-[-0.07em] text-[#111111] sm:text-6xl">
+          <h2 className="mt-4 text-[2.3rem] leading-[1] font-semibold tracking-[-0.06em] text-[#111111] sm:text-5xl xl:text-6xl">
             Practical outcomes sellers can feel quickly.
           </h2>
         </motion.div>
@@ -649,12 +649,12 @@ function PricingSection() {
           <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5E6461]">
             Pricing
           </p>
-          <h2 className="mt-4 text-4xl leading-[0.98] font-semibold tracking-[-0.07em] text-[#111111] sm:text-6xl">
+          <h2 className="mt-4 text-[2.3rem] leading-[1] font-semibold tracking-[-0.06em] text-[#111111] sm:text-5xl xl:text-6xl">
             Simple plans for sellers who want more control.
           </h2>
         </motion.div>
 
-        <div className="mt-12 grid gap-4 lg:grid-cols-4">
+        <div className="mt-12 grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
           {pricing.map((tier, index) => (
             <motion.div
               key={tier.name}
@@ -666,19 +666,19 @@ function PricingSection() {
                 tier.highlight ? "border-[#0F5D46]/26 shadow-[0_24px_70px_rgba(15,93,70,0.08)]" : "border-[#E8E8E2]"
               }`}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
                   <p className="text-xs uppercase tracking-[0.22em] text-[#5E6461]">{tier.name}</p>
-                  <h3 className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-[#111111]">
+                  <h3 className="mt-3 break-words text-3xl font-semibold tracking-[-0.05em] text-[#111111] sm:text-4xl">
                     {tier.priceLabel}
                   </h3>
                 </div>
                 {tier.highlight ? (
-                  <span className="rounded-full bg-[#0F5D46] px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-white">
+                  <span className="inline-flex max-w-full self-start rounded-full bg-[#0F5D46] px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-white sm:tracking-[0.2em]">
                     {tier.badge}
                   </span>
                 ) : tier.badge ? (
-                  <span className="rounded-full border border-[#E8E8E2] bg-[#F7F7F2] px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-[#0F5D46]">
+                  <span className="inline-flex max-w-full self-start rounded-full border border-[#E8E8E2] bg-[#F7F7F2] px-3 py-1 text-[11px] uppercase tracking-[0.16em] text-[#0F5D46] sm:tracking-[0.2em]">
                     {tier.badge}
                   </span>
                 ) : null}
@@ -724,7 +724,7 @@ function FinalCTA() {
           <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5E6461]">
             Final call
           </p>
-          <h2 className="mt-4 text-4xl leading-[0.98] font-semibold tracking-[-0.07em] text-[#111111] sm:text-6xl">
+          <h2 className="mt-4 text-[2.3rem] leading-[1] font-semibold tracking-[-0.06em] text-[#111111] sm:text-5xl xl:text-6xl">
             Chats help you sell. WhatsBoard helps you scale.
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-[#5E6461]">
@@ -746,7 +746,7 @@ function Footer() {
     <footer className="border-t border-[#E8E8E2] bg-[#FAFAF7]">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.2fr_1fr_1fr_1fr]">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#111111]">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#111111] sm:text-sm sm:tracking-[0.28em]">
             WhatsBoard
           </p>
           <p className="mt-4 max-w-xs text-sm leading-7 text-[#5E6461]">
@@ -795,7 +795,7 @@ function FloatingPanel({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.2 }}
       transition={{ duration: 0.45, ease: "easeOut" }}
-      className={`absolute rounded-[1.7rem] border border-[#E8E8E2] bg-white p-4 shadow-[0_28px_70px_rgba(17,17,17,0.08)] ${className}`}
+      className={`absolute rounded-[1.4rem] border border-[#E8E8E2] bg-white p-3 shadow-[0_24px_56px_rgba(17,17,17,0.08)] sm:rounded-[1.7rem] sm:p-4 ${className}`}
     >
       {children}
     </motion.div>
@@ -806,7 +806,7 @@ function OrderPreviewCard({ order }: { order: OrderRecord }) {
   return (
     <div className="space-y-4">
       <PanelHeader title="New order" badge={order.source} />
-      <p className="text-2xl font-semibold tracking-[-0.05em] text-[#111111]">{order.customer}</p>
+      <p className="text-xl font-semibold tracking-[-0.04em] text-[#111111] sm:text-2xl">{order.customer}</p>
       <div className="grid gap-2 text-sm text-[#5E6461]">
         <MetaRow label="Order ID" value={order.id} />
         <MetaRow label="Total" value={order.total} />
@@ -835,7 +835,7 @@ function CustomerPreviewCard({ customer }: { customer: CustomerRecord }) {
   return (
     <div className="space-y-4">
       <PanelHeader title="Customer record" badge={customer.history} />
-      <p className="text-lg font-semibold tracking-[-0.04em] text-[#111111]">{customer.name}</p>
+      <p className="text-base font-semibold tracking-[-0.03em] text-[#111111] sm:text-lg">{customer.name}</p>
       <div className="grid gap-2 text-sm text-[#5E6461]">
         <MetaRow label="Phone" value={customer.phone} />
         <MetaRow label="Last order" value={customer.lastOrder} />
@@ -860,7 +860,7 @@ function DispatchPreviewCard({ delivery }: { delivery: DeliveryRecord }) {
   return (
     <div className="space-y-4">
       <PanelHeader title="Dispatch" badge="Operational" />
-      <p className="text-lg font-semibold tracking-[-0.04em] text-[#111111]">{delivery.orderId}</p>
+      <p className="text-base font-semibold tracking-[-0.03em] text-[#111111] sm:text-lg">{delivery.orderId}</p>
       <div className="grid gap-2 text-sm text-[#5E6461]">
         <MetaRow label="Customer" value={delivery.customer} />
         <MetaRow label="Area" value={delivery.area} />
@@ -887,9 +887,9 @@ function ShowcasePanel({
       transition={{ duration: 0.45 }}
       className="rounded-[1.8rem] border border-[#E8E8E2] bg-white p-5 shadow-[0_20px_50px_rgba(17,17,17,0.04)]"
     >
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-[#5E6461]">{title}</p>
-        <p className="text-[11px] uppercase tracking-[0.22em] text-[#5E6461]">{meta}</p>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-[#5E6461] sm:tracking-[0.22em]">{title}</p>
+        <p className="text-[11px] uppercase tracking-[0.18em] text-[#5E6461] sm:text-right sm:tracking-[0.22em]">{meta}</p>
       </div>
       <div className="mt-5">{children}</div>
     </motion.div>
@@ -924,13 +924,13 @@ function CustomerTablePreview() {
       {customers.map((customer) => (
         <div key={customer.id} className="rounded-[1rem] border border-[#E8E8E2] bg-[#F9F9F5] px-3 py-3">
           <div className="flex items-center justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <p className="font-medium text-[#111111]">{customer.name}</p>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#5E6461]">
+              <p className="mt-1 break-all text-[11px] uppercase tracking-[0.12em] text-[#5E6461] sm:tracking-[0.16em]">
                 {customer.phone}
               </p>
             </div>
-            <span className="rounded-full border border-[#E8E8E2] bg-white px-2 py-1 text-[11px] uppercase tracking-[0.16em] text-[#0F5D46]">
+            <span className="shrink-0 rounded-full border border-[#E8E8E2] bg-white px-2 py-1 text-[11px] uppercase tracking-[0.12em] text-[#0F5D46] sm:tracking-[0.16em]">
               {customer.history}
             </span>
           </div>
@@ -946,7 +946,7 @@ function PaymentListPreview() {
       {orders.map((order) => (
         <div key={order.id} className="rounded-[1rem] border border-[#E8E8E2] bg-[#F9F9F5] px-3 py-3">
           <div className="flex items-center justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <p className="font-medium text-[#111111]">{order.customer}</p>
               <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#5E6461]">{order.total}</p>
             </div>
@@ -964,9 +964,9 @@ function DispatchListPreview() {
       {deliveries.map((delivery) => (
         <div key={delivery.id} className="rounded-[1rem] border border-[#E8E8E2] bg-[#F9F9F5] px-3 py-3">
           <div className="flex items-center justify-between gap-3">
-            <div>
+            <div className="min-w-0">
               <p className="font-medium text-[#111111]">{delivery.orderId}</p>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#5E6461]">
+              <p className="mt-1 text-[11px] uppercase tracking-[0.12em] text-[#5E6461] sm:tracking-[0.16em]">
                 {delivery.customer} • {delivery.area}
               </p>
             </div>
@@ -1002,7 +1002,7 @@ function ComparisonCard({
       }`}
     >
       <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5E6461]">{label}</p>
-      <h3 className="mt-4 text-3xl leading-tight font-semibold tracking-[-0.06em] text-[#111111]">
+      <h3 className="mt-4 text-[1.7rem] leading-tight font-semibold tracking-[-0.05em] text-[#111111] sm:text-3xl">
         {title}
       </h3>
       <div className="mt-6 grid gap-3">
@@ -1042,9 +1042,9 @@ function FooterColumn({
 
 function PanelHeader({ title, badge }: { title: string; badge: string }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <p className="text-[11px] uppercase tracking-[0.2em] text-[#5E6461]">{title}</p>
-      <span className="rounded-full border border-[#E8E8E2] bg-[#F7F7F2] px-2 py-1 text-[11px] uppercase tracking-[0.16em] text-[#0F5D46]">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-[11px] uppercase tracking-[0.16em] text-[#5E6461] sm:tracking-[0.2em]">{title}</p>
+      <span className="inline-flex max-w-full self-start rounded-full border border-[#E8E8E2] bg-[#F7F7F2] px-2 py-1 text-[11px] uppercase tracking-[0.12em] text-[#0F5D46] sm:tracking-[0.16em]">
         {badge}
       </span>
     </div>
@@ -1053,9 +1053,9 @@ function PanelHeader({ title, badge }: { title: string; badge: string }) {
 
 function MetaRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <span>{label}</span>
-      <span className="font-medium text-[#111111]">{value}</span>
+    <div className="flex items-start justify-between gap-3">
+      <span className="min-w-0">{label}</span>
+      <span className="max-w-[55%] break-words text-right font-medium text-[#111111]">{value}</span>
     </div>
   );
 }
@@ -1121,7 +1121,7 @@ function ChaosTile({
           : "border-[#E8E8E2] bg-white"
       }`}
     >
-      <p className="text-2xl font-semibold tracking-[-0.05em] text-[#111111]">{title}</p>
+      <p className="text-xl font-semibold tracking-[-0.04em] text-[#111111] sm:text-2xl">{title}</p>
       <p className="mt-3 text-sm leading-7 text-[#5E6461]">{detail}</p>
     </div>
   );
