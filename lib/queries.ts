@@ -353,3 +353,112 @@ export async function getOrderCatalogOptions() {
     isActive: Boolean(item.is_active),
   }));
 }
+
+export async function getAnalyticsData() {
+  const [{ orders, metrics }, customers] = await Promise.all([
+    getDashboardData(),
+    getCustomersData(),
+  ]);
+
+  const now = new Date();
+  const dailyMap = new Map<string, { day: string; revenue: number; orders: number }>();
+
+  for (let offset = 6; offset >= 0; offset -= 1) {
+    const date = new Date(now);
+    date.setDate(now.getDate() - offset);
+    const key = date.toISOString().slice(0, 10);
+    dailyMap.set(key, {
+      day: date.toLocaleDateString("en-US", { weekday: "short" }),
+      revenue: 0,
+      orders: 0,
+    });
+  }
+
+  const paymentMixMap = new Map<string, number>([
+    ["Paid", 0],
+    ["Unpaid", 0],
+    ["Partial", 0],
+    ["COD", 0],
+  ]);
+
+  const areaMap = new Map<string, number>();
+  const stageMap = new Map<string, number>([
+    ["new_order", 0],
+    ["waiting_payment", 0],
+    ["paid", 0],
+    ["packing", 0],
+    ["dispatched", 0],
+    ["delivered", 0],
+  ]);
+
+  for (const order of orders) {
+    const orderDateKey = new Date(order.createdAt).toISOString().slice(0, 10);
+    const dayBucket = dailyMap.get(orderDateKey);
+
+    if (dayBucket) {
+      dayBucket.orders += 1;
+      if (order.paymentStatus === "paid" || order.paymentStatus === "cod") {
+        dayBucket.revenue += order.amount;
+      }
+    }
+
+    const paymentLabel =
+      order.paymentStatus === "paid"
+        ? "Paid"
+        : order.paymentStatus === "partial"
+        ? "Partial"
+        : order.paymentStatus === "cod"
+        ? "COD"
+        : "Unpaid";
+    paymentMixMap.set(paymentLabel, (paymentMixMap.get(paymentLabel) ?? 0) + 1);
+
+    const areaLabel = order.area?.trim() || "Unknown";
+    areaMap.set(areaLabel, (areaMap.get(areaLabel) ?? 0) + 1);
+
+    if (stageMap.has(order.stage)) {
+      stageMap.set(order.stage, (stageMap.get(order.stage) ?? 0) + 1);
+    }
+  }
+
+  const revenueData = Array.from(dailyMap.values());
+  const paymentMix = Array.from(paymentMixMap.entries())
+    .map(([name, value]) => ({ name, value }))
+    .filter((entry) => entry.value > 0);
+  const areaData = Array.from(areaMap.entries())
+    .map(([area, count]) => ({ area, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6);
+
+  const bestDay = revenueData.reduce(
+    (best, item) => (item.revenue > best.revenue ? item : best),
+    revenueData[0] ?? { day: "N/A", revenue: 0, orders: 0 }
+  );
+
+  const highestStage = Array.from(stageMap.entries()).reduce(
+    (best, entry) => (entry[1] > best[1] ? entry : best),
+    ["new_order", 0] as [string, number]
+  );
+
+  const repeatCustomers = customers.filter((customer) => customer.isRepeat).length;
+  const dormantCustomers = customers.filter((customer) => {
+    const lastOrderTime = new Date(customer.lastOrderDate).getTime();
+    return Number.isFinite(lastOrderTime) && now.getTime() - lastOrderTime >= 30 * 24 * 60 * 60 * 1000;
+  }).length;
+
+  return {
+    orders,
+    customers,
+    metrics,
+    revenueData,
+    paymentMix,
+    areaData,
+    summary: {
+      bestDay: bestDay.day,
+      bestDayRevenue: bestDay.revenue,
+      bestDayOrders: bestDay.orders,
+      topStage: highestStage[0],
+      repeatCustomers,
+      dormantCustomers,
+    },
+  };
+}
