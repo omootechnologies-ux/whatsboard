@@ -1,74 +1,84 @@
 import type { CSSProperties, ReactNode } from 'react'
 import Link from 'next/link'
 
-const problemPanels = [
-  { title: 'Order gets lost', line: 'One DM. One screenshot. Gone.', type: 'lost' as const },
-  { title: 'Customer waits', line: 'Umeniona? Hello? Reply?', type: 'waiting' as const },
-  { title: 'Who paid?', line: 'Proof iko juu somewhere.', type: 'payment' as const },
-  { title: 'Follow-up missed', line: 'Reminder ilikuwa kichwani tu.', type: 'follow' as const },
-  { title: 'Dispatch confusion', line: 'Packed? sent? delivered?', type: 'dispatch' as const },
+const scenarios = [
+  {
+    title: 'The customer paid, but proof is buried',
+    body: 'You know the screenshot exists. You just do not know which chat, which hour, or which scroll.',
+    metric: 'Payment not clear',
+  },
+  {
+    title: 'An order is half-confirmed and half-missing',
+    body: 'Size is in one message. Area is in another. The order looks real, but it is not structured yet.',
+    metric: 'Order can slip',
+  },
+  {
+    title: 'Follow-up lives inside your memory',
+    body: 'You meant to reply after lunch. Then dispatch happened. Then another chat arrived.',
+    metric: 'Reminder missed',
+  },
 ]
 
-const flowSteps = [
+const workflowSteps = [
   {
     step: '01',
-    title: 'Order lands in chat',
-    body: 'Customer sends the details where they already shop: WhatsApp, Instagram, TikTok, Facebook.',
-    type: 'chat' as const,
+    title: 'Customer sends order in chat',
+    body: 'Orders still start where East African sellers actually sell: WhatsApp, Instagram, TikTok, Facebook.',
+    variant: 'chat' as const,
   },
   {
     step: '02',
     title: 'Capture it in WhatsBoard',
-    body: 'You move the order out of the scroll and into one clear record before it disappears.',
-    type: 'capture' as const,
+    body: 'The moment it matters, the order moves out of scroll and into a clean workflow record.',
+    variant: 'capture' as const,
   },
   {
     step: '03',
-    title: 'Track the real work',
-    body: 'Payment, follow-up, packing, dispatch. The next action is visible without guesswork.',
-    type: 'track' as const,
+    title: 'Track payment, follow-up, dispatch',
+    body: 'Know who paid, who needs a nudge, and what is ready to pack or send.',
+    variant: 'track' as const,
   },
   {
     step: '04',
-    title: 'Stay in control',
-    body: 'Less screenshot hunting. More calm. More trust. More repeat buyers.',
-    type: 'calm' as const,
+    title: 'Run the day with control',
+    body: 'Your business feels lighter because the next action is visible, not hidden in chat.',
+    variant: 'control' as const,
   },
 ]
 
-const resultBullets = [
-  'One clean order flow after every chat',
-  'Clear payment and dispatch control',
-  'Fewer forgotten follow-ups',
-  'A seller who looks serious, not overwhelmed',
+const beforeAfter = [
+  { before: 'Unread chats', after: 'Clear order queue' },
+  { before: 'Payment guesswork', after: 'Status by order' },
+  { before: 'Forgotten follow-ups', after: 'Visible next actions' },
+  { before: 'Dispatch confusion', after: 'Pipeline control' },
 ]
 
 export default function WhatsBoardHomepage() {
   return (
     <main className="font-roboto-mono min-h-screen bg-[#0a5c35] text-white">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.16),transparent_28%),radial-gradient(circle_at_20%_30%,rgba(255,255,255,0.06),transparent_22%),linear-gradient(135deg,rgba(255,255,255,0.05)_0,rgba(255,255,255,0.05)_1px,transparent_1px,transparent_26px)] [background-size:100%_100%,100%_100%,26px_26px]" />
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.15),transparent_28%),radial-gradient(circle_at_80%_12%,rgba(255,255,255,0.08),transparent_24%),linear-gradient(135deg,rgba(255,255,255,0.04)_0,rgba(255,255,255,0.04)_1px,transparent_1px,transparent_30px)] [background-size:100%_100%,100%_100%,30px_30px]" />
 
-      <header className="sticky top-0 z-30 border-b border-white/15 bg-[#0a5c35]/88 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-white/12 bg-[#0a5c35]/86 backdrop-blur-xl">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <Link href="/" className="text-sm uppercase tracking-[0.32em]">
             WhatsBoard
           </Link>
           <nav className="hidden items-center gap-6 text-sm md:flex">
-            <a href="#problem">Problem</a>
-            <a href="#switch">Switch</a>
-            <a href="#how">How It Works</a>
-            <a href="#cta">Start</a>
+            <a href="#transformation">Transformation</a>
+            <a href="#pain">Seller pain</a>
+            <a href="#how">How it works</a>
+            <a href="#preview">Preview</a>
           </nav>
           <div className="flex items-center gap-2 text-xs sm:text-sm">
             <Link
               href="/login"
-              className="rounded-full border border-white/20 px-3 py-2 transition hover:bg-white/10"
+              className="rounded-full border border-white/18 px-3 py-2 transition hover:bg-white/10"
             >
               Log in
             </Link>
             <Link
               href="/register"
-              className="rounded-full border border-white/20 bg-white/10 px-3 py-2 transition hover:bg-white/14"
+              className="rounded-full border border-white/18 bg-white/10 px-3 py-2 transition hover:bg-white/14"
             >
               Start free
             </Link>
@@ -76,133 +86,156 @@ export default function WhatsBoardHomepage() {
         </div>
       </header>
 
-      <section className="relative min-h-[100svh] border-b border-white/12">
-        <StoryFrame
-          kicker="Frame 1"
-          title="Biashara yako should not live inside chat bubbles."
-          body="Orders are coming in. But the system is WhatsApp, memory, screenshots, and panic. That is where the chaos starts."
-          actions={
-            <>
-              <PrimaryLink href="/register">Start free</PrimaryLink>
-              <SecondaryLink href="/pricing">See plans</SecondaryLink>
-            </>
-          }
-          visual={<HeroChaosScene />}
-        />
-      </section>
-
-      <section id="problem" className="relative min-h-[100svh] border-b border-white/12 bg-white/[0.03]">
-        <StoryFrame
-          reverse
-          kicker="Frame 2"
-          title="When business runs inside chats, small mistakes become expensive."
-          body="The problem is not WhatsApp. The problem is trying to run the whole business inside message scroll."
-          visual={<ProblemStackScene />}
-        >
-          <div className="grid gap-3 sm:grid-cols-2">
-            {problemPanels.map((item) => (
-              <div key={item.title} className="rounded-[1.6rem] border border-white/15 bg-white/[0.05] px-4 py-4">
-                <p className="text-base">{item.title}</p>
-                <p className="mt-2 text-sm leading-7 text-white/70">{item.line}</p>
-              </div>
-            ))}
-          </div>
-        </StoryFrame>
-      </section>
-
-      <section id="switch" className="relative min-h-[100svh] border-b border-white/12">
-        <StoryFrame
-          kicker="Frame 3"
-          title="The realization hits: chat is where the order starts, not where the business should stay."
-          body="One side is noise. One side is order. The turning point is simple: move the work out of the chat and into a system."
-          visual={<SplitRealizationScene />}
-        />
-      </section>
-
-      <section className="relative min-h-[100svh] border-b border-white/12 bg-white/[0.03]">
-        <StoryFrame
-          reverse
-          kicker="Frame 4"
-          title="WhatsBoard turns message chaos into a real workflow."
-          body="Chats become order cards. Payment gets a status. Follow-up gets a place. Dispatch stops living in your head."
-          visual={<TransformationScene />}
-        />
-      </section>
-
-      <section id="how" className="relative min-h-[100svh] border-b border-white/12">
-        <div className="mx-auto max-w-6xl px-4 py-18 sm:px-6 sm:py-24">
-          <div className="max-w-3xl space-y-4">
-            <p className="text-xs uppercase tracking-[0.3em] text-white/62">Frame 5</p>
-            <h2 className="text-4xl leading-none font-semibold tracking-[-0.05em] sm:text-6xl">
-              Four beats. No drama.
-            </h2>
-            <p className="max-w-2xl text-sm leading-7 text-white/74 sm:text-base">
-              The flow is simple enough to understand in seconds and strong enough to run every day.
+      <section className="relative overflow-hidden border-b border-white/12">
+        <div className="mx-auto grid min-h-[100svh] max-w-6xl gap-12 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[0.92fr_1.08fr] lg:items-center">
+          <div className="space-y-6">
+            <p className="inline-flex rounded-full border border-white/16 px-3 py-1 text-[11px] uppercase tracking-[0.28em] text-white/70">
+              Chaos to control
             </p>
+            <div className="space-y-4">
+              <h1 className="max-w-3xl text-5xl leading-none font-semibold tracking-[-0.06em] sm:text-7xl">
+                From chat chaos to sales control
+              </h1>
+              <p className="max-w-2xl text-sm leading-7 text-white/74 sm:text-base">
+                WhatsBoard is built for sellers whose real work starts after the message lands:
+                orders, payment status, follow-ups, packing, and dispatch.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <ActionLink href="/register" primary>
+                Start free
+              </ActionLink>
+              <ActionLink href="/pricing">See plans</ActionLink>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <MiniStat label="Missed orders" value="Less scroll" />
+              <MiniStat label="Payment clarity" value="Visible" />
+              <MiniStat label="Dispatch flow" value="Tracked" />
+            </div>
           </div>
 
-          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {flowSteps.map((step) => (
-              <div
-                key={step.step}
-                className="rounded-[2rem] border border-white/15 bg-white/[0.04] p-5 transition duration-300 hover:-translate-y-1 hover:bg-white/[0.06]"
-              >
-                <div className="flex items-center justify-between text-xs uppercase tracking-[0.28em] text-white/60">
-                  <span>{step.step}</span>
-                  <span className="h-2 w-2 rounded-full bg-white/70" />
-                </div>
-                <div className="mt-8">
-                  <StepMiniScene type={step.type} />
-                </div>
-                <h3 className="mt-6 text-xl leading-tight">{step.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-white/74">{step.body}</p>
-              </div>
-            ))}
-          </div>
+          <HeroSplitScene />
         </div>
       </section>
 
-      <section className="relative min-h-[100svh] border-b border-white/12 bg-white/[0.03]">
-        <StoryFrame
-          reverse
-          kicker="Frame 6"
-          title="Same seller. Different energy."
-          body="Before: stressed, chasing screenshots, replying late. After: calm, organized, professional, and in control."
-          visual={<CalmResultScene />}
+      <section id="transformation" className="relative border-b border-white/12 bg-white/[0.03]">
+        <SectionShell
+          eyebrow="Scroll 01"
+          title="The message stays where it came from. The business moves into structure."
+          body="As you scroll, the homepage tells the same transformation your seller brain wants every day: noise becoming order, confusion becoming next steps, chat becoming control."
         >
-          <div className="space-y-3">
-            {resultBullets.map((item) => (
-              <div key={item} className="rounded-full border border-white/15 px-4 py-3 text-sm text-white/78">
-                {item}
+          <TransformationRail />
+        </SectionShell>
+      </section>
+
+      <section id="pain" className="relative border-b border-white/12">
+        <SectionShell
+          eyebrow="Scroll 02"
+          title="The real pain is not chatting. It is managing biashara inside the chat itself."
+          body="This is where sellers lose time, trust, and calm. Not because the order is fake. Because the work around it is still floating."
+        >
+          <div className="grid gap-4 lg:grid-cols-3">
+            {scenarios.map((scenario) => (
+              <ScenarioCard
+                key={scenario.title}
+                title={scenario.title}
+                body={scenario.body}
+                metric={scenario.metric}
+              />
+            ))}
+          </div>
+        </SectionShell>
+      </section>
+
+      <section id="how" className="relative border-b border-white/12 bg-white/[0.03]">
+        <SectionShell
+          eyebrow="Scroll 03"
+          title="How it works in four clean moves"
+          body="The product flow is simple enough to understand immediately and strong enough to run the whole week."
+        >
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {workflowSteps.map((item) => (
+              <div
+                key={item.step}
+                className="rounded-[2rem] border border-white/14 bg-white/[0.04] p-5 transition duration-300 hover:-translate-y-1 hover:bg-white/[0.06]"
+              >
+                <div className="flex items-center justify-between text-xs uppercase tracking-[0.28em] text-white/58">
+                  <span>{item.step}</span>
+                  <span className="h-2 w-2 rounded-full bg-white/70" />
+                </div>
+                <div className="mt-6">
+                  <StepVisualization variant={item.variant} />
+                </div>
+                <h3 className="mt-6 text-xl leading-tight">{item.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-white/72">{item.body}</p>
               </div>
             ))}
           </div>
-        </StoryFrame>
+        </SectionShell>
       </section>
 
-      <section id="cta" className="relative min-h-[70svh]">
-        <div className="mx-auto flex max-w-6xl flex-col justify-center px-4 py-18 sm:px-6 sm:py-24">
-          <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
+      <section id="preview" className="relative border-b border-white/12">
+        <SectionShell
+          eyebrow="Scroll 04"
+          title="A dashboard that feels like a control room, not another noisy admin panel."
+          body="The product UI becomes the visual language here: clean cards, payment states, order flow, and dispatch visibility layered into one focused view."
+        >
+          <DashboardPreviewScene />
+        </SectionShell>
+      </section>
+
+      <section className="relative border-b border-white/12 bg-white/[0.03]">
+        <SectionShell
+          eyebrow="Scroll 05"
+          title="Before and after should feel emotional, not just functional."
+          body="The seller is the same. The difference is the feeling: less stress, fewer loose ends, more professional control."
+        >
+          <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+            <BeforeAfterVisual />
+            <div className="space-y-3">
+              {beforeAfter.map((item) => (
+                <div
+                  key={item.before}
+                  className="grid items-center gap-3 rounded-[1.6rem] border border-white/14 bg-white/[0.04] px-4 py-4 sm:grid-cols-[1fr_auto_1fr]"
+                >
+                  <span className="text-sm text-white/60">{item.before}</span>
+                  <span className="text-center text-xs uppercase tracking-[0.28em] text-white/40">
+                    to
+                  </span>
+                  <span className="text-sm">{item.after}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </SectionShell>
+      </section>
+
+      <section className="relative">
+        <div className="mx-auto max-w-6xl px-4 py-18 sm:px-6 sm:py-24">
+          <div className="grid gap-10 lg:grid-cols-[1.02fr_0.98fr] lg:items-end">
             <div className="space-y-4">
-              <p className="text-xs uppercase tracking-[0.3em] text-white/62">Frame 7</p>
+              <p className="text-xs uppercase tracking-[0.3em] text-white/62">Final frame</p>
               <h2 className="text-4xl leading-none font-semibold tracking-[-0.05em] sm:text-6xl">
-                From chat chaos to sales control.
+                Run the business after the chat like a serious operator.
               </h2>
               <p className="max-w-2xl text-sm leading-7 text-white/74 sm:text-base">
-                Start on free. Feel the control in your first orders. Upgrade when the volume becomes real.
+                Start free. Move your first orders out of chaos. Upgrade when the volume demands more control.
               </p>
               <div className="flex flex-col gap-3 sm:flex-row">
-                <PrimaryLink href="/register">Start free</PrimaryLink>
-                <SecondaryLink href="/pricing">Upgrade when ready</SecondaryLink>
+                <ActionLink href="/register" primary>
+                  Start free
+                </ActionLink>
+                <ActionLink href="/pricing">Explore pricing</ActionLink>
               </div>
             </div>
-            <FinalPosterScene />
+
+            <ClosingPanel />
           </div>
         </div>
 
         <footer className="border-t border-white/12">
-          <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-white/64 sm:px-6 md:flex-row md:items-center md:justify-between">
-            <p>Built for East African sellers who sell in chat and need control after the message.</p>
+          <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-white/62 sm:px-6 md:flex-row md:items-center md:justify-between">
+            <p>Built for East African sellers who need control after the message.</p>
             <div className="flex flex-wrap gap-4">
               <Link href="/pricing">Pricing</Link>
               <Link href="/login">Log in</Link>
@@ -215,397 +248,432 @@ export default function WhatsBoardHomepage() {
   )
 }
 
-function StoryFrame({
-  kicker,
+function SectionShell({
+  eyebrow,
   title,
   body,
-  visual,
-  reverse = false,
-  actions,
   children,
 }: {
-  kicker: string
+  eyebrow: string
   title: string
   body: string
-  visual: ReactNode
-  reverse?: boolean
-  actions?: ReactNode
-  children?: ReactNode
+  children: ReactNode
 }) {
   return (
-    <div className="mx-auto grid min-h-[100svh] max-w-6xl gap-12 px-4 py-14 sm:px-6 sm:py-18 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
-      <div className={reverse ? 'lg:order-2' : ''}>
-        <p className="text-xs uppercase tracking-[0.3em] text-white/62">{kicker}</p>
-        <h2 className="mt-4 max-w-3xl text-4xl leading-none font-semibold tracking-[-0.05em] sm:text-6xl">
-          {title}
-        </h2>
-        <p className="mt-5 max-w-2xl text-sm leading-7 text-white/74 sm:text-base">{body}</p>
-        {actions ? <div className="mt-7 flex flex-col gap-3 sm:flex-row">{actions}</div> : null}
-        {children ? <div className="mt-8">{children}</div> : null}
+    <div className="mx-auto max-w-6xl px-4 py-18 sm:px-6 sm:py-24">
+      <div className="max-w-3xl space-y-4">
+        <p className="text-xs uppercase tracking-[0.3em] text-white/58">{eyebrow}</p>
+        <h2 className="text-4xl leading-none font-semibold tracking-[-0.05em] sm:text-6xl">{title}</h2>
+        <p className="max-w-2xl text-sm leading-7 text-white/72 sm:text-base">{body}</p>
       </div>
-      <div className={reverse ? 'lg:order-1' : ''}>{visual}</div>
+      <div className="mt-10">{children}</div>
     </div>
   )
 }
 
-function PrimaryLink({ href, children }: { href: string; children: ReactNode }) {
+function ActionLink({
+  href,
+  children,
+  primary = false,
+}: {
+  href: string
+  children: ReactNode
+  primary?: boolean
+}) {
   return (
     <Link
       href={href}
-      className="rounded-full border border-white/18 bg-white/10 px-5 py-3 text-center text-sm transition hover:bg-white/14"
+      className={[
+        'rounded-full px-5 py-3 text-center text-sm transition',
+        primary
+          ? 'border border-white/18 bg-white/10 hover:bg-white/14'
+          : 'border border-white/18 hover:bg-white/10',
+      ].join(' ')}
     >
       {children}
     </Link>
   )
 }
 
-function SecondaryLink({ href, children }: { href: string; children: ReactNode }) {
+function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <Link
-      href={href}
-      className="rounded-full border border-white/18 px-5 py-3 text-center text-sm transition hover:bg-white/10"
-    >
-      {children}
-    </Link>
-  )
-}
-
-function HeroChaosScene() {
-  return (
-    <PosterFrame>
-      <div className="relative min-h-[27rem]">
-        <FloatingBubble label="Mteja anasubiri" style={{ top: '5%', left: '2%' }} />
-        <FloatingBubble label="Paid?" style={{ top: '12%', right: '8%' }} />
-        <FloatingBubble label="Screenshot" style={{ top: '42%', left: '1%' }} />
-        <FloatingBubble label="Where is order?" style={{ top: '48%', right: '2%' }} />
-        <FloatingBubble label="Kesho please" style={{ bottom: '10%', left: '10%' }} />
-        <DoodleSymbol symbol="?" style={{ top: '28%', right: '28%' }} />
-        <DoodleSymbol symbol="!" style={{ bottom: '19%', right: '18%' }} />
-        <DoodleSeller mood="stressed" className="absolute bottom-0 left-1/2 w-[15rem] -translate-x-1/2" />
-      </div>
-    </PosterFrame>
-  )
-}
-
-function ProblemStackScene() {
-  return (
-    <div className="space-y-3">
-      {problemPanels.map((panel, index) => (
-        <div
-          key={panel.title}
-          className="rounded-[1.8rem] border border-white/15 bg-white/[0.05] p-4"
-          style={{ transform: `translateX(${index % 2 === 0 ? 0 : 18}px)` }}
-        >
-          <div className="grid items-center gap-4 sm:grid-cols-[5.5rem_1fr]">
-            <div className="rounded-[1.4rem] border border-white/15 p-2">
-              <PanelMiniScene type={panel.type} />
-            </div>
-            <div>
-              <p className="text-lg">{panel.title}</p>
-              <p className="mt-2 text-sm leading-7 text-white/72">{panel.line}</p>
-            </div>
-          </div>
-        </div>
-      ))}
+    <div className="rounded-[1.5rem] border border-white/14 bg-white/[0.04] px-4 py-4">
+      <p className="text-[11px] uppercase tracking-[0.24em] text-white/54">{label}</p>
+      <p className="mt-3 text-lg">{value}</p>
     </div>
   )
 }
 
-function SplitRealizationScene() {
+function ScenarioCard({
+  title,
+  body,
+  metric,
+}: {
+  title: string
+  body: string
+  metric: string
+}) {
   return (
-    <PosterFrame>
-      <div className="grid gap-4 lg:grid-cols-[0.9fr_auto_1.1fr] lg:items-center">
+    <div className="rounded-[2rem] border border-white/14 bg-white/[0.04] p-5">
+      <div className="flex items-center justify-between gap-3">
+        <span className="rounded-full border border-white/14 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-white/60">
+          Seller scenario
+        </span>
+        <span className="text-[11px] uppercase tracking-[0.24em] text-white/42">{metric}</span>
+      </div>
+      <div className="mt-5 rounded-[1.5rem] border border-white/12 bg-black/8 p-4">
         <div className="space-y-3">
-          <MessyChatCard text="size 40?" />
-          <MessyChatCard text="proof ya payment iko juu" />
-          <MessyChatCard text="dispatch leo ama kesho?" />
-        </div>
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-white/20 text-2xl">
-          →
-        </div>
-        <div className="rounded-[1.8rem] border border-white/15 bg-white/[0.04] p-4">
-          <div className="grid gap-3">
-            <WorkflowCard title="Order" value="Viatu size 40" />
-            <WorkflowCard title="Payment" value="Waiting" />
-            <WorkflowCard title="Next step" value="Follow-up" />
-          </div>
+          <ChatRow text="Customer: nishalipa" align="left" />
+          <ChatRow text="Screenshot above..." align="right" />
+          <ChatRow text="Where is the order now?" align="left" />
         </div>
       </div>
-    </PosterFrame>
+      <h3 className="mt-5 text-xl leading-tight">{title}</h3>
+      <p className="mt-3 text-sm leading-7 text-white/72">{body}</p>
+    </div>
   )
 }
 
-function TransformationScene() {
+function HeroSplitScene() {
   return (
-    <PosterFrame>
-      <div className="grid gap-4 lg:grid-cols-[0.78fr_auto_1.02fr] lg:items-center">
-        <div className="space-y-3">
-          <MessyChatCard text="Nataka pair 2" />
-          <MessyChatCard text="Mikocheni" />
-          <MessyChatCard text="Nitakutumia payment" />
-        </div>
-        <div className="mx-auto flex flex-col items-center gap-3 text-white/80">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/20 text-2xl">
-            →
-          </div>
-          <span className="text-xs uppercase tracking-[0.28em]">Turn</span>
-        </div>
-        <div className="grid gap-3 md:grid-cols-3">
-          <PipelineColumn title="Orders" labels={['New', 'Paid']} />
-          <PipelineColumn title="Customers" labels={['Asha', 'Grace']} />
-          <PipelineColumn title="Dispatch" labels={['Pack', 'Send']} />
-        </div>
+    <div className="relative grid gap-4 lg:grid-cols-[0.88fr_1.12fr]">
+      <ChaosPanel />
+      <ControlPanel />
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 hidden h-18 w-18 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/16 bg-[#0a5c35]/90 text-xs uppercase tracking-[0.24em] text-white/76 lg:flex">
+        Shift
       </div>
-    </PosterFrame>
+    </div>
   )
 }
 
-function CalmResultScene() {
+function ChaosPanel() {
   return (
-    <PosterFrame>
+    <PanelFrame className="overflow-hidden">
       <div className="relative min-h-[26rem]">
-        <div className="absolute left-4 top-5 space-y-3">
-          <QuietBadge label="Paid" />
-          <QuietBadge label="Packed" />
+        <div className="absolute inset-x-0 top-0 flex items-center justify-between border-b border-white/10 px-4 py-3 text-xs uppercase tracking-[0.24em] text-white/48">
+          <span>Chat overload</span>
+          <span>19 unread</span>
         </div>
-        <div className="absolute right-4 top-10 space-y-3">
-          <QuietBadge label="Follow-up sent" />
-          <QuietBadge label="Delivered" />
+        <div className="space-y-3 px-4 pb-4 pt-16">
+          <FloatingChat text="Size 41 bado?" style={{ marginLeft: '0rem' }} />
+          <FloatingChat text="Nitumie Mbezi leo" style={{ marginLeft: '2rem' }} />
+          <FloatingChat text="Paid? check screenshot" style={{ marginLeft: '0.5rem' }} />
+          <FloatingChat text="Hello? reply pls" style={{ marginLeft: '3rem' }} />
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <ScreenshotTile />
+            <ScreenshotTile />
+          </div>
         </div>
-        <DoodleSeller mood="calm" className="absolute bottom-0 left-1/2 w-[15rem] -translate-x-1/2" />
       </div>
-    </PosterFrame>
+    </PanelFrame>
   )
 }
 
-function FinalPosterScene() {
+function ControlPanel() {
   return (
-    <PosterFrame>
-      <div className="relative min-h-[21rem]">
-        <div className="absolute left-4 top-4 rounded-[1.4rem] border border-white/15 px-4 py-3 text-xs uppercase tracking-[0.24em] text-white/72">
-          Order control
-        </div>
-        <div className="absolute right-4 top-10 rounded-[1.4rem] border border-white/15 px-4 py-3 text-xs uppercase tracking-[0.24em] text-white/72">
-          Payment clarity
-        </div>
-        <div className="absolute bottom-7 left-6 rounded-[1.4rem] border border-white/15 px-4 py-3 text-xs uppercase tracking-[0.24em] text-white/72">
-          Dispatch flow
-        </div>
-        <DoodleSeller mood="calm" className="absolute bottom-0 left-1/2 w-[13rem] -translate-x-1/2" />
+    <PanelFrame className="overflow-hidden">
+      <div className="border-b border-white/10 px-4 py-3">
+        <p className="text-xs uppercase tracking-[0.24em] text-white/48">WhatsBoard live board</p>
+        <h3 className="mt-2 text-lg">Today&apos;s seller control room</h3>
       </div>
-    </PosterFrame>
+      <div className="grid gap-4 p-4 xl:grid-cols-[1.05fr_0.95fr]">
+        <div className="space-y-3">
+          <MetricTile label="Waiting payment" value="6 orders" />
+          <MetricTile label="Need packing" value="4 orders" />
+          <MetricTile label="Follow-ups" value="3 pending" />
+        </div>
+        <div className="rounded-[1.6rem] border border-white/12 bg-white/[0.04] p-3">
+          <div className="grid grid-cols-3 gap-2 text-[11px] uppercase tracking-[0.22em] text-white/44">
+            <span>New</span>
+            <span>Paid</span>
+            <span>Dispatch</span>
+          </div>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            <PipelineCard title="2 orders" />
+            <PipelineCard title="4 orders" />
+            <PipelineCard title="3 orders" />
+          </div>
+        </div>
+      </div>
+    </PanelFrame>
   )
 }
 
-function StepMiniScene({
-  type,
+function TransformationRail() {
+  return (
+    <div className="grid gap-4 xl:grid-cols-[0.82fr_auto_1.18fr] xl:items-center">
+      <div className="space-y-3">
+        <MorphMessage text="Order in DM" />
+        <MorphMessage text="Payment proof somewhere" />
+        <MorphMessage text="Follow up later" />
+      </div>
+      <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-white/14 bg-white/[0.05] text-xs uppercase tracking-[0.24em] text-white/70">
+        Reorder
+      </div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <StructuredColumn title="Orders" items={['New order', 'Waiting payment']} />
+        <StructuredColumn title="Customers" items={['Asha', 'Grace']} />
+        <StructuredColumn title="Actions" items={['Follow-up', 'Dispatch']} />
+      </div>
+    </div>
+  )
+}
+
+function DashboardPreviewScene() {
+  return (
+    <PanelFrame className="overflow-hidden">
+      <div className="grid gap-4 border-b border-white/10 p-4 lg:grid-cols-[1.1fr_0.9fr]">
+        <div>
+          <p className="text-xs uppercase tracking-[0.24em] text-white/48">Daily board</p>
+          <h3 className="mt-2 text-2xl leading-tight">Everything after the customer says “nataka”.</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <MetricTile label="Collected" value="TZS 480K" />
+          <MetricTile label="To dispatch" value="5 orders" />
+        </div>
+      </div>
+      <div className="grid gap-4 p-4 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="rounded-[1.8rem] border border-white/12 bg-white/[0.04] p-4">
+          <div className="grid grid-cols-4 gap-3 text-[11px] uppercase tracking-[0.22em] text-white/44">
+            <span>New</span>
+            <span>Payment</span>
+            <span>Packing</span>
+            <span>Dispatch</span>
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4">
+            <WorkflowLane title="3 cards" />
+            <WorkflowLane title="2 cards" />
+            <WorkflowLane title="4 cards" />
+            <WorkflowLane title="1 card" />
+          </div>
+        </div>
+        <div className="space-y-4">
+          <DetailCard
+            title="Recent order"
+            rows={[
+              ['Customer', 'Asha'],
+              ['Product', 'Viatu size 40'],
+              ['Payment', 'Waiting'],
+              ['Area', 'Mikocheni'],
+            ]}
+          />
+          <DetailCard
+            title="Next action"
+            rows={[
+              ['Follow-up', 'Send reminder'],
+              ['Packing', '2 ready'],
+              ['Dispatch', '1 rider booked'],
+            ]}
+          />
+        </div>
+      </div>
+    </PanelFrame>
+  )
+}
+
+function BeforeAfterVisual() {
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <PanelFrame>
+        <div className="space-y-4 p-5">
+          <p className="text-xs uppercase tracking-[0.24em] text-white/50">Before</p>
+          <div className="space-y-3">
+            <FloatingChat text="Who paid?" />
+            <FloatingChat text="Dispatch leo?" />
+            <FloatingChat text="Screenshot missing" />
+          </div>
+          <div className="rounded-[1.5rem] border border-dashed border-white/14 px-4 py-8 text-center text-sm text-white/58">
+            Stress. Scroll. Guesswork.
+          </div>
+        </div>
+      </PanelFrame>
+      <PanelFrame>
+        <div className="space-y-4 p-5">
+          <p className="text-xs uppercase tracking-[0.24em] text-white/50">After</p>
+          <div className="grid gap-3">
+            <WorkflowCard label="Order" value="Captured" />
+            <WorkflowCard label="Payment" value="Visible" />
+            <WorkflowCard label="Dispatch" value="Tracked" />
+          </div>
+          <div className="rounded-[1.5rem] border border-white/14 bg-white/[0.05] px-4 py-8 text-center text-sm text-white/76">
+            Calm. Clear. Professional.
+          </div>
+        </div>
+      </PanelFrame>
+    </div>
+  )
+}
+
+function ClosingPanel() {
+  return (
+    <PanelFrame className="overflow-hidden">
+      <div className="grid gap-4 p-4 sm:grid-cols-[0.95fr_1.05fr]">
+        <div className="rounded-[1.8rem] border border-white/12 bg-white/[0.04] p-4">
+          <p className="text-xs uppercase tracking-[0.24em] text-white/48">What changes</p>
+          <div className="mt-4 space-y-3">
+            <WorkflowCard label="Orders" value="Not lost in chat" />
+            <WorkflowCard label="Payments" value="Easy to confirm" />
+            <WorkflowCard label="Follow-ups" value="Not left to memory" />
+          </div>
+        </div>
+        <div className="rounded-[1.8rem] border border-white/12 bg-black/8 p-4">
+          <div className="space-y-3">
+            <ChatRow text="Customer says nataka..." align="left" />
+            <ChatRow text="WhatsBoard makes it structured" align="right" />
+            <ChatRow text="You run the day from one view" align="left" />
+          </div>
+          <div className="mt-4 rounded-[1.4rem] border border-white/12 px-4 py-4 text-sm text-white/74">
+            The product does not replace chat. It gives the chat a system.
+          </div>
+        </div>
+      </div>
+    </PanelFrame>
+  )
+}
+
+function StepVisualization({
+  variant,
 }: {
-  type: 'chat' | 'capture' | 'track' | 'calm'
+  variant: 'chat' | 'capture' | 'track' | 'control'
 }) {
-  if (type === 'chat') {
+  if (variant === 'chat') {
     return (
-      <svg viewBox="0 0 160 120" className="h-28 w-full" fill="none" aria-hidden="true">
+      <svg viewBox="0 0 180 120" className="h-28 w-full" fill="none" aria-hidden="true">
         <g stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="14" y="20" width="60" height="36" rx="16" />
-          <path d="m38 56-7 12 15-9" />
-          <rect x="86" y="54" width="60" height="36" rx="16" />
-          <path d="m120 90 14 9-6-12" />
-          <path d="M30 38h28" />
-          <path d="M98 72h28" />
+          <rect x="14" y="18" width="62" height="34" rx="16" />
+          <path d="m38 52-8 12 14-7" />
+          <rect x="94" y="54" width="62" height="34" rx="16" />
+          <path d="m126 88 13 7-5-11" />
+          <path d="M28 34h32" />
+          <path d="M108 70h33" />
         </g>
       </svg>
     )
   }
 
-  if (type === 'capture') {
+  if (variant === 'capture') {
     return (
-      <svg viewBox="0 0 160 120" className="h-28 w-full" fill="none" aria-hidden="true">
+      <svg viewBox="0 0 180 120" className="h-28 w-full" fill="none" aria-hidden="true">
         <g stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="16" y="24" width="48" height="34" rx="15" />
-          <path d="m34 58-7 11 13-7" />
-          <path d="M72 42h18" />
-          <path d="m80 34 12 8-12 8" />
-          <rect x="102" y="20" width="42" height="58" rx="14" />
-          <path d="M114 36h18" />
-          <path d="M114 48h18" />
-          <path d="M114 60h12" />
+          <rect x="16" y="28" width="56" height="32" rx="14" />
+          <path d="m38 60-8 11 14-7" />
+          <path d="M82 44h18" />
+          <path d="m92 36 12 8-12 8" />
+          <rect x="116" y="20" width="42" height="58" rx="14" />
+          <path d="M126 36h20" />
+          <path d="M126 48h20" />
+          <path d="M126 60h12" />
         </g>
       </svg>
     )
   }
 
-  if (type === 'track') {
+  if (variant === 'track') {
     return (
-      <svg viewBox="0 0 160 120" className="h-28 w-full" fill="none" aria-hidden="true">
+      <svg viewBox="0 0 180 120" className="h-28 w-full" fill="none" aria-hidden="true">
         <g stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="16" y="24" width="34" height="58" rx="12" />
-          <rect x="63" y="36" width="34" height="46" rx="12" />
-          <rect x="110" y="18" width="34" height="64" rx="12" />
-          <path d="M24 38h18" />
-          <path d="M24 50h12" />
-          <path d="M71 52h18" />
-          <path d="M118 34h18" />
-          <path d="M118 46h16" />
-          <path d="M118 58h10" />
+          <rect x="18" y="24" width="40" height="60" rx="12" />
+          <rect x="70" y="36" width="40" height="48" rx="12" />
+          <rect x="122" y="18" width="40" height="66" rx="12" />
+          <path d="M28 40h20" />
+          <path d="M28 52h14" />
+          <path d="M80 52h20" />
+          <path d="M132 34h20" />
+          <path d="M132 46h18" />
+          <path d="M132 58h10" />
         </g>
       </svg>
     )
   }
 
   return (
-    <svg viewBox="0 0 160 120" className="h-28 w-full" fill="none" aria-hidden="true">
+    <svg viewBox="0 0 180 120" className="h-28 w-full" fill="none" aria-hidden="true">
       <g stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="80" cy="36" r="18" />
-        <path d="M61 91c5-15 14-23 19-23s14 8 19 23" />
-        <path d="M71 34h1" />
-        <path d="M88 34h1" />
-        <path d="M74 44c4 3 8 4 12 0" />
-        <path d="M108 28c10 4 18 12 20 23" />
-        <path d="M34 65h21" />
-        <path d="M34 77h27" />
+        <rect x="18" y="28" width="144" height="58" rx="16" />
+        <path d="M36 46h36" />
+        <path d="M36 60h26" />
+        <path d="M100 44h40" />
+        <path d="M100 58h34" />
+        <path d="M100 72h20" />
       </g>
     </svg>
   )
 }
 
-function PanelMiniScene({
-  type,
+function PanelFrame({
+  children,
+  className = '',
 }: {
-  type: 'lost' | 'waiting' | 'payment' | 'follow' | 'dispatch'
+  children: ReactNode
+  className?: string
 }) {
-  if (type === 'lost') {
-    return (
-      <svg viewBox="0 0 84 84" className="h-20 w-20" fill="none" aria-hidden="true">
-        <g stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="14" y="12" width="34" height="26" rx="12" />
-          <path d="m28 38-6 10 12-7" />
-          <path d="M57 22c6 2 10 7 11 13" />
-          <path d="M64 46h1" />
-          <path d="M60 56c4-3 9-4 13-2" />
-        </g>
-      </svg>
-    )
-  }
-
-  if (type === 'waiting') {
-    return (
-      <svg viewBox="0 0 84 84" className="h-20 w-20" fill="none" aria-hidden="true">
-        <g stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="27" cy="26" r="10" />
-          <path d="M16 58c4-10 10-16 16-16s12 6 16 16" />
-          <rect x="48" y="16" width="20" height="28" rx="9" />
-          <path d="M58 22v8" />
-          <path d="M58 35h.01" />
-        </g>
-      </svg>
-    )
-  }
-
-  if (type === 'payment') {
-    return (
-      <svg viewBox="0 0 84 84" className="h-20 w-20" fill="none" aria-hidden="true">
-        <g stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="12" y="22" width="60" height="40" rx="14" />
-          <path d="M24 36h16" />
-          <path d="M24 48h8" />
-          <path d="M54 40c0-6 5-11 11-11" />
-          <path d="M62 45h1" />
-        </g>
-      </svg>
-    )
-  }
-
-  if (type === 'follow') {
-    return (
-      <svg viewBox="0 0 84 84" className="h-20 w-20" fill="none" aria-hidden="true">
-        <g stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="42" cy="42" r="20" />
-          <path d="M42 30v14l8 5" />
-          <path d="M58 21l5-5" />
-        </g>
-      </svg>
-    )
-  }
-
   return (
-    <svg viewBox="0 0 84 84" className="h-20 w-20" fill="none" aria-hidden="true">
-      <g stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="12" y="30" width="26" height="22" rx="8" />
-        <path d="M38 41h17" />
-        <path d="m48 31 14 10-14 10" />
-        <rect x="55" y="47" width="16" height="12" rx="5" />
-      </g>
-    </svg>
-  )
-}
-
-function PosterFrame({ children }: { children: ReactNode }) {
-  return (
-    <div className="rounded-[2.2rem] border border-white/15 bg-white/[0.04] p-5 shadow-[0_24px_90px_rgba(0,0,0,0.16)] sm:p-6">
+    <div
+      className={`rounded-[2.2rem] border border-white/14 bg-white/[0.04] shadow-[0_24px_80px_rgba(0,0,0,0.16)] ${className}`}
+    >
       {children}
     </div>
   )
 }
 
-function FloatingBubble({
-  label,
+function FloatingChat({
+  text,
   style,
 }: {
-  label: string
-  style: CSSProperties
+  text: string
+  style?: CSSProperties
 }) {
   return (
     <div
-      className="animate-float absolute rounded-[1.4rem] border border-white/15 bg-white/[0.04] px-4 py-3 text-xs uppercase tracking-[0.2em] text-white/78"
+      className="rounded-[1.4rem] border border-white/14 bg-white/[0.04] px-4 py-3 text-sm text-white/74"
       style={style}
     >
-      {label}
-    </div>
-  )
-}
-
-function DoodleSymbol({
-  symbol,
-  style,
-}: {
-  symbol: string
-  style: CSSProperties
-}) {
-  return (
-    <div
-      className="animate-float-delayed absolute flex h-14 w-14 items-center justify-center rounded-full border border-white/15 text-2xl"
-      style={style}
-    >
-      {symbol}
-    </div>
-  )
-}
-
-function MessyChatCard({ text }: { text: string }) {
-  return (
-    <div className="rounded-[1.5rem] border border-white/15 bg-white/[0.04] px-4 py-3 text-sm text-white/78">
       {text}
     </div>
   )
 }
 
-function WorkflowCard({ title, value }: { title: string; value: string }) {
+function ScreenshotTile() {
   return (
-    <div className="rounded-[1.4rem] border border-white/15 px-4 py-3">
-      <p className="text-[11px] uppercase tracking-[0.24em] text-white/55">{title}</p>
-      <p className="mt-2 text-sm">{value}</p>
+    <div className="rounded-[1.4rem] border border-dashed border-white/14 px-4 py-6 text-center text-[11px] uppercase tracking-[0.24em] text-white/46">
+      Screenshot
     </div>
   )
 }
 
-function PipelineColumn({ title, labels }: { title: string; labels: string[] }) {
+function MetricTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[1.6rem] border border-white/15 bg-white/[0.04] p-3">
-      <p className="text-xs uppercase tracking-[0.24em] text-white/56">{title}</p>
-      <div className="mt-3 space-y-2">
-        {labels.map((label) => (
-          <div key={label} className="rounded-[1rem] border border-white/15 px-3 py-3 text-sm">
-            {label}
+    <div className="rounded-[1.4rem] border border-white/12 bg-black/8 px-4 py-4">
+      <p className="text-[11px] uppercase tracking-[0.22em] text-white/46">{label}</p>
+      <p className="mt-3 text-sm">{value}</p>
+    </div>
+  )
+}
+
+function PipelineCard({ title }: { title: string }) {
+  return (
+    <div className="rounded-[1.2rem] border border-white/12 bg-black/8 px-3 py-8 text-center text-xs uppercase tracking-[0.22em] text-white/62">
+      {title}
+    </div>
+  )
+}
+
+function MorphMessage({ text }: { text: string }) {
+  return (
+    <div className="rounded-[1.6rem] border border-white/14 bg-white/[0.04] px-4 py-4 text-sm text-white/74">
+      {text}
+    </div>
+  )
+}
+
+function StructuredColumn({ title, items }: { title: string; items: string[] }) {
+  return (
+    <div className="rounded-[1.8rem] border border-white/14 bg-white/[0.04] p-4">
+      <p className="text-xs uppercase tracking-[0.24em] text-white/48">{title}</p>
+      <div className="mt-4 space-y-3">
+        {items.map((item) => (
+          <div key={item} className="rounded-[1.1rem] border border-white/12 px-3 py-3 text-sm">
+            {item}
           </div>
         ))}
       </div>
@@ -613,63 +681,59 @@ function PipelineColumn({ title, labels }: { title: string; labels: string[] }) 
   )
 }
 
-function QuietBadge({ label }: { label: string }) {
+function WorkflowLane({ title }: { title: string }) {
   return (
-    <div className="rounded-full border border-white/15 bg-white/[0.05] px-4 py-3 text-xs uppercase tracking-[0.24em] text-white/75">
-      {label}
+    <div className="rounded-[1.2rem] border border-white/12 bg-black/8 p-3">
+      <div className="rounded-[1rem] border border-white/12 px-3 py-6 text-center text-xs uppercase tracking-[0.22em] text-white/60">
+        {title}
+      </div>
     </div>
   )
 }
 
-function DoodleSeller({
-  mood,
-  className,
+function DetailCard({
+  title,
+  rows,
 }: {
-  mood: 'stressed' | 'calm'
-  className?: string
+  title: string
+  rows: string[][]
 }) {
-  const mouth = mood === 'stressed' ? 'M86 71c7-4 14-4 21 0' : 'M86 71c6 6 15 6 21 0'
-  const tilt = mood === 'stressed' ? '-6' : '0'
-  const leftArm = mood === 'stressed' ? 'M67 102c-18-11-26-25-25-39' : 'M67 102c-13-9-20-18-24-29'
-  const rightArm = mood === 'stressed' ? 'M125 102c19-7 31-21 36-38' : 'M125 102c15-5 25-13 31-24'
-  const bubbles = mood === 'stressed'
-
   return (
-    <svg
-      viewBox="0 0 220 260"
-      className={className}
-      fill="none"
-      aria-hidden="true"
-      style={{ transform: `rotate(${tilt}deg)` }}
-    >
-      <g stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M73 240c6-30 18-50 37-50s31 20 37 50" />
-        <path d={leftArm} />
-        <path d={rightArm} />
-        <path d="M95 190v50" />
-        <path d="M125 190v50" />
-        <path d="M72 154c8-36 23-56 38-56s30 20 38 56" />
-        <path d="M83 106c8-20 18-30 27-30s19 10 27 30" />
-        <circle cx="110" cy="57" r="34" />
-        <path d="M97 55h1" />
-        <path d="M122 55h1" />
-        <path d={mouth} />
-        <path d="M81 35c7-11 18-16 29-16 10 0 22 5 29 16" />
-      </g>
-      {bubbles ? (
-        <g stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M32 66h14" />
-          <path d="M23 80h9" />
-          <path d="M180 68h13" />
-          <path d="M190 83h7" />
-        </g>
-      ) : (
-        <g stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M179 58c11 4 20 12 25 24" />
-          <path d="M183 93h16" />
-          <path d="M22 96h17" />
-        </g>
-      )}
-    </svg>
+    <div className="rounded-[1.8rem] border border-white/12 bg-white/[0.04] p-4">
+      <p className="text-xs uppercase tracking-[0.24em] text-white/48">{title}</p>
+      <div className="mt-4 space-y-3">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex items-center justify-between gap-4 rounded-[1rem] border border-white/12 px-3 py-3 text-sm">
+            <span className="text-white/60">{label}</span>
+            <span>{value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function WorkflowCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-[1.2rem] border border-white/12 px-4 py-3 text-sm">
+      <span className="text-white/58">{label}</span>
+      <span>{value}</span>
+    </div>
+  )
+}
+
+function ChatRow({
+  text,
+  align,
+}: {
+  text: string
+  align: 'left' | 'right'
+}) {
+  return (
+    <div className={`flex ${align === 'right' ? 'justify-end' : 'justify-start'}`}>
+      <div className="max-w-[17rem] rounded-[1.4rem] border border-white/14 bg-white/[0.04] px-4 py-3 text-sm text-white/74">
+        {text}
+      </div>
+    </div>
   )
 }
