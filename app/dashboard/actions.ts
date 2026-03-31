@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getViewerContext } from "@/lib/queries";
 
 type ActionState = {
   success: boolean;
@@ -12,32 +13,97 @@ export async function createOrderAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  const { supabase, businessId } = await getViewerContext();
 
-  const payload = {
-    customer_name: String(formData.get("customerName") || "").trim(),
-    phone: String(formData.get("phone") || "").trim(),
-    product: String(formData.get("product") || "").trim(),
-    amount: Number(formData.get("amount") || 0),
-    area: String(formData.get("area") || "").trim(),
-    stage: String(formData.get("stage") || "new_order").trim(),
-    payment_status: String(formData.get("paymentStatus") || "unpaid").trim(),
-    notes: String(formData.get("notes") || "").trim(),
-  };
+  if (!businessId) {
+    return { success: false, error: "Business not found." };
+  }
 
-  if (!payload.customer_name) {
+  const customerName = String(formData.get("customerName") || "").trim();
+  const phone = String(formData.get("phone") || "").trim();
+  const productName = String(formData.get("product") || "").trim();
+  const amount = Number(formData.get("amount") || 0);
+  const deliveryArea = String(formData.get("area") || "").trim();
+  const stage = String(formData.get("stage") || "new_order").trim();
+  const paymentStatus = String(formData.get("paymentStatus") || "unpaid").trim();
+  const notes = String(formData.get("notes") || "").trim();
+
+  if (!customerName) {
     return { success: false, error: "Customer name is required." };
   }
 
-  if (!payload.product) {
+  if (!phone) {
+    return { success: false, error: "Phone number is required." };
+  }
+
+  if (!productName) {
     return { success: false, error: "Product is required." };
   }
 
-  if (!Number.isFinite(payload.amount) || payload.amount < 0) {
+  if (!Number.isFinite(amount) || amount < 0) {
     return { success: false, error: "Amount must be a valid number." };
   }
 
-  const { error } = await supabase.from("orders").insert(payload);
+  let customerId: string | null = null;
+
+  const { data: existingCustomer, error: existingCustomerError } = await supabase
+    .from("customers")
+    .select("id")
+    .eq("business_id", businessId)
+    .eq("phone", phone)
+    .maybeSingle();
+
+  if (existingCustomerError) {
+    return { success: false, error: existingCustomerError.message };
+  }
+
+  if (existingCustomer?.id) {
+    customerId = existingCustomer.id;
+
+    const { error: updateCustomerError } = await supabase
+      .from("customers")
+      .update({
+        name: customerName,
+        area: deliveryArea,
+      })
+      .eq("id", customerId);
+
+    if (updateCustomerError) {
+      return { success: false, error: updateCustomerError.message };
+    }
+  } else {
+    const { data: newCustomer, error: newCustomerError } = await supabase
+      .from("customers")
+      .insert({
+        business_id: businessId,
+        name: customerName,
+        phone,
+        area: deliveryArea,
+        status: "active",
+      })
+      .select("id")
+      .single();
+
+    if (newCustomerError || !newCustomer) {
+      return {
+        success: false,
+        error: newCustomerError?.message || "Unable to create customer.",
+      };
+    }
+
+    customerId = newCustomer.id;
+  }
+
+  const { error } = await supabase.from("orders").insert({
+    business_id: businessId,
+    customer_id: customerId,
+    product_name: productName,
+    amount,
+    delivery_area: deliveryArea,
+    stage,
+    payment_status: paymentStatus,
+    notes,
+  });
 
   if (error) {
     return { success: false, error: error.message };
@@ -45,6 +111,7 @@ export async function createOrderAction(
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/orders");
+  revalidatePath("/dashboard/customers");
 
   return { success: true, error: null };
 }
@@ -68,32 +135,115 @@ export async function updateOrderAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const supabase = await createClient();
+  const { supabase, businessId } = await getViewerContext();
 
-  const payload = {
-    customer_name: String(formData.get("customerName") || "").trim(),
-    phone: String(formData.get("phone") || "").trim(),
-    product: String(formData.get("product") || "").trim(),
-    amount: Number(formData.get("amount") || 0),
-    area: String(formData.get("area") || "").trim(),
-    stage: String(formData.get("stage") || "new_order").trim(),
-    payment_status: String(formData.get("paymentStatus") || "unpaid").trim(),
-    notes: String(formData.get("notes") || "").trim(),
-  };
+  if (!businessId) {
+    return { success: false, error: "Business not found." };
+  }
 
-  if (!payload.customer_name) {
+  const customerName = String(formData.get("customerName") || "").trim();
+  const phone = String(formData.get("phone") || "").trim();
+  const productName = String(formData.get("product") || "").trim();
+  const amount = Number(formData.get("amount") || 0);
+  const deliveryArea = String(formData.get("area") || "").trim();
+  const stage = String(formData.get("stage") || "new_order").trim();
+  const paymentStatus = String(formData.get("paymentStatus") || "unpaid").trim();
+  const notes = String(formData.get("notes") || "").trim();
+
+  if (!customerName) {
     return { success: false, error: "Customer name is required." };
   }
 
-  if (!payload.product) {
+  if (!phone) {
+    return { success: false, error: "Phone number is required." };
+  }
+
+  if (!productName) {
     return { success: false, error: "Product is required." };
   }
 
-  if (!Number.isFinite(payload.amount) || payload.amount < 0) {
+  if (!Number.isFinite(amount) || amount < 0) {
     return { success: false, error: "Amount must be a valid number." };
   }
 
-  const { error } = await supabase.from("orders").update(payload).eq("id", id);
+  const { data: currentOrder, error: currentOrderError } = await supabase
+    .from("orders")
+    .select("id, customer_id")
+    .eq("id", id)
+    .single();
+
+  if (currentOrderError || !currentOrder) {
+    return {
+      success: false,
+      error: currentOrderError?.message || "Order not found.",
+    };
+  }
+
+  let customerId = currentOrder.customer_id;
+
+  if (!customerId) {
+    const { data: existingCustomer, error: existingCustomerError } = await supabase
+      .from("customers")
+      .select("id")
+      .eq("business_id", businessId)
+      .eq("phone", phone)
+      .maybeSingle();
+
+    if (existingCustomerError) {
+      return { success: false, error: existingCustomerError.message };
+    }
+
+    if (existingCustomer?.id) {
+      customerId = existingCustomer.id;
+    } else {
+      const { data: newCustomer, error: newCustomerError } = await supabase
+        .from("customers")
+        .insert({
+          business_id: businessId,
+          name: customerName,
+          phone,
+          area: deliveryArea,
+          status: "active",
+        })
+        .select("id")
+        .single();
+
+      if (newCustomerError || !newCustomer) {
+        return {
+          success: false,
+          error: newCustomerError?.message || "Unable to create customer.",
+        };
+      }
+
+      customerId = newCustomer.id;
+    }
+  } else {
+    const { error: updateCustomerError } = await supabase
+      .from("customers")
+      .update({
+        name: customerName,
+        phone,
+        area: deliveryArea,
+      })
+      .eq("id", customerId);
+
+    if (updateCustomerError) {
+      return { success: false, error: updateCustomerError.message };
+    }
+  }
+
+  const { error } = await supabase
+    .from("orders")
+    .update({
+      customer_id: customerId,
+      product_name: productName,
+      amount,
+      delivery_area: deliveryArea,
+      stage,
+      payment_status: paymentStatus,
+      notes,
+    })
+    .eq("id", id);
 
   if (error) {
     return { success: false, error: error.message };
@@ -103,6 +253,7 @@ export async function updateOrderAction(
   revalidatePath("/dashboard/orders");
   revalidatePath(`/dashboard/orders/${id}`);
   revalidatePath(`/dashboard/orders/${id}/edit`);
+  revalidatePath("/dashboard/customers");
 
   return { success: true, error: null };
 }
