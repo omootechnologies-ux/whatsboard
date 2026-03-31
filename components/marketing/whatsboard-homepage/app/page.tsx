@@ -39,6 +39,48 @@ const steps = [
   },
 ]
 
+const testimonials = [
+  {
+    quote: 'Before WhatsBoard, I was checking screenshots and chats all day. Now I know what is paid and what needs dispatch in one view.',
+    name: 'Amina',
+    role: 'Fashion seller, Dar es Salaam',
+  },
+  {
+    quote: 'Follow-ups used to disappear in my head. Now I reply faster and customers feel the difference.',
+    name: 'Brian',
+    role: 'Accessories seller, Nairobi',
+  },
+  {
+    quote: 'It makes my business look more serious. Orders move faster because I am not operating from memory anymore.',
+    name: 'Neema',
+    role: 'Beauty seller, Arusha',
+  },
+]
+
+const pricingTiers = [
+  {
+    name: 'Free',
+    price: 'TZS 0',
+    note: '30 orders/month',
+    points: ['Basic dashboard', 'Order tracking', 'Mobile-first'],
+    highlight: false,
+  },
+  {
+    name: 'Starter',
+    price: 'TZS 15K',
+    note: 'Most active sellers start here',
+    points: ['Unlimited orders', 'Payment tracking', 'Follow-up reminders'],
+    highlight: true,
+  },
+  {
+    name: 'Growth',
+    price: 'TZS 35K',
+    note: 'For sellers scaling up',
+    points: ['Dispatch workflow', 'Analytics', 'Team support'],
+    highlight: false,
+  },
+]
+
 export default function WhatsBoardHomepage() {
   return (
     <main className="min-h-screen bg-white text-[#173728]">
@@ -89,7 +131,16 @@ export default function WhatsBoardHomepage() {
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <PrimaryLink href="/register">Start free</PrimaryLink>
-              <SecondaryLink href="/pricing">See pricing</SecondaryLink>
+              <SecondaryLink href="#preview">See demo</SecondaryLink>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.22em] text-[#173728]/56">
+              <span className="rounded-full border border-[#173728]/10 bg-[#173728]/[0.03] px-3 py-2">
+                Built for East African sellers
+              </span>
+              <span>WhatsApp</span>
+              <span>Instagram</span>
+              <span>TikTok</span>
+              <span>Facebook</span>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <StatPill label="Missed orders" value="Reduced" />
@@ -152,6 +203,59 @@ export default function WhatsBoardHomepage() {
 
       <section className="relative border-b border-[#173728]/10 bg-[#173728]/[0.025]">
         <SectionShell
+          eyebrow="Feature proof"
+          title="Six core jobs sellers need every day, shown through the product."
+          body="Not feature fluff. The real operating layer after a customer sends the message."
+        >
+          <div className="grid gap-4 lg:grid-cols-3">
+            <FeatureMock title="Order tracking" body="Every order moves through a visible pipeline instead of disappearing in chat." />
+            <FeatureMock title="Payment tracking" body="See who paid, who is waiting, and what still needs confirmation." />
+            <FeatureMock title="Customer management" body="Customer records build from real orders so repeat buyers are easy to recognize." />
+            <FeatureMock title="Follow-up reminders" body="Important chats stop relying on memory and start living in a visible queue." />
+            <FeatureMock title="Dispatch workflow" body="Packing and delivery stages stay clear once payment is done." />
+            <FeatureMock title="Dashboard analytics" body="Growth sellers can see live order activity and seller performance patterns." />
+          </div>
+        </SectionShell>
+      </section>
+
+      <section className="relative border-b border-[#173728]/10">
+        <SectionShell
+          eyebrow="Seller trust"
+          title="Serious selling feels different when the business is structured."
+          body="A clean system does not just save time. It changes how customers experience you."
+        >
+          <div className="grid gap-4 xl:grid-cols-[0.7fr_1.3fr]">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+              <TrustStat value="Fewer missed orders" detail="Clear order pipeline instead of buried messages" />
+              <TrustStat value="Faster follow-ups" detail="Visible reminders instead of memory" />
+              <TrustStat value="Clear payment status" detail="Know what is paid and what is still pending" />
+              <TrustStat value="More professional selling" detail="Customers feel the control immediately" />
+            </div>
+            <div className="grid gap-4 lg:grid-cols-3">
+              {testimonials.map((item) => (
+                <TestimonialCard key={item.name} {...item} />
+              ))}
+            </div>
+          </div>
+        </SectionShell>
+      </section>
+
+      <section className="relative border-b border-[#173728]/10 bg-[#173728]/[0.025]">
+        <SectionShell
+          eyebrow="Simple pricing"
+          title="Start free. Upgrade when the business outgrows chat chaos."
+          body="The easiest plan to understand is the one that gets a seller moving now."
+        >
+          <div className="grid gap-4 lg:grid-cols-3">
+            {pricingTiers.map((tier) => (
+              <PricingPreviewCard key={tier.name} {...tier} />
+            ))}
+          </div>
+        </SectionShell>
+      </section>
+
+      <section className="relative border-b border-[#173728]/10 bg-[#173728]/[0.025]">
+        <SectionShell
           eyebrow="Before / after"
           title="Before: stress and screenshot hunting. After: calm control."
           body="The seller is the same. The operating system is different."
@@ -172,7 +276,7 @@ export default function WhatsBoardHomepage() {
                 If the business is growing, the chaos should not grow with it.
               </h2>
               <p className="max-w-2xl text-sm leading-7 text-[#173728]/72 sm:text-base">
-                Start free. Feel the difference in your first orders. Upgrade when the volume demands more control.
+                Every extra order managed from memory is extra risk. Start free, get structured, and grow from control instead of chaos.
               </p>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <PrimaryLink href="/register">Start free</PrimaryLink>
@@ -194,6 +298,17 @@ export default function WhatsBoardHomepage() {
           </div>
         </footer>
       </section>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#173728]/10 bg-white/95 p-3 backdrop-blur lg:hidden">
+        <div className="mx-auto flex max-w-md items-center gap-3">
+          <PrimaryLink href="/register">
+            <span className="block w-full">Start free</span>
+          </PrimaryLink>
+          <SecondaryLink href="#preview">
+            <span className="block w-full">See demo</span>
+          </SecondaryLink>
+        </div>
+      </div>
     </main>
   )
 }
@@ -466,6 +581,117 @@ function ClosingPanel() {
         </div>
       </div>
     </Surface>
+  )
+}
+
+function FeatureMock({ title, body }: { title: string; body: string }) {
+  return (
+    <Surface className="p-5">
+      <div className="rounded-[1.5rem] border border-[#173728]/10 bg-[#173728]/[0.03] p-4">
+        <div className="grid gap-2">
+          <div className="h-3 w-24 rounded-full bg-[#173728]/12" />
+          <div className="grid grid-cols-3 gap-2">
+            <div className="h-14 rounded-[1rem] border border-[#173728]/10 bg-white" />
+            <div className="h-14 rounded-[1rem] border border-[#173728]/10 bg-white" />
+            <div className="h-14 rounded-[1rem] border border-[#173728]/10 bg-white" />
+          </div>
+        </div>
+      </div>
+      <h3 className="mt-5 text-xl leading-tight">{title}</h3>
+      <p className="mt-3 text-sm leading-7 text-[#173728]/72">{body}</p>
+    </Surface>
+  )
+}
+
+function TrustStat({ value, detail }: { value: string; detail: string }) {
+  return (
+    <Surface className="p-5">
+      <p className="text-lg leading-tight">{value}</p>
+      <p className="mt-3 text-sm leading-7 text-[#173728]/68">{detail}</p>
+    </Surface>
+  )
+}
+
+function TestimonialCard({
+  quote,
+  name,
+  role,
+}: {
+  quote: string
+  name: string
+  role: string
+}) {
+  return (
+    <Surface className="p-5">
+      <p className="text-sm leading-7 text-[#173728]/76">&ldquo;{quote}&rdquo;</p>
+      <div className="mt-5 border-t border-[#173728]/8 pt-4">
+        <p className="text-sm font-semibold">{name}</p>
+        <p className="mt-1 text-xs uppercase tracking-[0.22em] text-[#173728]/50">{role}</p>
+      </div>
+    </Surface>
+  )
+}
+
+function PricingPreviewCard({
+  name,
+  price,
+  note,
+  points,
+  highlight,
+}: {
+  name: string
+  price: string
+  note: string
+  points: string[]
+  highlight: boolean
+}) {
+  return (
+    <div
+      className={[
+        'rounded-[2rem] border p-5 shadow-[0_24px_80px_rgba(23,55,40,0.06)]',
+        highlight ? 'border-[#173728] bg-[#173728] text-white' : 'border-[#173728]/10 bg-white',
+      ].join(' ')}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className={`text-xs uppercase tracking-[0.24em] ${highlight ? 'text-white/70' : 'text-[#173728]/50'}`}>
+            {name}
+          </p>
+          <h3 className="mt-3 text-4xl leading-none font-semibold tracking-[-0.05em]">{price}</h3>
+        </div>
+        {highlight ? (
+          <span className="rounded-full bg-white px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[#173728]">
+            Best for growth
+          </span>
+        ) : null}
+      </div>
+      <p className={`mt-4 text-sm leading-7 ${highlight ? 'text-white/74' : 'text-[#173728]/70'}`}>{note}</p>
+      <div className={`my-5 h-px ${highlight ? 'bg-white/12' : 'bg-[#173728]/10'}`} />
+      <div className="space-y-3">
+        {points.map((point) => (
+          <div key={point} className="flex items-center gap-3 text-sm">
+            <span
+              className={[
+                'inline-flex h-6 w-6 items-center justify-center rounded-full text-xs',
+                highlight ? 'bg-white/12' : 'bg-[#173728]/6',
+              ].join(' ')}
+            >
+              ✓
+            </span>
+            <span>{point}</span>
+          </div>
+        ))}
+      </div>
+      <Link
+        href="/pricing"
+        className={[
+          'mt-6 inline-flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-medium transition',
+          highlight ? 'bg-white text-[#173728] hover:bg-white/92' : 'bg-[#173728] text-white hover:bg-[#0f281d]',
+        ].join(' ')}
+      >
+        See plan
+      </Link>
+    </div>
   )
 }
 

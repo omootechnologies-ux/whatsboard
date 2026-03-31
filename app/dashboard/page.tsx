@@ -89,6 +89,14 @@ export default async function DashboardPage() {
 
   const recentOrders = orders.slice(0, 6);
   const nextFollowUps = pendingFollowUps.slice(0, 5);
+  const pipelineSnapshot = [
+    { label: "New", value: orders.filter((order) => order.stage === "new_order").length },
+    { label: "Payment", value: orders.filter((order) => order.stage === "waiting_payment").length },
+    { label: "Paid", value: orders.filter((order) => order.stage === "paid").length },
+    { label: "Packing", value: orders.filter((order) => order.stage === "packing").length },
+    { label: "Dispatch", value: orders.filter((order) => order.stage === "dispatched").length },
+    { label: "Done", value: orders.filter((order) => order.stage === "delivered").length },
+  ];
 
   return (
     <div className="space-y-6">
@@ -180,6 +188,66 @@ export default async function DashboardPage() {
           detail={canSeeFollowUps ? "Open reminders still pending" : "Upgrade to unlock reminders"}
           icon={<BellRing className="h-5 w-5" />}
         />
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
+        <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Pipeline</p>
+              <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-900">Order flow overview</h3>
+            </div>
+            <Link
+              href="/dashboard/orders"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 transition hover:text-emerald-700"
+            >
+              Open full order board
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+            {pipelineSnapshot.map((stage) => (
+              <div key={stage.label} className="rounded-[22px] border border-slate-200 bg-slate-50/80 p-4">
+                <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">{stage.label}</p>
+                <p className="mt-3 text-2xl font-black tracking-tight text-slate-950">{stage.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-50 text-slate-900">
+              <Truck className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Dispatch tracker</p>
+              <p className="text-xs text-slate-500">What is ready to move after payment and packing.</p>
+            </div>
+          </div>
+
+          <div className="mt-4 space-y-3">
+            <div className="rounded-[22px] bg-slate-50 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Ready for packing</p>
+              <p className="mt-2 text-2xl font-black text-slate-950">
+                {orders.filter((order) => order.stage === "paid").length}
+              </p>
+            </div>
+            <div className="rounded-[22px] bg-slate-50 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">In packing</p>
+              <p className="mt-2 text-2xl font-black text-slate-950">
+                {orders.filter((order) => order.stage === "packing").length}
+              </p>
+            </div>
+            <div className="rounded-[22px] bg-slate-50 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Out for dispatch</p>
+              <p className="mt-2 text-2xl font-black text-slate-950">
+                {orders.filter((order) => order.stage === "dispatched").length}
+              </p>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
