@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { useLanguage } from "@/components/i18n/language-provider"
 import { cn } from "@/lib/utils"
 import { LayoutDashboard, Users, Package, Bell, BarChart3, Clock } from "lucide-react"
 
@@ -41,6 +42,7 @@ export function AppShowcaseSection() {
   const [isVisible, setIsVisible] = useState(false)
   const [activeFeature, setActiveFeature] = useState(0)
   const sectionRef = useRef<HTMLElement>(null)
+  const { t } = useLanguage()
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -73,17 +75,17 @@ export function AppShowcaseSection() {
           )}
         >
           <span className="text-primary font-medium text-sm uppercase tracking-wider">
-            Powerful Features
+            {t("Powerful Features")}
           </span>
           <h2
             className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground text-balance"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Everything You Need to{" "}
-            <span className="text-primary">Sell Smarter</span>
+            {t("Everything You Need to ")}
+            <span className="text-primary">{t("Sell Smarter")}</span>
           </h2>
           <p className="mt-6 text-lg text-muted-foreground text-pretty">
-            Built specifically for online sellers. Every feature designed to save you time.
+            {t("Built specifically for online sellers. Every feature designed to save you time.")}
           </p>
         </div>
 
@@ -112,10 +114,10 @@ export function AppShowcaseSection() {
             {/* App Content - Kanban Board */}
             <div className="p-6 bg-secondary/30">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-foreground">Order Board</h3>
+                <h3 className="text-lg font-bold text-foreground">{t("Order Board")}</h3>
                 <div className="flex items-center gap-2">
                   <div className="px-3 py-1.5 rounded-md bg-primary/10 text-primary text-sm font-medium">
-                    Today: 12 Orders
+                    {t("Today: 12 Orders")}
                   </div>
                 </div>
               </div>
@@ -138,7 +140,7 @@ export function AppShowcaseSection() {
                   >
                     <div className="flex items-center gap-2 mb-3">
                       <div className={cn("w-2 h-2 rounded-full", column.color)} />
-                      <span className="text-sm font-medium text-foreground">{column.title}</span>
+                      <span className="text-sm font-medium text-foreground">{t(column.title)}</span>
                       <span className="ml-auto text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                         {column.count}
                       </span>
@@ -175,7 +177,7 @@ export function AppShowcaseSection() {
                       {column.count > 2 && (
                         <div className="text-center py-2">
                           <span className="text-xs text-muted-foreground">
-                            +{column.count - 2} more
+                            +{column.count - 2} {t("more")}
                           </span>
                         </div>
                       )}
@@ -210,10 +212,10 @@ export function AppShowcaseSection() {
                   <Icon className="w-6 h-6 text-primary" />
                 </div>
                 <h3 className="text-lg font-bold text-foreground mb-2">
-                  {feature.title}
+                  {t(feature.title)}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  {feature.description}
+                  {t(feature.description)}
                 </p>
               </div>
             )

@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { LanguageToggle } from "@/components/i18n/language-toggle"
+import { useLanguage } from "@/components/i18n/language-provider"
 import { Button } from "@/components/ui/button"
 import { Menu, X } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -9,6 +11,7 @@ import { cn } from "@/lib/utils"
 export function Navigation() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { t } = useLanguage()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -45,38 +48,39 @@ export function Navigation() {
               href="#problem"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-              The Problem
+              {t("The Problem")}
             </Link>
             <Link
               href="#how-it-works"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-              How It Works
+              {t("How It Works")}
             </Link>
             <Link
               href="#features"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-              Features
+              {t("Features")}
             </Link>
             <Link
               href="#testimonials"
               className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
-              Testimonials
+              {t("Testimonials")}
             </Link>
           </div>
 
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-4">
+            <LanguageToggle />
             <Button variant="ghost" size="sm" asChild>
               <Link href="/pricing">
-                See Demo
+                {t("See Demo")}
               </Link>
             </Button>
             <Button size="sm" asChild>
               <Link href="/register">
-                Start Free
+                {t("Start Free")}
               </Link>
             </Button>
           </div>
@@ -100,38 +104,39 @@ export function Navigation() {
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                The Problem
+                {t("The Problem")}
               </Link>
               <Link
                 href="#how-it-works"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                How It Works
+                {t("How It Works")}
               </Link>
               <Link
                 href="#features"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Features
+                {t("Features")}
               </Link>
               <Link
                 href="#testimonials"
                 className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                Testimonials
+                {t("Testimonials")}
               </Link>
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
+                <LanguageToggle />
                 <Button variant="ghost" size="sm" className="justify-start" asChild>
                   <Link href="/pricing">
-                    See Demo
+                    {t("See Demo")}
                   </Link>
                 </Button>
                 <Button size="sm" asChild>
                   <Link href="/register">
-                    Start Free
+                    {t("Start Free")}
                   </Link>
                 </Button>
               </div>

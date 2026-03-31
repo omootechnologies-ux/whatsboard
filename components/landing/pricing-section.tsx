@@ -1,25 +1,30 @@
+"use client"
+
 import Link from "next/link"
 import { CheckCircle2 } from "lucide-react"
+import { useLanguage } from "@/components/i18n/language-provider"
 import { PLAN_CONFIG } from "@/lib/plan-access"
 
 const tiers = Object.values(PLAN_CONFIG)
 
 export function PricingSection() {
+  const { t } = useLanguage()
+
   return (
     <section id="pricing" className="bg-background py-24 lg:py-32">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mx-auto mb-16 max-w-3xl text-center">
           <span className="text-primary text-sm font-medium uppercase tracking-wider">
-            Pricing
+            {t("Pricing")}
           </span>
           <h2
             className="mt-4 text-3xl font-bold text-foreground sm:text-4xl lg:text-5xl"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Start free. Upgrade when your selling gets serious.
+            {t("Start free. Upgrade when your selling gets serious.")}
           </h2>
           <p className="mt-6 text-lg text-muted-foreground text-pretty">
-            Clear monthly pricing in TZS for Tanzanian and East African online sellers.
+            {t("Clear monthly pricing in TZS for Tanzanian and East African online sellers.")}
           </p>
         </div>
 
@@ -42,7 +47,7 @@ export function PricingSection() {
                       plan.highlight ? "text-primary-foreground/75" : "text-primary",
                     ].join(" ")}
                   >
-                    {plan.name}
+                    {t(plan.name)}
                   </p>
                   <h3 className="mt-3 text-4xl font-bold tracking-tight">{plan.priceLabel}</h3>
                   <p
@@ -51,7 +56,7 @@ export function PricingSection() {
                       plan.highlight ? "text-primary-foreground/70" : "text-muted-foreground",
                     ].join(" ")}
                   >
-                    {plan.key === "free" ? "/forever" : "/month"}
+                    {plan.key === "free" ? t("/forever") : t("/month")}
                   </p>
                 </div>
 
@@ -61,7 +66,7 @@ export function PricingSection() {
                     plan.highlight ? "bg-white text-primary" : "bg-secondary text-primary",
                   ].join(" ")}
                 >
-                  {plan.badge}
+                  {t(plan.badge)}
                 </span>
               </div>
 
@@ -71,7 +76,7 @@ export function PricingSection() {
                   plan.highlight ? "text-primary-foreground/82" : "text-muted-foreground",
                 ].join(" ")}
               >
-                {plan.description}
+                {t(plan.description)}
               </p>
 
               <ul className="mt-6 space-y-3">
@@ -90,8 +95,8 @@ export function PricingSection() {
                       ].join(" ")}
                     />
                     <span>
-                      {feature.label}
-                      {feature.comingSoon ? " (coming soon)" : ""}
+                      {t(feature.label)}
+                      {feature.comingSoon ? ` ${t("(coming soon)")}` : ""}
                     </span>
                   </li>
                 ))}
@@ -106,7 +111,7 @@ export function PricingSection() {
                     : "bg-primary text-primary-foreground hover:bg-[#0a3d2e]",
                 ].join(" ")}
               >
-                {plan.key === "free" ? "Start Free" : `Choose ${plan.name}`}
+                {plan.key === "free" ? t("Start Free") : `${t("Choose")} ${t(plan.name)}`}
               </Link>
             </div>
           ))}

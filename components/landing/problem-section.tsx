@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
+import { useLanguage } from "@/components/i18n/language-provider"
 import { cn } from "@/lib/utils"
 
 const problems = [
@@ -35,6 +36,7 @@ export function ProblemSection() {
   const [activeIndex, setActiveIndex] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
   const sectionRef = useRef<HTMLElement>(null)
+  const { t } = useLanguage()
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -78,16 +80,16 @@ export function ProblemSection() {
           )}
         >
           <span className="text-primary font-medium text-sm uppercase tracking-wider">
-            The Reality
+            {t("The Reality")}
           </span>
           <h2
             className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground text-balance"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Does This Sound Like Your Daily Struggle?
+            {t("Does This Sound Like Your Daily Struggle?")}
           </h2>
           <p className="mt-6 text-lg text-muted-foreground text-pretty">
-            You started selling online to build freedom. But now, WhatsApp runs your life.
+            {t("You started selling online to build freedom. But now, WhatsApp runs your life.")}
           </p>
         </div>
 
@@ -133,7 +135,7 @@ export function ProblemSection() {
                   )}
                 >
                   <h3 className="text-lg font-bold text-white mb-2">
-                    {problem.title}
+                    {t(problem.title)}
                   </h3>
                   <p
                     className={cn(
@@ -143,7 +145,7 @@ export function ProblemSection() {
                         : "opacity-0 max-h-0 overflow-hidden"
                     )}
                   >
-                    {problem.description}
+                    {t(problem.description)}
                   </p>
                 </div>
               </div>
@@ -168,9 +170,9 @@ export function ProblemSection() {
           )}
         >
           <p className="text-xl sm:text-2xl text-foreground font-medium max-w-2xl mx-auto text-pretty">
-            You&apos;re not alone.{" "}
-            <span className="text-primary">Thousands of East African sellers</span>{" "}
-            face this chaos every single day.
+            {t("You're not alone.")}{" "}
+            <span className="text-primary">{t("Thousands of East African sellers")}</span>{" "}
+            {t("face this chaos every single day.")}
           </p>
         </div>
       </div>

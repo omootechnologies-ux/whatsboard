@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { useLanguage } from "@/components/i18n/language-provider"
 import { cn } from "@/lib/utils"
 import { ArrowRight, Check, Sparkles } from "lucide-react"
 
@@ -16,6 +17,7 @@ const benefits = [
 export function CTASection() {
   const [isVisible, setIsVisible] = useState(false)
   const sectionRef = useRef<HTMLElement>(null)
+  const { t } = useLanguage()
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -55,7 +57,7 @@ export function CTASection() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8">
             <Sparkles className="w-4 h-4" />
-            Join 2,500+ successful sellers
+            {t("Join 2,500+ successful sellers")}
           </div>
 
           {/* Headline */}
@@ -63,14 +65,15 @@ export function CTASection() {
             className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-foreground leading-tight mb-6 text-balance"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Ready to Take Control of{" "}
-            <span className="text-primary">Your Business?</span>
+            {t("Ready to Take Control of ")}
+            <span className="text-primary">{t("Your Business?")}</span>
           </h2>
 
           {/* Subheadline */}
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 text-pretty">
-            Stop losing orders. Stop the late nights. Start running your business like a pro.
-            Your first step to freedom is just one click away.
+            {t(
+              "Stop losing orders. Stop the late nights. Start running your business like a pro. Your first step to freedom is just one click away."
+            )}
           </p>
 
           {/* CTA Buttons */}
@@ -82,13 +85,13 @@ export function CTASection() {
           >
             <Button size="lg" className="text-lg px-8 py-6 gap-2 group" asChild>
               <Link href="/register">
-                Start Free Now
+                  {t("Start Free Now")}
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
             <Button size="lg" variant="outline" className="text-lg px-8 py-6" asChild>
               <Link href="/pricing">
-                Book a Demo
+                  {t("Book a Demo")}
               </Link>
             </Button>
           </div>
@@ -105,7 +108,7 @@ export function CTASection() {
                 <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center">
                   <Check className="w-3 h-3 text-primary" />
                 </div>
-                <span className="text-sm text-muted-foreground">{benefit}</span>
+                <span className="text-sm text-muted-foreground">{t(benefit)}</span>
               </div>
             ))}
           </div>
@@ -119,11 +122,11 @@ export function CTASection() {
           )}
         >
           <div className="p-6 rounded-2xl bg-card border border-primary/20 shadow-lg">
-            <p className="text-sm text-muted-foreground mb-2">Limited Time Offer</p>
+            <p className="text-sm text-muted-foreground mb-2">{t("Limited Time Offer")}</p>
             <p className="text-lg font-bold text-foreground mb-1">
-              First 100 signups this month get
+              {t("First 100 signups this month get")}
             </p>
-            <p className="text-2xl font-bold text-primary">2 Months Free Pro Features</p>
+            <p className="text-2xl font-bold text-primary">{t("2 Months Free Pro Features")}</p>
           </div>
         </div>
       </div>

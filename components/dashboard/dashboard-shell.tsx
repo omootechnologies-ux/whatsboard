@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LanguageToggle } from "@/components/i18n/language-toggle";
+import { useLanguage } from "@/components/i18n/language-provider";
 import {
   BarChart3,
   Bell,
@@ -47,6 +49,7 @@ const SECONDARY_NAV: NavItemConfig[] = [
 
 function NavItem({ href, label, icon: Icon, exact }: NavItemConfig) {
   const pathname = usePathname();
+  const { t } = useLanguage();
   const active = exact ? pathname === href : pathname.startsWith(href);
 
   return (
@@ -68,7 +71,7 @@ function NavItem({ href, label, icon: Icon, exact }: NavItemConfig) {
         <Icon className="h-4 w-4 shrink-0" />
       </span>
 
-      <span className="min-w-0 truncate">{label}</span>
+      <span className="min-w-0 truncate">{t(label)}</span>
       {active && <ChevronRight className="ml-auto h-4 w-4 text-[#173728]/80" />}
     </Link>
   );
@@ -76,6 +79,7 @@ function NavItem({ href, label, icon: Icon, exact }: NavItemConfig) {
 
 function MobileBottomNavItem({ href, label, icon: Icon, exact }: NavItemConfig) {
   const pathname = usePathname();
+  const { t } = useLanguage();
   const active = exact ? pathname === href : pathname.startsWith(href);
 
   return (
@@ -96,7 +100,7 @@ function MobileBottomNavItem({ href, label, icon: Icon, exact }: NavItemConfig) 
       >
         <Icon className="h-4 w-4" />
       </span>
-      <span className="truncate">{label}</span>
+      <span className="truncate">{t(label)}</span>
     </Link>
   );
 }
@@ -120,6 +124,7 @@ export function DashboardShell({
   } | null;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { t } = useLanguage();
   const effectivePlan = getEffectivePlanKey(business);
   const visiblePrimaryNav = PRIMARY_NAV.filter((item) => {
     if (item.href === "/dashboard/customers") {
@@ -145,7 +150,7 @@ export function DashboardShell({
       item.exact ? pathname === item.href : pathname.startsWith(item.href)
     )?.label ??
     "Overview";
-  const userLabel = profile?.full_name || profile?.email || "Team Member";
+  const userLabel = profile?.full_name || profile?.email || t("Team Member");
   const initials =
     userLabel
       .split(" ")
@@ -171,7 +176,7 @@ export function DashboardShell({
               </span>
               <div className="min-w-0">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#5e6461]">
-                  Seller OS
+                  {t("Seller OS")}
                 </p>
                 <h1 className="text-lg font-black tracking-tight text-[#111111]">WHATSBOARD</h1>
               </div>
@@ -182,20 +187,20 @@ export function DashboardShell({
             <div className="rounded-[30px] border border-border bg-secondary/40 p-5 text-foreground shadow-[0_24px_80px_rgba(17,17,17,0.05)]">
               <div className="inline-flex items-center gap-2 rounded-full border border-[#e8e8e2] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#0f5d46]">
                 <ShoppingBag className="h-3.5 w-3.5" />
-                Daily workflow
+                {t("Daily workflow")}
               </div>
               <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#5e6461]">
-                Built for chat orders
+                {t("Built for chat orders")}
               </p>
               <h2 className="mt-3 text-lg font-black leading-tight text-[#111111] 2xl:text-xl">
-                Keep orders, payments, follow-ups, and delivery steps in one place.
+                {t("Keep orders, payments, follow-ups, and delivery steps in one place.")}
               </h2>
               <p className="mt-2 text-sm leading-6 text-[#5e6461]">
-                Made for WhatsApp sellers who need less screenshot hunting and clearer daily control.
+                {t("Made for WhatsApp sellers who need less screenshot hunting and clearer daily control.")}
               </p>
 
               <div className="mt-4 rounded-2xl border border-border bg-card px-4 py-3">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-[#5e6461]">Current plan</p>
+                <p className="text-[10px] uppercase tracking-[0.18em] text-[#5e6461]">{t("Current plan")}</p>
                 <p className="mt-2 text-sm font-semibold text-foreground">
                   {getPlanName(effectivePlan)}
                 </p>
@@ -210,17 +215,17 @@ export function DashboardShell({
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[#0f5d46] bg-[#0f5d46] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0a3d2e]"
               >
                 <Plus className="h-4 w-4" />
-                {canCreateOrders ? "Add New Order" : "Upgrade Plan"}
+                {canCreateOrders ? t("Add New Order") : t("Upgrade Plan")}
               </Link>
 
               <div className="mt-5 grid grid-cols-1 gap-3 2xl:grid-cols-2">
                 <div className="rounded-2xl border border-border bg-card p-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#5e6461]">Focus</p>
-                  <p className="mt-2 text-sm font-semibold text-foreground">Order control</p>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#5e6461]">{t("Focus")}</p>
+                  <p className="mt-2 text-sm font-semibold text-foreground">{t("Order control")}</p>
                 </div>
                 <div className="rounded-2xl border border-border bg-card p-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#5e6461]">Priority</p>
-                  <p className="mt-2 text-sm font-semibold text-foreground">Fast follow-up</p>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#5e6461]">{t("Priority")}</p>
+                  <p className="mt-2 text-sm font-semibold text-foreground">{t("Fast follow-up")}</p>
                 </div>
               </div>
             </div>
@@ -243,21 +248,21 @@ export function DashboardShell({
               <div className="mb-3 rounded-2xl border border-border bg-card p-4">
                 <div className="flex items-center gap-2 text-[#111111]">
                   <ShieldCheck className="h-4 w-4" />
-                  <p className="text-xs font-semibold">Admin Access</p>
+                  <p className="text-xs font-semibold">{t("Admin Access")}</p>
                 </div>
                 <p className="mt-2 text-xs text-[#5e6461]">
                   {profile?.full_name || profile?.email || "Admin"}
                 </p>
                 {business?.name ? (
-                  <p className="mt-1 text-[11px] text-[#5e6461]">Business: {business.name}</p>
+                  <p className="mt-1 text-[11px] text-[#5e6461]">{t("Business: ")}{business.name}</p>
                 ) : null}
               </div>
             )}
 
             <div className="mb-3 rounded-2xl border border-border bg-card p-4">
-              <p className="text-xs font-semibold text-foreground">Operations Mode</p>
+              <p className="text-xs font-semibold text-foreground">{t("Operations Mode")}</p>
               <p className="mt-1 text-xs text-[#5e6461]">
-                Focused on orders, payments, customers, and follow-ups.
+                {t("Focused on orders, payments, customers, and follow-ups.")}
               </p>
             </div>
 
@@ -269,7 +274,7 @@ export function DashboardShell({
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-secondary">
                   <LogOut className="h-4 w-4" />
                 </span>
-                Sign out
+                {t("Sign out")}
               </button>
             </form>
           </div>
@@ -290,7 +295,7 @@ export function DashboardShell({
                 </button>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#173728]/35">
-                    {currentSection}
+                    {t(currentSection)}
                   </p>
                   <h2 className="truncate text-lg font-black tracking-tight text-[#173728]">
                     {business?.name || "Your Business Overview"}
@@ -305,9 +310,11 @@ export function DashboardShell({
                   </span>
                   <div className="min-w-0 max-w-[10rem] xl:max-w-[12rem]">
                     <p className="truncate text-sm font-semibold text-[#173728]">{userLabel}</p>
-                    <p className="text-xs text-[#173728]/45">Live workspace</p>
+                    <p className="text-xs text-[#173728]/45">{t("Live workspace")}</p>
                   </div>
                 </div>
+
+                <LanguageToggle />
 
                 <Link
                   href={
@@ -318,7 +325,7 @@ export function DashboardShell({
                   className="inline-flex items-center gap-2 rounded-2xl border border-[#173728] bg-[#173728] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0f281d]"
                 >
                   <Plus className="h-4 w-4" />
-                  {canCreateOrders ? "New Order" : "Upgrade"}
+                  {canCreateOrders ? t("New Order") : t("Upgrade")}
                 </Link>
               </div>
             </div>
@@ -346,7 +353,7 @@ export function DashboardShell({
                       className="inline-flex items-center gap-2 rounded-2xl border border-[#173728]/10 bg-[#173728]/4 px-3 py-2 text-xs font-semibold text-[#173728] transition hover:bg-[#173728]/7"
                     >
                       <LogOut className="h-3.5 w-3.5" />
-                      Sign out
+                      {t("Sign out")}
                     </button>
                   </form>
                 </div>

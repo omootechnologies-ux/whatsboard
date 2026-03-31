@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
+import { useLanguage } from "@/components/i18n/language-provider"
 import { cn } from "@/lib/utils"
 import { Star, Quote } from "lucide-react"
 
@@ -33,6 +34,7 @@ export function TestimonialsSection() {
   const [isVisible, setIsVisible] = useState(false)
   const [activeIndex, setActiveIndex] = useState(0)
   const sectionRef = useRef<HTMLElement>(null)
+  const { t } = useLanguage()
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -76,17 +78,17 @@ export function TestimonialsSection() {
           )}
         >
           <span className="text-primary font-medium text-sm uppercase tracking-wider">
-            Success Stories
+            {t("Success Stories")}
           </span>
           <h2
             className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground text-balance"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            Sellers Who Transformed{" "}
-            <span className="text-primary">Their Business</span>
+            {t("Sellers Who Transformed ")}
+            <span className="text-primary">{t("Their Business")}</span>
           </h2>
           <p className="mt-6 text-lg text-muted-foreground text-pretty">
-            Real stories from East African sellers who said goodbye to chaos.
+            {t("Real stories from East African sellers who said goodbye to chaos.")}
           </p>
         </div>
 
@@ -139,7 +141,7 @@ export function TestimonialsSection() {
 
                       {/* Quote */}
                       <blockquote className="text-lg lg:text-xl text-foreground leading-relaxed mb-6">
-                        &ldquo;{testimonial.quote}&rdquo;
+                        &ldquo;{t(testimonial.quote)}&rdquo;
                       </blockquote>
 
                       {/* Author */}
@@ -158,7 +160,7 @@ export function TestimonialsSection() {
                             {testimonial.stats.metric}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {testimonial.stats.label}
+                            {t(testimonial.stats.label)}
                           </p>
                         </div>
                       </div>
@@ -207,7 +209,7 @@ export function TestimonialsSection() {
               <p className="text-3xl lg:text-4xl font-bold text-primary mb-2">
                 {stat.value}
               </p>
-              <p className="text-sm text-muted-foreground">{stat.label}</p>
+              <p className="text-sm text-muted-foreground">{t(stat.label)}</p>
             </div>
           ))}
         </div>

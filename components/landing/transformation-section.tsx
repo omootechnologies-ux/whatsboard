@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
+import { useLanguage } from "@/components/i18n/language-provider"
 import { cn } from "@/lib/utils"
 import { Check, X } from "lucide-react"
 
@@ -27,6 +28,7 @@ export function TransformationSection() {
   const [isVisible, setIsVisible] = useState(false)
   const [showAfter, setShowAfter] = useState(false)
   const sectionRef = useRef<HTMLElement>(null)
+  const { t } = useLanguage()
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -61,17 +63,17 @@ export function TransformationSection() {
           )}
         >
           <span className="text-primary font-medium text-sm uppercase tracking-wider">
-            The Transformation
+            {t("The Transformation")}
           </span>
           <h2
             className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground text-balance"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            From Chaos to{" "}
-            <span className="text-primary">Complete Control</span>
+            {t("From Chaos to ")}
+            <span className="text-primary">{t("Complete Control")}</span>
           </h2>
           <p className="mt-6 text-lg text-muted-foreground text-pretty">
-            See the difference WhatsBoard makes for your business.
+            {t("See the difference WhatsBoard makes for your business.")}
           </p>
         </div>
 
@@ -89,7 +91,7 @@ export function TransformationSection() {
           >
             <div className="absolute -top-4 left-8 px-4 py-1.5 bg-background border border-destructive/30 rounded-full">
               <span className="text-sm font-bold text-destructive uppercase tracking-wider">
-                Before
+                {t("Before")}
               </span>
             </div>
 
@@ -108,7 +110,7 @@ export function TransformationSection() {
                   <div className="flex-shrink-0 w-6 h-6 rounded-full bg-destructive/10 flex items-center justify-center">
                     <X className="w-4 h-4 text-destructive" />
                   </div>
-                  <span className="text-foreground">{item}</span>
+                  <span className="text-foreground">{t(item)}</span>
                 </div>
               ))}
             </div>
@@ -118,9 +120,9 @@ export function TransformationSection() {
               <div className="flex items-center gap-3">
                 <span className="text-3xl">😫</span>
                 <div>
-                  <p className="font-medium text-foreground">Stressed & Overwhelmed</p>
+                  <p className="font-medium text-foreground">{t("Stressed & Overwhelmed")}</p>
                   <p className="text-sm text-muted-foreground">
-                    Business running you instead of you running it
+                    {t("Business running you instead of you running it")}
                   </p>
                 </div>
               </div>
@@ -139,7 +141,7 @@ export function TransformationSection() {
           >
             <div className="absolute -top-4 left-8 px-4 py-1.5 bg-primary text-primary-foreground rounded-full">
               <span className="text-sm font-bold uppercase tracking-wider">
-                After
+                {t("After")}
               </span>
             </div>
 
@@ -158,7 +160,7 @@ export function TransformationSection() {
                   <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
                     <Check className="w-4 h-4 text-primary" />
                   </div>
-                  <span className="text-foreground font-medium">{item}</span>
+                  <span className="text-foreground font-medium">{t(item)}</span>
                 </div>
               ))}
             </div>
@@ -168,9 +170,9 @@ export function TransformationSection() {
               <div className="flex items-center gap-3">
                 <span className="text-3xl">😎</span>
                 <div>
-                  <p className="font-medium text-foreground">Calm & In Control</p>
+                  <p className="font-medium text-foreground">{t("Calm & In Control")}</p>
                   <p className="text-sm text-muted-foreground">
-                    Running your business like a professional
+                    {t("Running your business like a professional")}
                   </p>
                 </div>
               </div>
@@ -198,12 +200,12 @@ export function TransformationSection() {
             {/* Floating Success Metrics */}
             <div className="absolute top-4 right-4 sm:top-8 sm:right-8 bg-background/95 backdrop-blur-sm rounded-xl p-4 shadow-lg">
               <p className="text-2xl sm:text-3xl font-bold text-primary">3x</p>
-              <p className="text-xs sm:text-sm text-muted-foreground">More Orders Handled</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">{t("More Orders Handled")}</p>
             </div>
 
             <div className="absolute bottom-4 left-4 sm:bottom-8 sm:left-8 bg-background/95 backdrop-blur-sm rounded-xl p-4 shadow-lg">
               <p className="text-2xl sm:text-3xl font-bold text-primary">0</p>
-              <p className="text-xs sm:text-sm text-muted-foreground">Missed Orders</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">{t("Missed Orders")}</p>
             </div>
           </div>
         </div>

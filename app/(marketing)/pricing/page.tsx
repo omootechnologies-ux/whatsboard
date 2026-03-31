@@ -1,5 +1,7 @@
 import Link from "next/link"
 import { CheckCircle2, ChevronLeft } from "lucide-react"
+import { LanguageToggle } from "@/components/i18n/language-toggle"
+import { TranslatedText } from "@/components/i18n/translated-text"
 import { createClient } from "@/lib/supabase/server"
 import { getViewerContext } from "@/lib/queries"
 import { PLAN_CONFIG, getEffectivePlanKey, getPlanName, type PlanKey } from "@/lib/plan-access"
@@ -19,7 +21,7 @@ function CheckoutButton({
   if (tierKey === "free") {
     return (
       <span className="mt-8 inline-flex w-full items-center justify-center rounded-2xl border border-border bg-secondary px-5 py-3 text-sm font-semibold text-foreground">
-        Included after signup
+        <TranslatedText text="Included after signup" />
       </span>
     )
   }
@@ -32,7 +34,7 @@ function CheckoutButton({
         href="/register"
         className="mt-8 inline-flex w-full items-center justify-center rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-[#0a3d2e]"
       >
-        Start Free
+        <TranslatedText text="Start Free" />
       </Link>
     )
   }
@@ -40,7 +42,7 @@ function CheckoutButton({
   if (isCurrentPlan) {
     return (
       <span className="mt-8 inline-flex w-full items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 px-5 py-3 text-sm font-semibold text-primary">
-        Current Plan
+        <TranslatedText text="Current Plan" />
       </span>
     )
   }
@@ -51,7 +53,15 @@ function CheckoutButton({
         type="submit"
         className="inline-flex w-full items-center justify-center rounded-2xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-[#0a3d2e]"
       >
-        {currentPlan ? `Switch to ${PLAN_CONFIG[tierKey].name}` : `Pay for ${PLAN_CONFIG[tierKey].name}`}
+        {currentPlan ? (
+          <>
+            <TranslatedText text="Switch to" /> <span className="ml-1"><TranslatedText text={PLAN_CONFIG[tierKey].name} /></span>
+          </>
+        ) : (
+          <>
+            <TranslatedText text="Pay for" /> <span className="ml-1"><TranslatedText text={PLAN_CONFIG[tierKey].name} /></span>
+          </>
+        )}
       </button>
     </form>
   )
@@ -65,7 +75,11 @@ function Notice({ tone, message }: { tone: "error" | "required" | "upgrade" | "p
     processing: "border-primary/20 bg-primary/10 text-primary",
   } as const
 
-  return <div className={`mx-auto mt-8 max-w-3xl rounded-2xl border px-4 py-3 text-sm ${toneMap[tone]}`}>{message}</div>
+  return (
+    <div className={`mx-auto mt-8 max-w-3xl rounded-2xl border px-4 py-3 text-sm ${toneMap[tone]}`}>
+      <TranslatedText text={message} />
+    </div>
+  )
 }
 
 export default async function PricingPage({
@@ -92,36 +106,40 @@ export default async function PricingPage({
               className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground"
             >
               <ChevronLeft className="h-4 w-4" />
-              Back to home
+              <TranslatedText text="Back to home" />
             </Link>
-            {user ? (
-              <Link
-                href="/dashboard/account"
-                className="inline-flex items-center justify-center rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-secondary"
-              >
-                View account billing
-              </Link>
-            ) : (
-              <Link
-                href="/login"
-                className="inline-flex items-center justify-center rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-secondary"
-              >
-                Login
-              </Link>
-            )}
+            <div className="flex items-center gap-3">
+              <LanguageToggle />
+              {user ? (
+                <Link
+                  href="/dashboard/account"
+                  className="inline-flex items-center justify-center rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-secondary"
+                >
+                  <TranslatedText text="View account billing" />
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  className="inline-flex items-center justify-center rounded-2xl border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground transition hover:bg-secondary"
+                >
+                  <TranslatedText text="Login" />
+                </Link>
+              )}
+            </div>
           </div>
 
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-medium uppercase tracking-wider text-primary">Pricing</p>
+            <p className="text-sm font-medium uppercase tracking-wider text-primary">
+              <TranslatedText text="Pricing" />
+            </p>
             <h1
               className="mt-4 text-4xl font-bold tracking-tight text-foreground sm:text-5xl lg:text-6xl"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              Clear pricing for serious selling.
+              <TranslatedText text="Clear pricing for serious selling." />
             </h1>
             <p className="mt-5 text-base leading-7 text-muted-foreground sm:text-lg">
-              Start on Free, then upgrade through live Snippe checkout when you need more orders,
-              payment visibility, follow-ups, and deeper control.
+              <TranslatedText text="Start on Free, then upgrade through live Snippe checkout when you need more orders, payment visibility, follow-ups, and deeper control." />
             </p>
           </div>
 
@@ -153,7 +171,7 @@ export default async function PricingPage({
           {user && business ? (
             <div className="mx-auto mt-8 max-w-3xl rounded-[28px] border border-border bg-card p-5 text-left shadow-sm">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                Current billing
+                <TranslatedText text="Current billing" />
               </p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -166,7 +184,7 @@ export default async function PricingPage({
                   </p>
                 </div>
                 <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                  Live billing active
+                  <TranslatedText text="Live billing active" />
                 </span>
               </div>
             </div>
@@ -191,7 +209,7 @@ export default async function PricingPage({
                         tier.highlight ? "text-primary-foreground/76" : "text-primary",
                       ].join(" ")}
                     >
-                      {tier.name}
+                      <TranslatedText text={tier.name} />
                     </p>
                     <h2 className="mt-3 text-4xl font-bold tracking-tight">
                       {tier.priceLabel}
@@ -201,7 +219,7 @@ export default async function PricingPage({
                           tier.highlight ? "text-primary-foreground/70" : "text-muted-foreground",
                         ].join(" ")}
                       >
-                        {tier.key === "free" ? "/forever" : "/month"}
+                        <TranslatedText text={tier.key === "free" ? "/forever" : "/month"} />
                       </span>
                     </h2>
                   </div>
@@ -212,7 +230,7 @@ export default async function PricingPage({
                       tier.highlight ? "bg-white text-primary" : "bg-secondary text-primary",
                     ].join(" ")}
                   >
-                    {tier.badge}
+                    <TranslatedText text={tier.badge} />
                   </span>
                 </div>
 
@@ -222,7 +240,7 @@ export default async function PricingPage({
                     tier.highlight ? "text-primary-foreground/80" : "text-muted-foreground",
                   ].join(" ")}
                 >
-                  {tier.description}
+                  <TranslatedText text={tier.description} />
                 </p>
 
                 <CheckoutButton
@@ -250,8 +268,9 @@ export default async function PricingPage({
                         ].join(" ")}
                       />
                       <span>
-                        {feature.label}
-                        {feature.comingSoon ? " (coming soon)" : ""}
+                        <TranslatedText text={feature.label} />
+                        {feature.comingSoon ? " " : ""}
+                        {feature.comingSoon ? <TranslatedText text="(coming soon)" /> : null}
                       </span>
                     </li>
                   ))}
@@ -262,13 +281,13 @@ export default async function PricingPage({
 
           <div className="mt-10 rounded-[28px] border border-border bg-card p-6 text-center shadow-sm">
             <p className="text-lg font-bold text-foreground">
-              Snippe handles the payment page. WhatsBoard handles the plan activation.
+              <TranslatedText text="Snippe handles the payment page. WhatsBoard handles the plan activation." />
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Checkout stays secure, and the plan state stays tied to the same business record used by the dashboard.
+              <TranslatedText text="Checkout stays secure, and the plan state stays tied to the same business record used by the dashboard." />
             </p>
             <p className="mt-3 text-sm font-semibold text-foreground">
-              Free includes 30 orders per month. Paid plans unlock deeper operations that are already live in the app.
+              <TranslatedText text="Free includes 30 orders per month. Paid plans unlock deeper operations that are already live in the app." />
             </p>
           </div>
         </div>

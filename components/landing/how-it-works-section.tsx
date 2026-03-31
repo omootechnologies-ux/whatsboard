@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
+import { useLanguage } from "@/components/i18n/language-provider"
 import { cn } from "@/lib/utils"
 import { MessageSquare, ClipboardList, ArrowRightLeft, Truck } from "lucide-react"
 
@@ -44,6 +45,7 @@ export function HowItWorksSection() {
   const [activeStep, setActiveStep] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
   const sectionRef = useRef<HTMLElement>(null)
+  const { t } = useLanguage()
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -77,16 +79,16 @@ export function HowItWorksSection() {
           )}
         >
           <span className="text-primary font-medium text-sm uppercase tracking-wider">
-            Simple & Powerful
+            {t("Simple & Powerful")}
           </span>
           <h2
             className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground text-balance"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            How WhatsBoard Works
+            {t("How WhatsBoard Works")}
           </h2>
           <p className="mt-6 text-lg text-muted-foreground text-pretty">
-            Four simple steps to transform your WhatsApp selling into a professional operation.
+            {t("Four simple steps to transform your WhatsApp selling into a professional operation.")}
           </p>
         </div>
 
@@ -132,11 +134,11 @@ export function HowItWorksSection() {
                               : "text-muted-foreground"
                           )}
                         >
-                          Step {step.number}
+                          {t("Step")} {step.number}
                         </span>
                       </div>
                       <h3 className="text-lg font-bold text-foreground mb-2">
-                        {step.title}
+                        {t(step.title)}
                       </h3>
                       <p
                         className={cn(
@@ -146,7 +148,7 @@ export function HowItWorksSection() {
                             : "opacity-70 max-h-12 overflow-hidden"
                         )}
                       >
-                        {step.description}
+                        {t(step.description)}
                       </p>
                     </div>
                   </div>

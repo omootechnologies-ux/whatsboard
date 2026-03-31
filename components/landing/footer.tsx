@@ -1,4 +1,7 @@
+"use client"
+
 import Link from "next/link"
+import { useLanguage } from "@/components/i18n/language-provider"
 
 const footerLinks = [
   { label: "How It Works", href: "#how-it-works" },
@@ -10,6 +13,8 @@ const footerLinks = [
 ]
 
 export function Footer() {
+  const { t } = useLanguage()
+
   return (
     <footer className="bg-foreground text-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,7 +32,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-background/70">
-              The order management system for Tanzanian and East African online sellers. Turn chat chaos into organized growth.
+              {t("The order management system for Tanzanian and East African online sellers. Turn chat chaos into organized growth.")}
             </p>
           </div>
 
@@ -38,15 +43,15 @@ export function Footer() {
                 href={link.href}
                 className="text-background/70 transition-colors hover:text-primary"
               >
-                {link.label}
+                {t(link.label)}
               </Link>
             ))}
           </div>
         </div>
 
         <div className="flex flex-col items-center justify-between gap-4 border-t border-background/10 py-6 text-sm text-background/50 sm:flex-row">
-          <p>© 2026 WhatsBoard. All rights reserved.</p>
-          <p>Built for Tanzanian and East African online sellers.</p>
+          <p>{t("© 2026 WhatsBoard. All rights reserved.")}</p>
+          <p>{t("Built for Tanzanian and East African online sellers.")}</p>
         </div>
       </div>
     </footer>
