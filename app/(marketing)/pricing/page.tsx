@@ -72,17 +72,17 @@ export default async function PricingPage({
   const tiers = Object.values(PLAN_CONFIG);
 
   return (
-    <main className="min-h-screen bg-white text-slate-900">
-      <section className="border-b border-slate-100 bg-white">
+    <main className="min-h-screen bg-[#fafaf7] text-[#111111]">
+      <section className="border-b border-[#e8e8e2] bg-[#fafaf7]">
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-black uppercase tracking-[0.22em] text-emerald-600">
+            <p className="text-sm font-black uppercase tracking-[0.22em] text-[#0f5d46]">
               Pricing
             </p>
-            <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
+            <h1 className="mt-4 text-4xl font-black tracking-tight text-[#111111] sm:text-5xl">
               Pay in TZS. Activate your plan on real checkout.
             </h1>
-            <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">
+            <p className="mt-5 text-base leading-7 text-[#5e6461] sm:text-lg">
               WHATSBOARD pricing is now connected to live Snippe hosted payments. Pick a plan,
               pay securely, and your business plan updates automatically after webhook confirmation.
             </p>
@@ -113,14 +113,14 @@ export default async function PricingPage({
           ) : null}
 
           {user && business ? (
-            <div className="mx-auto mt-8 max-w-3xl rounded-[28px] border border-slate-200 bg-slate-50 p-5 text-left">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Current billing</p>
+            <div className="mx-auto mt-8 max-w-3xl rounded-[28px] border border-[#e8e8e2] bg-white p-5 text-left shadow-sm">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#5e6461]">Current billing</p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-lg font-black text-slate-950">
-                    {getPlanName(effectivePlan)}
-                  </p>
-                  <p className="text-sm text-slate-600">
+                    <p className="text-lg font-black text-[#111111]">
+                      {getPlanName(effectivePlan)}
+                    </p>
+                    <p className="text-sm text-[#5e6461]">
                     Status: {effectivePlan === "free" ? "free" : business.billing_status || "inactive"}
                     {business.billing_current_period_ends_at
                       ? effectivePlan !== "free"
@@ -131,7 +131,7 @@ export default async function PricingPage({
                 </div>
                 <Link
                   href="/dashboard/account"
-                  className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:border-slate-400"
+                  className="inline-flex items-center justify-center rounded-2xl border border-[#e8e8e2] bg-[#fafaf7] px-4 py-2.5 text-sm font-semibold text-[#111111] transition hover:bg-white"
                 >
                   View account billing
                 </Link>
@@ -147,7 +147,7 @@ export default async function PricingPage({
                   "rounded-[32px] border p-6 shadow-sm",
                   tier.highlight
                     ? "border-[#173728] bg-[#173728] text-white shadow-xl"
-                    : "border-slate-200 bg-white text-slate-900",
+                    : "border-[#e8e8e2] bg-white text-[#111111]",
                 ].join(" ")}
               >
                 <div className="flex items-start justify-between gap-3">
@@ -155,7 +155,7 @@ export default async function PricingPage({
                     <p
                       className={[
                         "text-sm font-bold uppercase tracking-[0.18em]",
-                        tier.highlight ? "text-white/76" : "text-emerald-600",
+                        tier.highlight ? "text-white/76" : "text-[#0f5d46]",
                       ].join(" ")}
                     >
                       {tier.name}
@@ -165,7 +165,7 @@ export default async function PricingPage({
                       <span
                         className={[
                           "ml-1 text-sm font-semibold",
-                          tier.highlight ? "text-white/70" : "text-slate-500",
+                          tier.highlight ? "text-white/70" : "text-[#5e6461]",
                         ].join(" ")}
                       >
                         {tier.key === "free" ? "/forever" : "/month"}
@@ -178,7 +178,7 @@ export default async function PricingPage({
                       "rounded-full px-3 py-1 text-xs font-bold",
                       tier.highlight
                         ? "bg-white text-[#173728]"
-                        : "bg-emerald-50 text-emerald-700",
+                        : "bg-[#f4f6f1] text-[#0f5d46]",
                     ].join(" ")}
                   >
                     {tier.badge}
@@ -188,7 +188,7 @@ export default async function PricingPage({
                 <p
                   className={[
                     "mt-5 text-sm leading-6",
-                    tier.highlight ? "text-white/80" : "text-slate-600",
+                    tier.highlight ? "text-white/80" : "text-[#5e6461]",
                   ].join(" ")}
                 >
                   {tier.description}
@@ -204,7 +204,7 @@ export default async function PricingPage({
                 <div
                   className={[
                     "my-6 h-px",
-                    tier.highlight ? "bg-white/14" : "bg-slate-200",
+                    tier.highlight ? "bg-white/14" : "bg-[#e8e8e2]",
                   ].join(" ")}
                 />
 
@@ -214,7 +214,7 @@ export default async function PricingPage({
                       key={feature.label}
                       className={[
                         "flex items-start gap-3 text-sm",
-                        tier.highlight ? "text-white/85" : "text-slate-700",
+                        tier.highlight ? "text-white/85" : "text-[#5e6461]",
                       ].join(" ")}
                     >
                       <span
@@ -222,7 +222,7 @@ export default async function PricingPage({
                           "mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-black",
                           tier.highlight
                             ? "bg-white text-[#173728]"
-                            : "bg-emerald-50 text-emerald-700",
+                            : "bg-[#f4f6f1] text-[#0f5d46]",
                         ].join(" ")}
                       >
                         ✓
@@ -238,14 +238,14 @@ export default async function PricingPage({
             ))}
           </div>
 
-          <div className="mt-10 rounded-[28px] border border-slate-200 bg-slate-50 p-6 text-center">
-            <p className="text-lg font-black text-slate-900">
+          <div className="mt-10 rounded-[28px] border border-[#e8e8e2] bg-white p-6 text-center shadow-sm">
+            <p className="text-lg font-black text-[#111111]">
               Snippe checkout handles the payment page. WHATSBOARD handles the plan activation after webhook confirmation.
             </p>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-[#5e6461]">
               That keeps checkout secure and keeps your plan state tied to the business record already used by the dashboard.
             </p>
-            <p className="mt-3 text-sm font-semibold text-slate-700">
+            <p className="mt-3 text-sm font-semibold text-[#111111]">
               Free includes 30 orders per month. Paid plans unlock deeper operations based on the tools that are already live in the app.
             </p>
           </div>

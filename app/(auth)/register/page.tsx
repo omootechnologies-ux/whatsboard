@@ -11,9 +11,10 @@ export default async function RegisterPage({
 
   return (
     <main className="container-pad flex min-h-screen items-center justify-center py-16">
-      <div className="w-full max-w-md rounded-3xl border border-[#173728]/12 bg-white p-8 shadow-[0_24px_80px_rgba(23,55,40,0.08)]">
-        <h1 className="text-3xl font-semibold text-[#173728]">Create your account</h1>
-        <p className="mt-2 text-[#173728]/68">Start tracking orders from WhatsApp, Instagram, and more.</p>
+      <div className="w-full max-w-md rounded-[2rem] border border-[#e8e8e2] bg-white p-8 shadow-[0_24px_80px_rgba(17,17,17,0.06)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0f5d46]">Get started</p>
+        <h1 className="mt-4 text-3xl font-semibold tracking-[-0.04em] text-[#111111]">Create your account</h1>
+        <p className="mt-2 text-[#5e6461]">Start tracking orders from WhatsApp, Instagram, and more.</p>
         <AuthForm
           action={registerAction}
           submitLabel="Create account"
@@ -25,8 +26,8 @@ export default async function RegisterPage({
             { name: "referralCode", label: "Referral code", placeholder: "Optional", defaultValue: resolvedSearch.ref ?? "" },
           ]}
         />
-        <p className="mt-4 text-sm text-[#173728]/62">
-          Already have an account? <Link href="/login" className="text-[#173728] underline">Login</Link>
+        <p className="mt-4 text-sm text-[#5e6461]">
+          Already have an account? <Link href="/login" className="text-[#111111] underline">Login</Link>
         </p>
       </div>
     </main>

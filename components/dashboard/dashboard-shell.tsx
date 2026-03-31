@@ -155,48 +155,48 @@ export function DashboardShell({
       .join("") || "WB";
 
   return (
-    <div className="min-h-screen bg-white text-[#173728]">
+    <div className="min-h-screen bg-[#fafaf7] text-[#111111]">
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute left-[-12rem] top-[-10rem] h-[24rem] w-[24rem] rounded-full bg-[#173728]/6 blur-3xl" />
-        <div className="absolute right-[-8rem] top-[8rem] h-[20rem] w-[20rem] rounded-full bg-black/6 blur-3xl" />
-        <div className="absolute bottom-[-10rem] left-[18%] h-[24rem] w-[24rem] rounded-full bg-[#173728]/5 blur-3xl" />
+        <div className="absolute left-[-12rem] top-[-10rem] h-[24rem] w-[24rem] rounded-full bg-[#0f5d46]/5 blur-3xl" />
+        <div className="absolute right-[-8rem] top-[8rem] h-[20rem] w-[20rem] rounded-full bg-black/5 blur-3xl" />
+        <div className="absolute bottom-[-10rem] left-[18%] h-[24rem] w-[24rem] rounded-full bg-[#0f5d46]/4 blur-3xl" />
       </div>
 
       <div className="relative flex min-h-screen">
-        <aside className="hidden w-[20rem] shrink-0 border-r border-[#173728]/10 bg-[#f7faf8] xl:flex xl:flex-col 2xl:w-[22rem]">
-          <div className="border-b border-[#173728]/8 px-6 py-6">
+        <aside className="hidden w-[20rem] shrink-0 border-r border-[#e8e8e2] bg-white xl:flex xl:flex-col 2xl:w-[22rem]">
+          <div className="border-b border-[#e8e8e2] px-6 py-6">
             <Link href="/dashboard" className="flex items-center gap-3">
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-3xl border border-[#173728]/12 bg-[#173728] text-white shadow-[0_16px_30px_rgba(23,55,40,0.12)]">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-3xl border border-[#e8e8e2] bg-[#0f5d46] text-white shadow-[0_16px_30px_rgba(15,93,70,0.12)]">
                 <Wallet className="h-5 w-5" />
               </span>
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#173728]/40">
-                  Seller Operations
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#5e6461]">
+                  Seller OS
                 </p>
-                <h1 className="text-lg font-black tracking-tight text-[#173728]">WHATSBOARD</h1>
+                <h1 className="text-lg font-black tracking-tight text-[#111111]">WHATSBOARD</h1>
               </div>
             </Link>
           </div>
 
           <div className="px-5 pt-5">
-            <div className="rounded-[30px] border border-[#173728]/10 bg-white p-5 text-[#173728] shadow-[0_24px_80px_rgba(23,55,40,0.06)]">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#173728]/12 bg-[#173728]/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#173728]/88">
+            <div className="rounded-[30px] border border-[#e8e8e2] bg-[#fcfcfa] p-5 text-[#111111] shadow-[0_24px_80px_rgba(17,17,17,0.05)]">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#e8e8e2] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#0f5d46]">
                 <ShoppingBag className="h-3.5 w-3.5" />
-                Daily Workflow
+                Daily workflow
               </div>
-              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#173728]/45">
+              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#5e6461]">
                 Built for chat orders
               </p>
-              <h2 className="mt-3 text-lg font-black leading-tight 2xl:text-xl">
+              <h2 className="mt-3 text-lg font-black leading-tight text-[#111111] 2xl:text-xl">
                 Keep orders, payments, follow-ups, and delivery steps in one place.
               </h2>
-              <p className="mt-2 text-sm leading-6 text-[#173728]/65">
+              <p className="mt-2 text-sm leading-6 text-[#5e6461]">
                 Made for WhatsApp sellers who need less screenshot hunting and clearer daily control.
               </p>
 
-              <div className="mt-4 rounded-2xl border border-[#173728]/10 bg-[#173728]/3 px-4 py-3">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-[#173728]/35">Current plan</p>
-                <p className="mt-2 text-sm font-semibold text-[#173728]">
+              <div className="mt-4 rounded-2xl border border-[#e8e8e2] bg-white px-4 py-3">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-[#5e6461]">Current plan</p>
+                <p className="mt-2 text-sm font-semibold text-[#111111]">
                   {getPlanName(effectivePlan)}
                 </p>
               </div>
@@ -207,20 +207,20 @@ export function DashboardShell({
                     ? "/dashboard/orders/new"
                     : "/pricing?status=upgrade&message=Upgrade%20when%20you%20need%20more%20than%2030%20orders%20this%20month"
                 }
-                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[#173728] bg-[#173728] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0f281d]"
+                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-[#0f5d46] bg-[#0f5d46] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#0a3d2e]"
               >
                 <Plus className="h-4 w-4" />
                 {canCreateOrders ? "Add New Order" : "Upgrade Plan"}
               </Link>
 
               <div className="mt-5 grid grid-cols-1 gap-3 2xl:grid-cols-2">
-                <div className="rounded-2xl border border-[#173728]/8 bg-[#173728]/3 p-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#173728]/35">Focus</p>
-                  <p className="mt-2 text-sm font-semibold text-[#173728]">Order control</p>
+                <div className="rounded-2xl border border-[#e8e8e2] bg-white p-3">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#5e6461]">Focus</p>
+                  <p className="mt-2 text-sm font-semibold text-[#111111]">Order control</p>
                 </div>
-                <div className="rounded-2xl border border-[#173728]/8 bg-[#173728]/3 p-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#173728]/35">Priority</p>
-                  <p className="mt-2 text-sm font-semibold text-[#173728]">Fast follow-up</p>
+                <div className="rounded-2xl border border-[#e8e8e2] bg-white p-3">
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#5e6461]">Priority</p>
+                  <p className="mt-2 text-sm font-semibold text-[#111111]">Fast follow-up</p>
                 </div>
               </div>
             </div>
@@ -232,7 +232,7 @@ export function DashboardShell({
             ))}
           </nav>
 
-          <div className="border-t border-[#173728]/8 p-5">
+          <div className="border-t border-[#e8e8e2] p-5">
             <div className="mb-3 space-y-1">
               {visibleSecondaryNav.map((item) => (
                 <NavItem key={item.href} {...item} />
@@ -240,23 +240,23 @@ export function DashboardShell({
             </div>
 
             {isAdmin && (
-              <div className="mb-3 rounded-2xl border border-[#173728]/10 bg-[#173728]/4 p-4">
-                <div className="flex items-center gap-2 text-[#173728]">
+              <div className="mb-3 rounded-2xl border border-[#e8e8e2] bg-white p-4">
+                <div className="flex items-center gap-2 text-[#111111]">
                   <ShieldCheck className="h-4 w-4" />
                   <p className="text-xs font-semibold">Admin Access</p>
                 </div>
-                <p className="mt-2 text-xs text-[#173728]/80">
+                <p className="mt-2 text-xs text-[#5e6461]">
                   {profile?.full_name || profile?.email || "Admin"}
                 </p>
                 {business?.name ? (
-                  <p className="mt-1 text-[11px] text-[#173728]/65">Business: {business.name}</p>
+                  <p className="mt-1 text-[11px] text-[#5e6461]">Business: {business.name}</p>
                 ) : null}
               </div>
             )}
 
-            <div className="mb-3 rounded-2xl border border-[#173728]/8 bg-[#173728]/3 p-4">
-              <p className="text-xs font-semibold text-[#173728]">Operations Mode</p>
-              <p className="mt-1 text-xs text-[#173728]/55">
+            <div className="mb-3 rounded-2xl border border-[#e8e8e2] bg-white p-4">
+              <p className="text-xs font-semibold text-[#111111]">Operations Mode</p>
+              <p className="mt-1 text-xs text-[#5e6461]">
                 Focused on orders, payments, customers, and follow-ups.
               </p>
             </div>
@@ -264,9 +264,9 @@ export function DashboardShell({
             <form action={logoutAction}>
               <button
                 type="submit"
-                className="flex w-full items-center gap-3 rounded-2xl border border-[#173728]/8 px-3 py-3 text-sm font-medium text-[#173728]/65 transition hover:bg-[#173728]/4 hover:text-[#173728]"
+                className="flex w-full items-center gap-3 rounded-2xl border border-[#e8e8e2] px-3 py-3 text-sm font-medium text-[#5e6461] transition hover:bg-[#f2f3ee] hover:text-[#111111]"
               >
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#173728]/5">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[#f4f6f1]">
                   <LogOut className="h-4 w-4" />
                 </span>
                 Sign out
@@ -276,7 +276,7 @@ export function DashboardShell({
         </aside>
 
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 border-b border-[#173728]/10 bg-white/92 backdrop-blur-xl">
+          <header className="sticky top-0 z-20 border-b border-[#e8e8e2] bg-[#fafaf7]/92 backdrop-blur-xl">
             <div className="mx-auto flex w-full max-w-[1600px] flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-5 lg:px-8">
               <div className="flex min-w-0 items-center gap-3">
                 <button
