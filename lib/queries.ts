@@ -58,9 +58,23 @@ export async function getViewerContext() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("business_id, full_name, email, is_admin")
+    .select("business_id, full_name, email")
     .eq("id", user.id)
     .single();
+
+  let isAdmin = false;
+
+  if (user) {
+    const { data: adminProfile, error: adminProfileError } = await supabase
+      .from("profiles")
+      .select("is_admin")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (!adminProfileError && adminProfile) {
+      isAdmin = Boolean((adminProfile as { is_admin?: boolean | null }).is_admin);
+    }
+  }
 
   let business: ViewerBusiness | null = null;
 
@@ -110,7 +124,7 @@ export async function getViewerContext() {
     profile,
     business,
     billingTransaction,
-    isAdmin: profile?.is_admin ?? false,
+    isAdmin,
   };
 }
 
