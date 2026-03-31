@@ -15,6 +15,10 @@ export async function requireDashboardAccess() {
     redirect("/login");
   }
 
+  if (!context.isAdmin) {
+    redirect("/pricing?status=error&message=Only%20admin%20accounts%20can%20access%20the%20dashboard");
+  }
+
   if (!canAccessDashboardFeature("overview", context.business)) {
     redirect("/pricing?status=required&message=Pay%20for%20a%20plan%20to%20open%20the%20dashboard");
   }

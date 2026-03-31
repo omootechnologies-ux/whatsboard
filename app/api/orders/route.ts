@@ -28,7 +28,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const { supabase, businessId } = await getViewerContext();
+    const { supabase, businessId, isAdmin } = await getViewerContext();
+
+    if (!isAdmin) {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    }
 
     if (!businessId) {
       return NextResponse.json({ error: "Business not found" }, { status: 401 });

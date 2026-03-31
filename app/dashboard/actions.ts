@@ -33,6 +33,16 @@ type CreateOrderPayload = {
   tags?: string[];
 };
 
+async function getAdminDashboardContext() {
+  const context = await getViewerContext();
+
+  if (!context.isAdmin || !context.businessId) {
+    return null;
+  }
+
+  return context;
+}
+
 function normalizeText(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
@@ -260,9 +270,9 @@ export async function createOrderAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { supabase, businessId } = await getViewerContext();
-
-  if (!businessId) return { success: false, error: "Business not found." };
+  const context = await getAdminDashboardContext();
+  if (!context) return { success: false, error: "Admin access required." };
+  const { supabase, businessId } = context;
 
   const customerName = String(formData.get("customerName") || "").trim();
   const phone = String(formData.get("phone") || "").trim();
@@ -294,6 +304,8 @@ export async function createOrderAction(
 }
 
 export async function updateOrderStageAction(id: string, stage: string) {
+  const context = await getAdminDashboardContext();
+  if (!context) throw new Error("Admin access required.");
   const supabase = await createClient();
 
   const { error } = await supabase.from("orders").update({ stage }).eq("id", id);
@@ -310,9 +322,9 @@ export async function updateOrderAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { supabase, businessId } = await getViewerContext();
-
-  if (!businessId) return { success: false, error: "Business not found." };
+  const context = await getAdminDashboardContext();
+  if (!context) return { success: false, error: "Admin access required." };
+  const { supabase, businessId } = context;
 
   const customerName = String(formData.get("customerName") || "").trim();
   const phone = String(formData.get("phone") || "").trim();
@@ -511,9 +523,9 @@ export async function updateCustomerAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { supabase, businessId } = await getViewerContext();
-
-  if (!businessId) return { success: false, error: "Business not found." };
+  const context = await getAdminDashboardContext();
+  if (!context) return { success: false, error: "Admin access required." };
+  const { supabase, businessId } = context;
 
   const payload = {
     name: String(formData.get("name") || "").trim(),
@@ -545,9 +557,9 @@ export async function updateFollowUpAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { supabase, businessId } = await getViewerContext();
-
-  if (!businessId) return { success: false, error: "Business not found." };
+  const context = await getAdminDashboardContext();
+  if (!context) return { success: false, error: "Admin access required." };
+  const { supabase, businessId } = context;
 
   const dueAtRaw = String(formData.get("dueAt") || "").trim();
   const note = String(formData.get("note") || "").trim();
@@ -581,9 +593,9 @@ export async function createCatalogProductAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { supabase, businessId } = await getViewerContext();
-
-  if (!businessId) return { success: false, error: "Business not found." };
+  const context = await getAdminDashboardContext();
+  if (!context) return { success: false, error: "Admin access required." };
+  const { supabase, businessId } = context;
 
   const name = String(formData.get("name") || "").trim();
   const description = String(formData.get("description") || "").trim();
@@ -625,9 +637,9 @@ export async function createCatalogProductAction(
 }
 
 export async function updateCatalogStockAction(id: string, formData: FormData) {
-  const { supabase, businessId } = await getViewerContext();
-
-  if (!businessId) return;
+  const context = await getAdminDashboardContext();
+  if (!context) return;
+  const { supabase, businessId } = context;
 
   const stockCount = Number(formData.get("stockCount") || 0);
   const isActive = String(formData.get("isActive") || "") === "on";
@@ -645,9 +657,9 @@ export async function updateCatalogStockAction(id: string, formData: FormData) {
 }
 
 export async function completeFollowUpAction(id: string) {
-  const { supabase, businessId } = await getViewerContext();
-
-  if (!businessId) throw new Error("Business not found.");
+  const context = await getAdminDashboardContext();
+  if (!context) throw new Error("Admin access required.");
+  const { supabase, businessId } = context;
 
   const { error } = await supabase
     .from("follow_ups")
@@ -668,9 +680,9 @@ export async function saveAiOrderCaptureAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const { supabase, businessId } = await getViewerContext();
-
-  if (!businessId) return { success: false, error: "Business not found." };
+  const context = await getAdminDashboardContext();
+  if (!context) return { success: false, error: "Admin access required." };
+  const { supabase, businessId } = context;
 
   const customerName = String(formData.get("customerName") || "").trim();
   const phone = String(formData.get("phone") || "").trim();
