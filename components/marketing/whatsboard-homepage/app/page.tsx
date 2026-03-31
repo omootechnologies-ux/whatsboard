@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { PLAN_CONFIG } from "@/lib/billing";
 
 type OrderStatus =
   | "new"
@@ -222,24 +223,7 @@ const testimonials = [
   },
 ];
 
-const pricing = [
-  {
-    name: "Free",
-    price: "TZS 0",
-    note: "For sellers getting out of chat chaos and starting with real order structure.",
-  },
-  {
-    name: "Starter",
-    price: "TZS 15K / mo",
-    note: "For active sellers who need payments, follow-ups, customer tracking, and control.",
-    highlight: true,
-  },
-  {
-    name: "Growth",
-    price: "TZS 35K / mo",
-    note: "For higher-volume sellers managing dispatch workflow and broader visibility.",
-  },
-] as const;
+const pricing = Object.values(PLAN_CONFIG);
 
 export default function WhatsBoardHomepage() {
   return (
@@ -670,7 +654,7 @@ function PricingSection() {
           </h2>
         </motion.div>
 
-        <div className="mt-12 grid gap-4 lg:grid-cols-3">
+        <div className="mt-12 grid gap-4 lg:grid-cols-4">
           {pricing.map((tier, index) => (
             <motion.div
               key={tier.name}
@@ -686,16 +670,28 @@ function PricingSection() {
                 <div>
                   <p className="text-xs uppercase tracking-[0.22em] text-[#5E6461]">{tier.name}</p>
                   <h3 className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-[#111111]">
-                    {tier.price}
+                    {tier.priceLabel}
                   </h3>
                 </div>
                 {tier.highlight ? (
                   <span className="rounded-full bg-[#0F5D46] px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-white">
-                    Best value
+                    {tier.badge}
+                  </span>
+                ) : tier.badge ? (
+                  <span className="rounded-full border border-[#E8E8E2] bg-[#F7F7F2] px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-[#0F5D46]">
+                    {tier.badge}
                   </span>
                 ) : null}
               </div>
-              <p className="mt-4 text-sm leading-7 text-[#5E6461]">{tier.note}</p>
+              <p className="mt-4 text-sm leading-7 text-[#5E6461]">{tier.description}</p>
+              <div className="mt-5 grid gap-2">
+                {tier.features.slice(0, 3).map((feature) => (
+                  <div key={feature.label} className="text-sm text-[#5E6461]">
+                    {feature.label}
+                    {feature.comingSoon ? " (coming soon)" : ""}
+                  </div>
+                ))}
+              </div>
               <Link
                 href="/pricing"
                 className={`mt-6 inline-flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-medium transition ${
@@ -704,7 +700,7 @@ function PricingSection() {
                     : "border border-[#E8E8E2] text-[#0A3D2E] hover:bg-[#F2F3EE]"
                 }`}
               >
-                View pricing
+                {tier.key === "free" ? "Start free" : `View ${tier.name}`}
               </Link>
             </motion.div>
           ))}
