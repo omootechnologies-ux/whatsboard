@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getViewerContext } from "@/lib/queries";
+import { canAccessDashboardFeature } from "@/lib/plan-access";
 
 const createOrderSchema = z.object({
   customerName: z.string().min(1),
@@ -28,14 +29,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const { supabase, businessId, isAdmin } = await getViewerContext();
-
-    if (!isAdmin) {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-    }
+    const { supabase, businessId, isAdmin, business } = await getViewerContext();
 
     if (!businessId) {
       return NextResponse.json({ error: "Business not found" }, { status: 401 });
+    }
+
+    if (!isAdmin && !canAccessDashboardFeature("overview", business)) {
+      return NextResponse.json({ error: "Dashboard access required" }, { status: 403 });
     }
 
     const customerName = parsed.data.customerName.trim();

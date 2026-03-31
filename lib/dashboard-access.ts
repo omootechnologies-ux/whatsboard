@@ -15,8 +15,8 @@ export async function requireDashboardAccess() {
     redirect("/login");
   }
 
-  if (!context.isAdmin) {
-    redirect("/pricing?status=error&message=Only%20admin%20accounts%20can%20access%20the%20dashboard");
+  if (context.isAdmin) {
+    return context;
   }
 
   if (!canAccessDashboardFeature("overview", context.business)) {
@@ -28,6 +28,10 @@ export async function requireDashboardAccess() {
 
 export async function requireDashboardFeatureAccess(feature: DashboardFeature) {
   const context = await requireDashboardAccess();
+
+  if (context.isAdmin) {
+    return context;
+  }
 
   if (!canAccessDashboardFeature(feature, context.business)) {
     const minimumPlan = getMinimumPlanForFeature(feature);

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getViewerContext } from "@/lib/queries";
+import { canAccessDashboardFeature } from "@/lib/plan-access";
 
 type ActionState = {
   success: boolean;
@@ -33,10 +34,18 @@ type CreateOrderPayload = {
   tags?: string[];
 };
 
-async function getAdminDashboardContext() {
+async function getDashboardActionContext() {
   const context = await getViewerContext();
 
-  if (!context.isAdmin || !context.businessId) {
+  if (!context.businessId) {
+    return null;
+  }
+
+  if (context.isAdmin) {
+    return context;
+  }
+
+  if (!canAccessDashboardFeature("overview", context.business)) {
     return null;
   }
 
@@ -270,8 +279,8 @@ export async function createOrderAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const context = await getAdminDashboardContext();
-  if (!context) return { success: false, error: "Admin access required." };
+  const context = await getDashboardActionContext();
+  if (!context) return { success: false, error: "Dashboard access required." };
   const { supabase, businessId } = context;
 
   const customerName = String(formData.get("customerName") || "").trim();
@@ -304,8 +313,8 @@ export async function createOrderAction(
 }
 
 export async function updateOrderStageAction(id: string, stage: string) {
-  const context = await getAdminDashboardContext();
-  if (!context) throw new Error("Admin access required.");
+  const context = await getDashboardActionContext();
+  if (!context) throw new Error("Dashboard access required.");
   const supabase = await createClient();
 
   const { error } = await supabase.from("orders").update({ stage }).eq("id", id);
@@ -322,8 +331,8 @@ export async function updateOrderAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const context = await getAdminDashboardContext();
-  if (!context) return { success: false, error: "Admin access required." };
+  const context = await getDashboardActionContext();
+  if (!context) return { success: false, error: "Dashboard access required." };
   const { supabase, businessId } = context;
 
   const customerName = String(formData.get("customerName") || "").trim();
@@ -523,8 +532,8 @@ export async function updateCustomerAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const context = await getAdminDashboardContext();
-  if (!context) return { success: false, error: "Admin access required." };
+  const context = await getDashboardActionContext();
+  if (!context) return { success: false, error: "Dashboard access required." };
   const { supabase, businessId } = context;
 
   const payload = {
@@ -557,8 +566,8 @@ export async function updateFollowUpAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const context = await getAdminDashboardContext();
-  if (!context) return { success: false, error: "Admin access required." };
+  const context = await getDashboardActionContext();
+  if (!context) return { success: false, error: "Dashboard access required." };
   const { supabase, businessId } = context;
 
   const dueAtRaw = String(formData.get("dueAt") || "").trim();
@@ -593,8 +602,8 @@ export async function createCatalogProductAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const context = await getAdminDashboardContext();
-  if (!context) return { success: false, error: "Admin access required." };
+  const context = await getDashboardActionContext();
+  if (!context) return { success: false, error: "Dashboard access required." };
   const { supabase, businessId } = context;
 
   const name = String(formData.get("name") || "").trim();
@@ -637,7 +646,7 @@ export async function createCatalogProductAction(
 }
 
 export async function updateCatalogStockAction(id: string, formData: FormData) {
-  const context = await getAdminDashboardContext();
+  const context = await getDashboardActionContext();
   if (!context) return;
   const { supabase, businessId } = context;
 
@@ -657,8 +666,8 @@ export async function updateCatalogStockAction(id: string, formData: FormData) {
 }
 
 export async function completeFollowUpAction(id: string) {
-  const context = await getAdminDashboardContext();
-  if (!context) throw new Error("Admin access required.");
+  const context = await getDashboardActionContext();
+  if (!context) throw new Error("Dashboard access required.");
   const { supabase, businessId } = context;
 
   const { error } = await supabase
@@ -680,8 +689,8 @@ export async function saveAiOrderCaptureAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const context = await getAdminDashboardContext();
-  if (!context) return { success: false, error: "Admin access required." };
+  const context = await getDashboardActionContext();
+  if (!context) return { success: false, error: "Dashboard access required." };
   const { supabase, businessId } = context;
 
   const customerName = String(formData.get("customerName") || "").trim();
