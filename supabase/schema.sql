@@ -60,6 +60,7 @@ create table public.orders (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references public.businesses(id) on delete cascade,
   customer_id uuid not null references public.customers(id) on delete cascade,
+  catalog_product_id uuid references public.catalog_products(id) on delete set null,
   product_name text not null,
   amount numeric(12,2) not null default 0,
   delivery_area text,

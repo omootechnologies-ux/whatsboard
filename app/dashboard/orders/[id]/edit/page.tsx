@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getViewerContext } from "@/lib/queries";
+import { getOrderCatalogOptions, getViewerContext } from "@/lib/queries";
 import UpdateOrderForm from "@/components/forms/update-order-form";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +13,7 @@ export default async function EditOrderPage({
 }) {
   const { supabase, businessId } = await getViewerContext();
   const { id } = await params;
+  const catalogProducts = businessId ? await getOrderCatalogOptions() : [];
 
   if (!businessId) notFound();
 
@@ -20,6 +21,7 @@ export default async function EditOrderPage({
     .from("orders")
     .select(`
       id,
+      catalog_product_id,
       product_name,
       amount,
       delivery_area,
@@ -39,6 +41,7 @@ export default async function EditOrderPage({
 
   const normalizedOrder = {
     id: order.id,
+    catalog_product_id: order.catalog_product_id ?? "",
     customer_name: customer?.name ?? "",
     phone: customer?.phone ?? "",
     product_name: order.product_name ?? "",
@@ -64,7 +67,7 @@ export default async function EditOrderPage({
         </Link>
       </div>
 
-      <UpdateOrderForm order={normalizedOrder} />
+      <UpdateOrderForm order={normalizedOrder} catalogProducts={catalogProducts} />
     </div>
   );
 }

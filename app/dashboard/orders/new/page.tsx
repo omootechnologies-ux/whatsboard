@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { OrderForm } from "@/components/forms/order-form";
+import { getOrderCatalogOptions } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default function NewOrderPage() {
+export default async function NewOrderPage() {
+  const catalogProducts = await getOrderCatalogOptions();
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -26,7 +29,7 @@ export default function NewOrderPage() {
       </div>
 
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <OrderForm />
+        <OrderForm catalogProducts={catalogProducts} />
       </section>
     </div>
   );

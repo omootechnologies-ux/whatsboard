@@ -1,5 +1,25 @@
 import { createClient } from "@/lib/supabase/server";
 
+type ViewerBusiness = {
+  id: string;
+  name: string | null;
+  phone: string | null;
+  brand_color: string | null;
+  currency: string | null;
+  created_at: string | null;
+  referral_code?: string | null;
+  referral_credit_days?: number | null;
+  referred_by_business_id?: string | null;
+  billing_provider?: string | null;
+  billing_plan?: string | null;
+  billing_status?: string | null;
+  billing_provider_reference?: string | null;
+  billing_provider_session_reference?: string | null;
+  billing_last_paid_at?: string | null;
+  billing_current_period_starts_at?: string | null;
+  billing_current_period_ends_at?: string | null;
+};
+
 function matchesMissingRelationError(message?: string) {
   const value = (message || "").toLowerCase();
   return (
@@ -42,7 +62,7 @@ export async function getViewerContext() {
     .eq("id", user.id)
     .single();
 
-  let business = null;
+  let business: ViewerBusiness | null = null;
 
   if (profile?.business_id) {
     const { data: baseBusinessData } = await supabase
@@ -105,6 +125,7 @@ export async function getDashboardData() {
     .from("orders")
     .select(`
       id,
+      catalog_product_id,
       product_name,
       amount,
       delivery_area,
@@ -125,6 +146,7 @@ export async function getDashboardData() {
 
     return {
       id: item.id,
+      catalogProductId: item.catalog_product_id ?? undefined,
       customerId: customer?.id ?? "",
       customerName: customer?.name ?? "Unknown",
       phone: customer?.phone ?? "",
@@ -296,4 +318,24 @@ export async function getCatalogProductsData() {
     })),
     setupRequired: Boolean(error && matchesMissingRelationError(error.message)),
   };
+}
+
+export async function getOrderCatalogOptions() {
+  const { supabase, businessId } = await getViewerContext();
+
+  if (!businessId) return [];
+
+  const { data } = await supabase
+    .from("catalog_products")
+    .select("id, name, price, stock_count, is_active")
+    .eq("business_id", businessId)
+    .order("name", { ascending: true });
+
+  return (data ?? []).map((item: any) => ({
+    id: item.id,
+    name: item.name,
+    price: Number(item.price ?? 0),
+    stockCount: Number(item.stock_count ?? 0),
+    isActive: Boolean(item.is_active),
+  }));
 }

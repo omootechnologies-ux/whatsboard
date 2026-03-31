@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useFormState } from "react-dom";
 import { updateOrderAction } from "@/app/dashboard/actions";
 
 type OrderRecord = {
   id: string;
+  catalog_product_id?: string | null;
   customer_name?: string | null;
   phone?: string | null;
   product_name?: string | null;
@@ -20,14 +22,32 @@ type ActionState = {
   error: string | null;
 };
 
+type CatalogOption = {
+  id: string;
+  name: string;
+  price: number;
+  stockCount: number;
+  isActive: boolean;
+};
+
 const initialState: ActionState = {
   success: false,
   error: null,
 };
 
-export default function UpdateOrderForm({ order }: { order: OrderRecord }) {
+export default function UpdateOrderForm({
+  order,
+  catalogProducts = [],
+}: {
+  order: OrderRecord;
+  catalogProducts?: CatalogOption[];
+}) {
   const action = updateOrderAction.bind(null, order.id);
   const [state, formAction, isPending] = useFormState(action, initialState);
+  const [catalogProductId, setCatalogProductId] = useState(order.catalog_product_id ?? "");
+  const [customProduct, setCustomProduct] = useState(order.product_name ?? "");
+  const [customAmount, setCustomAmount] = useState(String(order.amount ?? 0));
+  const selectedCatalogProduct = catalogProducts.find((item) => item.id === catalogProductId) ?? null;
 
   return (
     <form action={formAction} className="grid gap-4 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
@@ -43,13 +63,46 @@ export default function UpdateOrderForm({ order }: { order: OrderRecord }) {
         </label>
 
         <label className="grid gap-2">
+          <span className="text-sm font-semibold text-slate-700">Catalog product</span>
+          <select
+            name="catalogProductId"
+            value={catalogProductId}
+            onChange={(event) => setCatalogProductId(event.target.value)}
+            className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900"
+          >
+            <option value="">Custom product</option>
+            {catalogProducts
+              .filter((item) => item.isActive || item.id === catalogProductId)
+              .map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name} • TZS {item.price.toLocaleString()} • {item.stockCount} left
+                </option>
+              ))}
+          </select>
+        </label>
+
+        <label className="grid gap-2">
           <span className="text-sm font-semibold text-slate-700">Product</span>
-          <input name="product" defaultValue={order.product_name ?? ""} className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
+          <input
+            name="product"
+            value={selectedCatalogProduct ? selectedCatalogProduct.name : customProduct}
+            onChange={(event) => setCustomProduct(event.target.value)}
+            readOnly={Boolean(selectedCatalogProduct)}
+            className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900 read-only:text-slate-500"
+          />
         </label>
 
         <label className="grid gap-2">
           <span className="text-sm font-semibold text-slate-700">Amount</span>
-          <input name="amount" type="number" min="0" defaultValue={order.amount ?? 0} className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
+          <input
+            name="amount"
+            type="number"
+            min="0"
+            value={selectedCatalogProduct ? String(selectedCatalogProduct.price) : customAmount}
+            onChange={(event) => setCustomAmount(event.target.value)}
+            readOnly={Boolean(selectedCatalogProduct)}
+            className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900 read-only:text-slate-500"
+          />
         </label>
 
         <label className="grid gap-2">
@@ -78,6 +131,12 @@ export default function UpdateOrderForm({ order }: { order: OrderRecord }) {
             <option value="cod">COD</option>
           </select>
         </label>
+
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 md:col-span-2">
+          {selectedCatalogProduct
+            ? `${selectedCatalogProduct.stockCount} units left in catalog. Changing this order to a different catalog product will restore stock on the previous one and reduce the new one by 1.`
+            : "Leave catalog product empty to keep this order as a custom line item."}
+        </div>
 
         <label className="flex items-center gap-3 rounded-2xl border border-slate-300 bg-white px-4 py-3 md:col-span-2">
           <input type="checkbox" name="addFollowUp" className="h-4 w-4" />

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { createOrderAction } from "@/app/dashboard/actions";
 import { ORDER_STAGES } from "@/lib/constants";
@@ -9,6 +10,14 @@ const PAYMENT_OPTIONS = ["unpaid", "partial", "paid", "cod"];
 type OrderFormState = {
   error: string | null;
   success: boolean;
+};
+
+type CatalogOption = {
+  id: string;
+  name: string;
+  price: number;
+  stockCount: number;
+  isActive: boolean;
 };
 
 function SubmitButton() {
@@ -24,19 +33,73 @@ function SubmitButton() {
   );
 }
 
-export function OrderForm() {
+export function OrderForm({
+  catalogProducts = [],
+}: {
+  catalogProducts?: CatalogOption[];
+}) {
   const [state, formAction] = useFormState(createOrderAction, {
     error: null,
     success: false,
   });
+  const [catalogProductId, setCatalogProductId] = useState("");
+  const [customProduct, setCustomProduct] = useState("");
+  const [customAmount, setCustomAmount] = useState("");
+  const selectedCatalogProduct = catalogProducts.find((item) => item.id === catalogProductId) ?? null;
 
   return (
     <form action={formAction} className="grid gap-4 md:grid-cols-2">
       <input name="customerName" placeholder="Customer name" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3" />
       <input name="phone" placeholder="Phone number" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3" />
       <input name="area" placeholder="Delivery area" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3" />
-      <input name="product" placeholder="Product or service" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3" />
-      <input name="amount" type="number" placeholder="Amount" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3" />
+      <label className="grid gap-2">
+        <span className="text-sm text-white/70">Catalog product</span>
+        <select
+          name="catalogProductId"
+          value={catalogProductId}
+          onChange={(event) => setCatalogProductId(event.target.value)}
+          className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3"
+        >
+          <option value="">Custom product</option>
+          {catalogProducts
+            .filter((item) => item.isActive || item.id === catalogProductId)
+            .map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name} • TZS {item.price.toLocaleString()} • {item.stockCount} left
+              </option>
+            ))}
+        </select>
+      </label>
+      <div className="grid gap-2">
+        <span className="text-sm text-white/70">Price</span>
+        <input
+          name="amount"
+          type="number"
+          placeholder="Amount"
+          readOnly={Boolean(selectedCatalogProduct)}
+          value={selectedCatalogProduct ? String(selectedCatalogProduct.price) : customAmount}
+          onChange={(event) => setCustomAmount(event.target.value)}
+          className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 read-only:text-white/70"
+        />
+      </div>
+      <input
+        name="product"
+        placeholder="Product or service"
+        readOnly={Boolean(selectedCatalogProduct)}
+        value={selectedCatalogProduct ? selectedCatalogProduct.name : customProduct}
+        onChange={(event) => setCustomProduct(event.target.value)}
+        className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 read-only:text-white/70"
+      />
+
+      {selectedCatalogProduct ? (
+        <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200">
+          {selectedCatalogProduct.stockCount} units left in catalog. Saving this order will reduce stock by 1.
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-white/10 bg-slate-950/40 px-4 py-3 text-sm text-white/55">
+          Choose a catalog product to lock the price and sync stock automatically, or leave it as a custom order.
+        </div>
+      )}
 
       <select name="stage" defaultValue="new_order" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3">
         {ORDER_STAGES.map((stage) => (

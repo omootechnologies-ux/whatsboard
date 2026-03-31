@@ -9,6 +9,14 @@ type ActionState = {
   error: string | null;
 };
 
+type CatalogProductRecord = {
+  id: string;
+  name: string;
+  price: number | string | null;
+  stock_count: number | null;
+  is_active: boolean | null;
+};
+
 function normalizeText(value: string) {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
@@ -23,6 +31,47 @@ function generateReferralCode(value: string, businessId: string) {
   return `${slug}-${businessId.replace(/-/g, "").slice(0, 6)}`.toUpperCase();
 }
 
+async function getCatalogProductById(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  businessId: string,
+  catalogProductId: string
+) {
+  const { data, error } = await supabase
+    .from("catalog_products")
+    .select("id, name, price, stock_count, is_active")
+    .eq("business_id", businessId)
+    .eq("id", catalogProductId)
+    .maybeSingle();
+
+  return { product: (data as CatalogProductRecord | null) ?? null, error };
+}
+
+async function adjustCatalogStock(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  businessId: string,
+  catalogProductId: string,
+  delta: number
+) {
+  const { product, error } = await getCatalogProductById(supabase, businessId, catalogProductId);
+
+  if (error) return { error };
+  if (!product) return { error: new Error("Selected catalog product was not found.") };
+
+  const nextStock = Number(product.stock_count ?? 0) + delta;
+
+  if (nextStock < 0) {
+    return { error: new Error(`${product.name} is out of stock.`) };
+  }
+
+  const { error: updateError } = await supabase
+    .from("catalog_products")
+    .update({ stock_count: nextStock })
+    .eq("business_id", businessId)
+    .eq("id", catalogProductId);
+
+  return { error: updateError };
+}
+
 export async function createOrderAction(
   _prevState: ActionState,
   formData: FormData
@@ -34,6 +83,7 @@ export async function createOrderAction(
   const customerName = String(formData.get("customerName") || "").trim();
   const phone = String(formData.get("phone") || "").trim();
   const productName = String(formData.get("product") || "").trim();
+  const catalogProductId = String(formData.get("catalogProductId") || "").trim();
   const amount = Number(formData.get("amount") || 0);
   const deliveryArea = String(formData.get("area") || "").trim();
   const stage = String(formData.get("stage") || "new_order").trim();
@@ -45,8 +95,23 @@ export async function createOrderAction(
 
   if (!customerName) return { success: false, error: "Customer name is required." };
   if (!phone) return { success: false, error: "Phone number is required." };
-  if (!productName) return { success: false, error: "Product is required." };
-  if (!Number.isFinite(amount) || amount < 0) {
+  let resolvedProductName = productName;
+  let resolvedAmount = amount;
+
+  if (catalogProductId) {
+    const { product, error: catalogError } = await getCatalogProductById(supabase, businessId, catalogProductId);
+
+    if (catalogError) return { success: false, error: catalogError.message };
+    if (!product) return { success: false, error: "Selected catalog product was not found." };
+    if (!product.is_active) return { success: false, error: "Selected catalog product is hidden." };
+    if (Number(product.stock_count ?? 0) < 1) return { success: false, error: `${product.name} is out of stock.` };
+
+    resolvedProductName = product.name;
+    resolvedAmount = Number(product.price ?? 0);
+  }
+
+  if (!resolvedProductName) return { success: false, error: "Product is required." };
+  if (!Number.isFinite(resolvedAmount) || resolvedAmount < 0) {
     return { success: false, error: "Amount must be a valid number." };
   }
 
@@ -107,8 +172,9 @@ export async function createOrderAction(
     .insert({
       business_id: businessId,
       customer_id: customerId,
-      product_name: productName,
-      amount,
+      catalog_product_id: catalogProductId || null,
+      product_name: resolvedProductName,
+      amount: resolvedAmount,
       delivery_area: deliveryArea,
       stage,
       payment_status: paymentStatus,
@@ -121,6 +187,15 @@ export async function createOrderAction(
     return { success: false, error: orderError?.message || "Unable to create order." };
   }
 
+  if (catalogProductId) {
+    const { error: stockError } = await adjustCatalogStock(supabase, businessId, catalogProductId, -1);
+
+    if (stockError) {
+      await supabase.from("orders").delete().eq("business_id", businessId).eq("id", createdOrder.id);
+      return { success: false, error: stockError.message };
+    }
+  }
+
   if (addFollowUp) {
     const dueAt = followUpDateRaw
       ? new Date(followUpDateRaw).toISOString()
@@ -130,7 +205,7 @@ export async function createOrderAction(
       business_id: businessId,
       order_id: createdOrder.id,
       due_at: dueAt,
-      note: followUpNote || `Follow up with ${customerName} about ${productName}`,
+      note: followUpNote || `Follow up with ${customerName} about ${resolvedProductName}`,
       completed: false,
     });
 
@@ -169,6 +244,7 @@ export async function updateOrderAction(
   const customerName = String(formData.get("customerName") || "").trim();
   const phone = String(formData.get("phone") || "").trim();
   const productName = String(formData.get("product") || "").trim();
+  const catalogProductId = String(formData.get("catalogProductId") || "").trim();
   const amount = Number(formData.get("amount") || 0);
   const deliveryArea = String(formData.get("area") || "").trim();
   const stage = String(formData.get("stage") || "new_order").trim();
@@ -180,20 +256,49 @@ export async function updateOrderAction(
 
   if (!customerName) return { success: false, error: "Customer name is required." };
   if (!phone) return { success: false, error: "Phone number is required." };
-  if (!productName) return { success: false, error: "Product is required." };
-  if (!Number.isFinite(amount) || amount < 0) {
+  let resolvedProductName = productName;
+  let resolvedAmount = amount;
+
+  if (catalogProductId) {
+    const { product, error: catalogError } = await getCatalogProductById(supabase, businessId, catalogProductId);
+
+    if (catalogError) return { success: false, error: catalogError.message };
+    if (!product) return { success: false, error: "Selected catalog product was not found." };
+    if (!product.is_active) return { success: false, error: "Selected catalog product is hidden." };
+
+    resolvedProductName = product.name;
+    resolvedAmount = Number(product.price ?? 0);
+  }
+
+  if (!resolvedProductName) return { success: false, error: "Product is required." };
+  if (!Number.isFinite(resolvedAmount) || resolvedAmount < 0) {
     return { success: false, error: "Amount must be a valid number." };
   }
 
   const { data: currentOrder, error: currentOrderError } = await supabase
     .from("orders")
-    .select("id, customer_id")
+    .select("id, customer_id, catalog_product_id")
     .eq("business_id", businessId)
     .eq("id", id)
     .single();
 
   if (currentOrderError || !currentOrder) {
     return { success: false, error: currentOrderError?.message || "Order not found." };
+  }
+
+  const previousCatalogProductId = currentOrder.catalog_product_id ?? null;
+  if (catalogProductId && previousCatalogProductId !== catalogProductId) {
+    const { product: nextCatalogProduct, error: nextCatalogProductError } = await getCatalogProductById(
+      supabase,
+      businessId,
+      catalogProductId
+    );
+
+    if (nextCatalogProductError) return { success: false, error: nextCatalogProductError.message };
+    if (!nextCatalogProduct) return { success: false, error: "Selected catalog product was not found." };
+    if (Number(nextCatalogProduct.stock_count ?? 0) < 1) {
+      return { success: false, error: `${nextCatalogProduct.name} is out of stock.` };
+    }
   }
 
   let customerId = currentOrder.customer_id;
@@ -256,8 +361,9 @@ export async function updateOrderAction(
     .from("orders")
     .update({
       customer_id: customerId,
-      product_name: productName,
-      amount,
+      catalog_product_id: catalogProductId || null,
+      product_name: resolvedProductName,
+      amount: resolvedAmount,
       delivery_area: deliveryArea,
       stage,
       payment_status: paymentStatus,
@@ -267,6 +373,18 @@ export async function updateOrderAction(
     .eq("id", id);
 
   if (error) return { success: false, error: error.message };
+
+  if (previousCatalogProductId !== (catalogProductId || null)) {
+    if (catalogProductId) {
+      const { error: decrementError } = await adjustCatalogStock(supabase, businessId, catalogProductId, -1);
+      if (decrementError) return { success: false, error: decrementError.message };
+    }
+
+    if (previousCatalogProductId) {
+      const { error: restoreError } = await adjustCatalogStock(supabase, businessId, previousCatalogProductId, 1);
+      if (restoreError) return { success: false, error: restoreError.message };
+    }
+  }
 
   if (addFollowUp) {
     const dueAt = followUpDateRaw
@@ -286,7 +404,7 @@ export async function updateOrderAction(
         .from("follow_ups")
         .update({
           due_at: dueAt,
-          note: followUpNote || `Follow up with ${customerName} about ${productName}`,
+          note: followUpNote || `Follow up with ${customerName} about ${resolvedProductName}`,
         })
         .eq("business_id", businessId)
         .eq("id", existingFollowUp.id);
@@ -297,7 +415,7 @@ export async function updateOrderAction(
         business_id: businessId,
         order_id: id,
         due_at: dueAt,
-        note: followUpNote || `Follow up with ${customerName} about ${productName}`,
+        note: followUpNote || `Follow up with ${customerName} about ${resolvedProductName}`,
         completed: false,
       });
 

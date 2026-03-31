@@ -23,6 +23,7 @@ export interface Customer {
 
 export interface Order {
   id: string;
+  catalogProductId?: string;
   customerId: string;
   customerName: string;
   phone: string;
