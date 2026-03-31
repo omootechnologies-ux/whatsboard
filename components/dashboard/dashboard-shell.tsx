@@ -267,6 +267,31 @@ export function DashboardShell({
 
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 border-b border-white/10 bg-[#07111f]/82 backdrop-blur-xl">
+            <div className="mx-auto flex w-full max-w-[1600px] gap-2 px-4 pt-3 sm:px-5 lg:hidden">
+              {visibleSecondaryNav
+                .filter((item) => item.href === "/dashboard/account" || item.href === "/dashboard/settings")
+                .map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+                  >
+                    <item.icon className="h-3.5 w-3.5" />
+                    {item.label}
+                  </Link>
+                ))}
+
+              <form action={logoutAction}>
+                <button
+                  type="submit"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-red-500/20 bg-white/5 px-3 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-500/10"
+                >
+                  <LogOut className="h-3.5 w-3.5" />
+                  Sign out
+                </button>
+              </form>
+            </div>
+
             <div className="mx-auto flex w-full max-w-[1600px] flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-5 lg:px-8">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white lg:hidden">
@@ -307,31 +332,6 @@ export function DashboardShell({
           <main className="w-full max-w-[1600px] flex-1 px-3 py-4 pb-24 sm:px-4 lg:px-8 lg:py-8 lg:pb-8">
             {children}
           </main>
-
-          <div className="fixed bottom-[5.5rem] left-3 z-40 flex flex-col gap-2 lg:hidden">
-            {visibleSecondaryNav
-              .filter((item) => item.href === "/dashboard/account" || item.href === "/dashboard/settings")
-              .map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-[#07111f]/92 px-3 py-2 text-xs font-semibold text-white/80 shadow-[0_12px_32px_rgba(2,8,23,0.28)] backdrop-blur-xl transition hover:bg-white/10 hover:text-white"
-                >
-                  <item.icon className="h-3.5 w-3.5" />
-                  {item.label}
-                </Link>
-              ))}
-
-            <form action={logoutAction}>
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 rounded-2xl border border-red-500/20 bg-[#07111f]/92 px-3 py-2 text-xs font-semibold text-red-200 shadow-[0_12px_32px_rgba(2,8,23,0.28)] backdrop-blur-xl transition hover:bg-red-500/10"
-              >
-                <LogOut className="h-3.5 w-3.5" />
-                Sign out
-              </button>
-            </form>
-          </div>
 
           <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-[#07111f]/92 backdrop-blur-xl lg:hidden">
             <div className="mx-auto flex max-w-screen-sm items-stretch justify-between px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
