@@ -94,7 +94,7 @@ export async function getViewerContext() {
       .limit(1)
       .maybeSingle();
 
-    if (!billingTransactionError || !matchesMissingOptionalFieldError(billingTransactionError.message)) {
+    if (!billingTransactionError || !isMissingOptionalFieldError(billingTransactionError.message)) {
       billingTransaction = billingTransactionData ?? null;
     }
   }

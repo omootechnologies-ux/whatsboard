@@ -88,7 +88,15 @@ export function ChaosSection() {
 
                   {/* Chat messages */}
                   <div className="h-[400px] overflow-hidden relative">
-                    <div className="absolute inset-0 bg-[url('/whatsapp-bg.png')] bg-repeat opacity-5" />
+                    <div
+                      className="absolute inset-0 opacity-20"
+                      style={{
+                        backgroundColor: "#efeae2",
+                        backgroundImage:
+                          "radial-gradient(circle at 1px 1px, rgba(7,94,84,0.08) 1px, transparent 0)",
+                        backgroundSize: "24px 24px",
+                      }}
+                    />
                     <div className="relative p-3 space-y-2">
                       {chaosMessages.map((msg, i) => (
                         <motion.div
