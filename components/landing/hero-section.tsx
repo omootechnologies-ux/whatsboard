@@ -36,7 +36,7 @@ export function HeroSection() {
           >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Built for African Online Sellers
+              Built for Tanzanian and East African online sellers
             </div>
 
             <h1

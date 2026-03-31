@@ -164,7 +164,7 @@ export function AppShowcaseSection() {
                           </p>
                           <div className="flex items-center justify-between mt-2">
                             <span className="text-xs font-medium text-primary">
-                              ₦{["45,000", "28,000", "67,500", "125,000"][colIndex]}
+                              TZS {["45,000", "28,000", "67,500", "125,000"][colIndex]}
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {["2h ago", "4h ago", "Today", "Yesterday"][colIndex]}

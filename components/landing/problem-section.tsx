@@ -169,7 +169,7 @@ export function ProblemSection() {
         >
           <p className="text-xl sm:text-2xl text-foreground font-medium max-w-2xl mx-auto text-pretty">
             You&apos;re not alone.{" "}
-            <span className="text-primary">Thousands of African sellers</span>{" "}
+            <span className="text-primary">Thousands of East African sellers</span>{" "}
             face this chaos every single day.
           </p>
         </div>

@@ -27,7 +27,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-background/70">
-              The order management system for African online sellers. Turn chat chaos into organized growth.
+              The order management system for Tanzanian and East African online sellers. Turn chat chaos into organized growth.
             </p>
           </div>
 
@@ -46,7 +46,7 @@ export function Footer() {
 
         <div className="flex flex-col items-center justify-between gap-4 border-t border-background/10 py-6 text-sm text-background/50 sm:flex-row">
           <p>© 2026 WhatsBoard. All rights reserved.</p>
-          <p>Built for African online sellers.</p>
+          <p>Built for Tanzanian and East African online sellers.</p>
         </div>
       </div>
     </footer>
