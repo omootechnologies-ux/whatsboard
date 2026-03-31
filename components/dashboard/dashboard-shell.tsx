@@ -3,37 +3,42 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  ArrowUpRight,
-  BarChart3,
   Bell,
   Boxes,
   ChevronRight,
-  Gift,
   LayoutDashboard,
   LogOut,
   Plus,
+  ReceiptText,
   Settings,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
   Users,
   Wallet,
 } from "lucide-react";
 import { logoutAction } from "@/app/(auth)/actions";
 
-const NAV = [
+type NavItemConfig = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  exact?: boolean;
+};
+
+const PRIMARY_NAV: NavItemConfig[] = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/orders", label: "Orders", icon: ShoppingBag },
   { href: "/dashboard/customers", label: "Customers", icon: Users },
   { href: "/dashboard/follow-ups", label: "Follow-ups", icon: Bell },
-  { href: "/dashboard/ai-order-capture", label: "AI Capture", icon: Sparkles },
   { href: "/dashboard/catalog", label: "Catalog", icon: Boxes },
-  { href: "/dashboard/referrals", label: "Referrals", icon: Gift },
-  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+];
+
+const SECONDARY_NAV: NavItemConfig[] = [
+  { href: "/dashboard/account", label: "Account", icon: ReceiptText },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
-function NavItem({ href, label, icon: Icon, exact }: (typeof NAV)[0]) {
+function NavItem({ href, label, icon: Icon, exact }: NavItemConfig) {
   const pathname = usePathname();
   const active = exact ? pathname === href : pathname.startsWith(href);
 
@@ -62,7 +67,7 @@ function NavItem({ href, label, icon: Icon, exact }: (typeof NAV)[0]) {
   );
 }
 
-function MobileBottomNavItem({ href, label, icon: Icon, exact }: (typeof NAV)[0]) {
+function MobileBottomNavItem({ href, label, icon: Icon, exact }: NavItemConfig) {
   const pathname = usePathname();
   const active = exact ? pathname === href : pathname.startsWith(href);
 
@@ -102,7 +107,9 @@ export function DashboardShell({
 }) {
   const pathname = usePathname();
   const currentSection =
-    NAV.find((item) => (item.exact ? pathname === item.href : pathname.startsWith(item.href)))?.label ??
+    [...PRIMARY_NAV, ...SECONDARY_NAV].find((item) =>
+      item.exact ? pathname === item.href : pathname.startsWith(item.href)
+    )?.label ??
     "Overview";
   const userLabel = profile?.full_name || profile?.email || "Team Member";
   const initials =
@@ -130,7 +137,7 @@ export function DashboardShell({
               </span>
               <div className="min-w-0">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/40">
-                  Seller Treasury OS
+                  Seller Operations
                 </p>
                 <h1 className="text-lg font-black tracking-tight text-white">WHATSBOARD</h1>
               </div>
@@ -140,17 +147,17 @@ export function DashboardShell({
           <div className="px-5 pt-5">
             <div className="rounded-[30px] border border-white/10 bg-white/6 p-5 text-white shadow-[0_24px_80px_rgba(2,8,23,0.45)]">
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-emerald-200">
-                <Sparkles className="h-3.5 w-3.5" />
-                Live Control
+                <ShoppingBag className="h-3.5 w-3.5" />
+                Daily Workflow
               </div>
               <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/45">
-                Treasury cockpit
+                Built for chat orders
               </p>
               <h2 className="mt-3 text-lg font-black leading-tight 2xl:text-xl">
-                Cash, pipeline, and customer momentum in one operating view.
+                Keep orders, payments, follow-ups, and delivery steps in one place.
               </h2>
               <p className="mt-2 text-sm leading-6 text-white/65">
-                Built to feel less like admin software and more like a compact fintech console.
+                Made for WhatsApp sellers who need less screenshot hunting and clearer daily control.
               </p>
 
               <Link
@@ -163,24 +170,30 @@ export function DashboardShell({
 
               <div className="mt-5 grid grid-cols-1 gap-3 2xl:grid-cols-2">
                 <div className="rounded-2xl border border-white/8 bg-slate-950/35 p-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-white/35">Mode</p>
-                  <p className="mt-2 text-sm font-semibold text-white">Collections-first</p>
+                  <p className="text-[10px] uppercase tracking-[0.18em] text-white/35">Focus</p>
+                  <p className="mt-2 text-sm font-semibold text-white">Order control</p>
                 </div>
                 <div className="rounded-2xl border border-white/8 bg-slate-950/35 p-3">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-white/35">Priority</p>
-                  <p className="mt-2 text-sm font-semibold text-white">Fast decisions</p>
+                  <p className="mt-2 text-sm font-semibold text-white">Fast follow-up</p>
                 </div>
               </div>
             </div>
           </div>
 
           <nav className="flex-1 space-y-1 px-5 py-5">
-            {NAV.map((item) => (
+            {PRIMARY_NAV.map((item) => (
               <NavItem key={item.href} {...item} />
             ))}
           </nav>
 
           <div className="border-t border-white/8 p-5">
+            <div className="mb-3 space-y-1">
+              {SECONDARY_NAV.map((item) => (
+                <NavItem key={item.href} {...item} />
+              ))}
+            </div>
+
             {isAdmin && (
               <div className="mb-3 rounded-2xl border border-emerald-400/15 bg-emerald-400/10 p-4">
                 <div className="flex items-center gap-2 text-emerald-100">
@@ -199,7 +212,7 @@ export function DashboardShell({
             <div className="mb-3 rounded-2xl border border-white/8 bg-white/5 p-4">
               <p className="text-xs font-semibold text-white">Operations Mode</p>
               <p className="mt-1 text-xs text-white/55">
-                Tuned for mobile-first commerce teams that need clean cash visibility.
+                Focused on orders, payments, customers, and follow-ups.
               </p>
             </div>
 
@@ -256,13 +269,6 @@ export function DashboardShell({
                 </div>
 
                 <Link
-                  href="/dashboard/analytics"
-                  className="hidden items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/85 transition hover:bg-white/10 sm:inline-flex"
-                >
-                  <ArrowUpRight className="h-4 w-4" />
-                  View Analytics
-                </Link>
-                <Link
                   href="/dashboard/orders/new"
                   className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:opacity-95"
                 >
@@ -270,6 +276,19 @@ export function DashboardShell({
                   New Order
                 </Link>
               </div>
+            </div>
+
+            <div className="mx-auto flex w-full max-w-[1600px] gap-2 px-4 pb-3 sm:px-5 lg:hidden">
+              {SECONDARY_NAV.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/75 transition hover:bg-white/10 hover:text-white"
+                >
+                  <item.icon className="h-3.5 w-3.5" />
+                  {item.label}
+                </Link>
+              ))}
             </div>
           </header>
 
@@ -279,7 +298,7 @@ export function DashboardShell({
 
           <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-[#07111f]/92 backdrop-blur-xl lg:hidden">
             <div className="mx-auto flex max-w-screen-sm items-stretch justify-between px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
-              {NAV.slice(0, 5).map((item) => (
+              {PRIMARY_NAV.map((item) => (
                 <MobileBottomNavItem key={item.href} {...item} />
               ))}
             </div>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Pencil, Plus, Wallet } from "lucide-react";
+import { ArrowRight, BellRing, Pencil, Plus, Wallet } from "lucide-react";
 import { getDashboardData } from "@/lib/queries";
 import { formatTZS } from "@/lib/utils";
 
@@ -44,10 +44,17 @@ export default async function OrdersPage() {
               New Order
             </Link>
             <Link
-              href="/dashboard/analytics"
+              href="/dashboard/follow-ups"
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
             >
-              See performance
+              Open follow-ups
+              <BellRing className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/dashboard/customers"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+            >
+              Open customers
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
