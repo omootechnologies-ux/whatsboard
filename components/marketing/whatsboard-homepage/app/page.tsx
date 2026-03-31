@@ -64,7 +64,7 @@ export default function WhatsBoardHomepage() {
             </Link>
             <Link
               href="/register"
-              className="rounded-full bg-white px-3 py-2 text-[#0b7a43] transition hover:bg-white/90"
+              className="rounded-full border border-white/20 bg-white/10 px-3 py-2 text-white transition hover:bg-white/14"
             >
               Start free
             </Link>
@@ -91,7 +91,7 @@ export default function WhatsBoardHomepage() {
             <div className="flex flex-col gap-3 sm:flex-row">
               <Link
                 href="/register"
-                className="rounded-full bg-white px-5 py-3 text-center text-sm text-[#0b7a43] transition hover:bg-white/90"
+                className="rounded-full border border-white/20 bg-white/10 px-5 py-3 text-center text-sm text-white transition hover:bg-white/14"
               >
                 Start free
               </Link>
@@ -216,7 +216,7 @@ export default function WhatsBoardHomepage() {
             <div className="grid gap-3 sm:grid-cols-2">
               <Link
                 href="/register"
-                className="rounded-full bg-white px-5 py-3 text-center text-sm text-[#0b7a43] transition hover:bg-white/90"
+                className="rounded-full border border-white/20 bg-white/10 px-5 py-3 text-center text-sm text-white transition hover:bg-white/14"
               >
                 Start free
               </Link>

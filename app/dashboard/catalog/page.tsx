@@ -35,7 +35,7 @@ export default async function CatalogPage() {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 2xl:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-[32px] border border-white/10 bg-[#08192d] p-6 text-white shadow-[0_24px_100px_rgba(2,8,23,0.28)] sm:p-7">
+        <div className="rounded-[32px] border border-white/10 bg-[#0b653a] p-6 text-white shadow-[0_24px_100px_rgba(0,0,0,0.16)] sm:p-7">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-200/80">Catalog</p>
           <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Product catalog builder</h1>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-white/65">

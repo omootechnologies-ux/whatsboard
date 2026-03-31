@@ -11,9 +11,9 @@ export default async function RegisterPage({
 
   return (
     <main className="container-pad flex min-h-screen items-center justify-center py-16">
-      <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8">
-        <h1 className="text-3xl font-semibold">Create your account</h1>
-        <p className="mt-2 text-slate-600">Start tracking orders from WhatsApp, Instagram, and more.</p>
+      <div className="w-full max-w-md rounded-3xl border border-white/14 bg-white/8 p-8 backdrop-blur">
+        <h1 className="text-3xl font-semibold text-white">Create your account</h1>
+        <p className="mt-2 text-white/72">Start tracking orders from WhatsApp, Instagram, and more.</p>
         <AuthForm
           action={registerAction}
           submitLabel="Create account"
@@ -25,8 +25,8 @@ export default async function RegisterPage({
             { name: "referralCode", label: "Referral code", placeholder: "Optional", defaultValue: resolvedSearch.ref ?? "" },
           ]}
         />
-        <p className="mt-4 text-sm text-slate-500">
-          Already have an account? <Link href="/login" className="text-emerald-300">Login</Link>
+        <p className="mt-4 text-sm text-white/62">
+          Already have an account? <Link href="/login" className="text-white underline">Login</Link>
         </p>
       </div>
     </main>
