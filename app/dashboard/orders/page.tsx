@@ -27,7 +27,7 @@ export default async function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 xl:grid-cols-[1.25fr_0.75fr]">
+      <section className="grid gap-4 2xl:grid-cols-[1.25fr_0.75fr]">
         <div className="rounded-[32px] border border-white/10 bg-[#08192d] p-6 text-white shadow-[0_24px_100px_rgba(2,8,23,0.28)] sm:p-7">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-200/80">Orders</p>
           <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Manage the order book</h1>
@@ -63,7 +63,7 @@ export default async function OrdersPage() {
               <p className="text-xs text-slate-500">Orders still waiting to convert to cash</p>
             </div>
           </div>
-          <h2 className="mt-5 text-3xl font-black tracking-tight text-slate-950">{formatTZS(unpaidValue)}</h2>
+          <h2 className="mt-5 break-words text-2xl font-black leading-tight tracking-tight text-slate-950 xl:text-[1.75rem] 2xl:text-3xl">{formatTZS(unpaidValue)}</h2>
           <p className="mt-2 text-sm text-slate-500">{orders.length} total orders currently tracked.</p>
         </div>
       </section>

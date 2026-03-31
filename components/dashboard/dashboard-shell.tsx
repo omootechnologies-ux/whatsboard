@@ -51,7 +51,7 @@ function NavItem({ href, label, icon: Icon, exact }: (typeof NAV)[0]) {
         <Icon className="h-4 w-4 shrink-0" />
       </span>
 
-      <span>{label}</span>
+      <span className="min-w-0 truncate">{label}</span>
       {active && <ChevronRight className="ml-auto h-4 w-4 text-white/80" />}
     </Link>
   );
@@ -117,13 +117,13 @@ export function DashboardShell({
       </div>
 
       <div className="relative flex min-h-screen">
-        <aside className="hidden w-[22rem] shrink-0 border-r border-white/8 bg-[#08111e]/88 lg:flex lg:flex-col">
+        <aside className="hidden w-[20rem] shrink-0 border-r border-white/8 bg-[#08111e]/88 xl:flex xl:flex-col 2xl:w-[22rem]">
           <div className="border-b border-white/8 px-6 py-6">
             <Link href="/dashboard" className="flex items-center gap-3">
               <span className="inline-flex h-12 w-12 items-center justify-center rounded-3xl bg-gradient-to-br from-emerald-400 to-cyan-400 text-slate-950 shadow-[0_16px_30px_rgba(16,185,129,0.28)]">
                 <Wallet className="h-5 w-5" />
               </span>
-              <div>
+              <div className="min-w-0">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/40">
                   Seller Treasury OS
                 </p>
@@ -141,7 +141,7 @@ export function DashboardShell({
               <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/45">
                 Treasury cockpit
               </p>
-              <h2 className="mt-3 text-xl font-black leading-tight">
+              <h2 className="mt-3 text-lg font-black leading-tight 2xl:text-xl">
                 Cash, pipeline, and customer momentum in one operating view.
               </h2>
               <p className="mt-2 text-sm leading-6 text-white/65">
@@ -156,7 +156,7 @@ export function DashboardShell({
                 Add New Order
               </Link>
 
-              <div className="mt-5 grid grid-cols-2 gap-3">
+              <div className="mt-5 grid grid-cols-1 gap-3 2xl:grid-cols-2">
                 <div className="rounded-2xl border border-white/8 bg-slate-950/35 p-3">
                   <p className="text-[10px] uppercase tracking-[0.18em] text-white/35">Mode</p>
                   <p className="mt-2 text-sm font-semibold text-white">Collections-first</p>
@@ -230,11 +230,11 @@ export function DashboardShell({
               </div>
 
               <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
-                <div className="hidden items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-white/80 md:flex">
+                <div className="hidden min-w-0 items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-white/80 lg:flex">
                   <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-400 text-xs font-bold text-slate-950">
                     {initials}
                   </span>
-                  <div className="min-w-0">
+                  <div className="min-w-0 max-w-[10rem] xl:max-w-[12rem]">
                     <p className="truncate text-sm font-semibold text-white">{userLabel}</p>
                     <p className="text-xs text-white/45">Live workspace</p>
                   </div>

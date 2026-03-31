@@ -11,7 +11,7 @@ export default async function CustomersPage() {
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+      <section className="grid gap-4 2xl:grid-cols-[1.2fr_0.8fr]">
         <div className="rounded-[32px] border border-white/10 bg-[#08192d] p-6 text-white shadow-[0_24px_100px_rgba(2,8,23,0.28)] sm:p-7">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-200/80">Customers</p>
           <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Customer relationship board</h1>

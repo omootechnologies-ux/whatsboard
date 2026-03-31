@@ -31,12 +31,14 @@ function MetricCard({
   return (
     <div className="rounded-[28px] border border-white/10 bg-white/6 p-5 text-white shadow-[0_24px_80px_rgba(2,8,23,0.25)]">
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/40">{title}</p>
-          <h3 className="mt-3 text-3xl font-black tracking-tight">{value}</h3>
-          <p className="mt-2 text-sm text-white/58">{subtitle}</p>
+          <h3 className="mt-3 break-words text-2xl font-black leading-tight tracking-tight xl:text-[1.75rem] 2xl:text-3xl">
+            {value}
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-white/58">{subtitle}</p>
         </div>
-        <span className={`inline-flex h-12 w-12 items-center justify-center rounded-2xl ${accent}`}>
+        <span className={`inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${accent}`}>
           {icon}
         </span>
       </div>
@@ -144,7 +146,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 xl:grid-cols-[1.45fr_0.95fr]">
+      <section className="grid gap-4 2xl:grid-cols-[1.45fr_0.95fr]">
         <div className="overflow-hidden rounded-[34px] border border-white/10 bg-[#08192d] text-white shadow-[0_30px_120px_rgba(2,8,23,0.38)]">
           <div className="relative p-6 sm:p-7 lg:p-8">
             <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-r from-emerald-400/18 via-cyan-400/10 to-transparent blur-2xl" />
@@ -153,10 +155,10 @@ export default async function DashboardPage() {
                 Fintech dashboard
               </div>
 
-              <div className="mt-5 grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
-                <div>
+              <div className="mt-5 grid gap-6 xl:grid-cols-[1.1fr_0.9fr] xl:items-end">
+                <div className="min-w-0">
                   <p className="text-sm font-semibold text-white/52">Net collected revenue</p>
-                  <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">
+                  <h1 className="mt-3 break-words text-4xl font-black leading-tight tracking-tight sm:text-5xl xl:text-[2.75rem] 2xl:text-5xl">
                     {formatTZS(revenue)}
                   </h1>
                   <p className="mt-3 max-w-xl text-sm leading-7 text-white/65">
@@ -181,25 +183,25 @@ export default async function DashboardPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-[24px] border border-white/8 bg-white/6 p-4">
+                <div className="grid grid-cols-2 gap-3 xl:grid-cols-2">
+                  <div className="min-w-0 rounded-[24px] border border-white/8 bg-white/6 p-4">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-white/40">Orders</p>
                     <p className="mt-3 text-2xl font-black">{totalOrders}</p>
                     <p className="mt-1 text-xs text-white/50">Tracked in workflow</p>
                   </div>
-                  <div className="rounded-[24px] border border-white/8 bg-white/6 p-4">
+                  <div className="min-w-0 rounded-[24px] border border-white/8 bg-white/6 p-4">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-white/40">Paid Rate</p>
                     <p className="mt-3 text-2xl font-black">{paymentRate}%</p>
                     <p className="mt-1 text-xs text-white/50">Conversion to cash</p>
                   </div>
-                  <div className="rounded-[24px] border border-white/8 bg-white/6 p-4">
+                  <div className="min-w-0 rounded-[24px] border border-white/8 bg-white/6 p-4">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-white/40">Customers</p>
                     <p className="mt-3 text-2xl font-black">{uniqueCustomers}</p>
                     <p className="mt-1 text-xs text-white/50">Active buyer base</p>
                   </div>
-                  <div className="rounded-[24px] border border-white/8 bg-white/6 p-4">
+                  <div className="min-w-0 rounded-[24px] border border-white/8 bg-white/6 p-4">
                     <p className="text-[11px] uppercase tracking-[0.18em] text-white/40">Avg Order</p>
-                    <p className="mt-3 text-2xl font-black">{formatTZS(avgOrderValue)}</p>
+                    <p className="mt-3 break-words text-xl font-black leading-tight xl:text-2xl">{formatTZS(avgOrderValue)}</p>
                     <p className="mt-1 text-xs text-white/50">Basket quality</p>
                   </div>
                 </div>
@@ -225,7 +227,7 @@ export default async function DashboardPage() {
 
         <div className="rounded-[34px] border border-slate-200/80 bg-[linear-gradient(180deg,#ffffff,rgba(241,245,249,0.88))] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.08)] sm:p-7">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">Risk monitor</p>
-          <h2 className="mt-3 text-3xl font-black tracking-tight text-slate-950">{formatTZS(unpaidValue)}</h2>
+          <h2 className="mt-3 break-words text-2xl font-black leading-tight tracking-tight text-slate-950 xl:text-[1.75rem] 2xl:text-3xl">{formatTZS(unpaidValue)}</h2>
           <p className="mt-2 text-sm text-slate-500">
             Outstanding receivables currently tied up in unpaid orders.
           </p>
@@ -258,11 +260,11 @@ export default async function DashboardPage() {
             {alertRows.map((item) => (
               <div key={item.title} className="rounded-[22px] border border-slate-200 bg-white/85 p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-sm font-semibold text-slate-900">{item.title}</p>
                     <p className="mt-1 text-xs text-slate-500">{item.detail}</p>
                   </div>
-                  <p className="text-sm font-bold text-emerald-600">{item.value}</p>
+                  <p className="max-w-[40%] break-words text-right text-sm font-bold leading-tight text-emerald-600">{item.value}</p>
                 </div>
               </div>
             ))}
@@ -270,7 +272,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 md:grid-cols-2 2xl:grid-cols-4">
         <MetricCard
           title="Collected"
           value={formatTZS(revenue)}
@@ -301,7 +303,7 @@ export default async function DashboardPage() {
         />
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
+      <section className="grid gap-4 2xl:grid-cols-[0.92fr_1.08fr]">
         <div className="rounded-[30px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-6">
           <div className="flex items-center justify-between">
             <div>
@@ -348,7 +350,7 @@ export default async function DashboardPage() {
                     <p className="mt-1 text-xs text-slate-500">{order.phone || "No phone"}</p>
                   </div>
                   <div className="text-sm text-slate-700">{order.product}</div>
-                  <div className="text-sm font-bold text-slate-900">{formatTZS(order.amount)}</div>
+                  <div className="break-words text-sm font-bold leading-tight text-slate-900">{formatTZS(order.amount)}</div>
                   <div className="flex items-center gap-2">
                     <span
                       className={[
