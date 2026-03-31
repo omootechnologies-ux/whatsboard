@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -7,6 +8,7 @@ import {
   Bell,
   Boxes,
   ChevronRight,
+  Menu,
   LayoutDashboard,
   LogOut,
   Plus,
@@ -115,6 +117,7 @@ export function DashboardShell({
     billing_current_period_ends_at?: string | null;
   } | null;
 }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const visiblePrimaryNav = PRIMARY_NAV.filter((item) => {
     if (item.href === "/dashboard/catalog") {
       return canAccessDashboardFeature("catalog", business);
@@ -267,43 +270,17 @@ export function DashboardShell({
 
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-20 border-b border-white/10 bg-[#07111f]/82 backdrop-blur-xl">
-            <nav className="border-b border-white/8 lg:hidden">
-              <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-2 px-4 py-3 sm:px-5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/38">
-                  Menu
-                </p>
-                <div className="flex flex-wrap items-center gap-2">
-                  {visibleSecondaryNav
-                    .filter((item) => item.href === "/dashboard/account" || item.href === "/dashboard/settings")
-                    .map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
-                      >
-                        <item.icon className="h-3.5 w-3.5" />
-                        {item.label}
-                      </Link>
-                    ))}
-
-                  <form action={logoutAction}>
-                    <button
-                      type="submit"
-                      className="inline-flex items-center gap-2 rounded-2xl border border-red-500/20 bg-white/5 px-3 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-500/10"
-                    >
-                      <LogOut className="h-3.5 w-3.5" />
-                      Sign out
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </nav>
-
             <div className="mx-auto flex w-full max-w-[1600px] flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-5 lg:px-8">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white lg:hidden">
-                  <Wallet className="h-4 w-4" />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setMobileMenuOpen((value) => !value)}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white lg:hidden"
+                  aria-label="Open menu"
+                  aria-expanded={mobileMenuOpen}
+                >
+                  <Menu className="h-4 w-4" />
+                </button>
                 <div className="min-w-0">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/35">
                     {currentSection}
@@ -334,6 +311,36 @@ export function DashboardShell({
                 </Link>
               </div>
             </div>
+
+            {mobileMenuOpen ? (
+              <nav className="border-t border-white/8 lg:hidden">
+                <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-2 px-4 py-3 sm:px-5">
+                  {visibleSecondaryNav
+                    .filter((item) => item.href === "/dashboard/account" || item.href === "/dashboard/settings")
+                    .map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/80 transition hover:bg-white/10 hover:text-white"
+                      >
+                        <item.icon className="h-3.5 w-3.5" />
+                        {item.label}
+                      </Link>
+                    ))}
+
+                  <form action={logoutAction}>
+                    <button
+                      type="submit"
+                      className="inline-flex items-center gap-2 rounded-2xl border border-red-500/20 bg-white/5 px-3 py-2 text-xs font-semibold text-red-200 transition hover:bg-red-500/10"
+                    >
+                      <LogOut className="h-3.5 w-3.5" />
+                      Sign out
+                    </button>
+                  </form>
+                </div>
+              </nav>
+            ) : null}
           </header>
 
           <main className="w-full max-w-[1600px] flex-1 px-3 py-4 pb-24 sm:px-4 lg:px-8 lg:py-8 lg:pb-8">
