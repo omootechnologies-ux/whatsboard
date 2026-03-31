@@ -66,11 +66,11 @@ const tiers = [
     highlight: false,
     features: [
       "Everything in Growth",
-      "AI Order Capture from chat",
-      "Analytics dashboard",
-      "Referral tools",
       "Best for larger seller operations",
-      "Faster support",
+      "Extra room for admin-managed teams",
+      "Priority support",
+      "Cleaner control for higher order volume",
+      "Advanced tools roll out on this plan first",
     ],
   },
 ];

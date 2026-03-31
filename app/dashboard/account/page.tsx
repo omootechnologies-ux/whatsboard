@@ -14,8 +14,8 @@ export default async function AccountPage() {
     { label: "Customers", allowed: canAccessDashboardFeature("customers", business) },
     { label: "Follow-ups", allowed: canAccessDashboardFeature("followUps", business) },
     { label: "Catalog", allowed: canAccessDashboardFeature("catalog", business) },
-    { label: "AI Capture", allowed: canAccessDashboardFeature("aiCapture", business) },
-    { label: "Analytics", allowed: canAccessDashboardFeature("analytics", business) },
+    { label: "Account", allowed: canAccessDashboardFeature("account", business) },
+    { label: "Settings", allowed: canAccessDashboardFeature("settings", business) },
   ];
 
   return (

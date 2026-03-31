@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  BarChart3,
   Bell,
   Boxes,
   ChevronRight,
@@ -16,12 +15,11 @@ import {
   Settings,
   ShieldCheck,
   ShoppingBag,
-  Sparkles,
   Users,
   Wallet,
 } from "lucide-react";
 import { logoutAction } from "@/app/(auth)/actions";
-import { canAccessDashboardFeature, getPlanName } from "@/lib/plan-access";
+import { canAccessDashboardFeature, canManageImportantRecords, getPlanName } from "@/lib/plan-access";
 
 type NavItemConfig = {
   href: string;
@@ -35,12 +33,10 @@ const PRIMARY_NAV: NavItemConfig[] = [
   { href: "/dashboard/orders", label: "Orders", icon: ShoppingBag },
   { href: "/dashboard/customers", label: "Customers", icon: Users },
   { href: "/dashboard/follow-ups", label: "Follow-ups", icon: Bell },
-  { href: "/dashboard/catalog", label: "Catalog", icon: Boxes },
 ];
 
 const SECONDARY_NAV: NavItemConfig[] = [
-  { href: "/dashboard/ai-order-capture", label: "AI Capture", icon: Sparkles },
-  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/dashboard/catalog", label: "Catalog", icon: Boxes },
   { href: "/dashboard/account", label: "Account", icon: ReceiptText },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
@@ -118,20 +114,11 @@ export function DashboardShell({
   } | null;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const visiblePrimaryNav = PRIMARY_NAV.filter((item) => {
+  const canManageRecords = isAdmin || canManageImportantRecords(business);
+  const visiblePrimaryNav = PRIMARY_NAV;
+  const visibleSecondaryNav = SECONDARY_NAV.filter((item) => {
     if (item.href === "/dashboard/catalog") {
       return canAccessDashboardFeature("catalog", business);
-    }
-
-    return true;
-  });
-  const visibleSecondaryNav = SECONDARY_NAV.filter((item) => {
-    if (item.href === "/dashboard/ai-order-capture") {
-      return canAccessDashboardFeature("aiCapture", business);
-    }
-
-    if (item.href === "/dashboard/analytics") {
-      return canAccessDashboardFeature("analytics", business);
     }
 
     return true;
@@ -199,11 +186,15 @@ export function DashboardShell({
               </div>
 
               <Link
-                href="/dashboard/orders/new"
+                href={
+                  canManageRecords
+                    ? "/dashboard/orders/new"
+                    : "/pricing?status=upgrade&message=Upgrade%20to%20a%20paid%20plan%20to%20create%20orders"
+                }
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:opacity-95"
               >
                 <Plus className="h-4 w-4" />
-                Add New Order
+                {canManageRecords ? "Add New Order" : "Upgrade to Create"}
               </Link>
 
               <div className="mt-5 grid grid-cols-1 gap-3 2xl:grid-cols-2">
@@ -303,11 +294,15 @@ export function DashboardShell({
                 </div>
 
                 <Link
-                  href="/dashboard/orders/new"
+                  href={
+                    canManageRecords
+                      ? "/dashboard/orders/new"
+                      : "/pricing?status=upgrade&message=Upgrade%20to%20a%20paid%20plan%20to%20create%20orders"
+                  }
                   className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:opacity-95"
                 >
                   <Plus className="h-4 w-4" />
-                  New Order
+                  {canManageRecords ? "New Order" : "Upgrade"}
                 </Link>
               </div>
             </div>

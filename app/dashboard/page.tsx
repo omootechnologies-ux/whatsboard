@@ -310,12 +310,12 @@ export default async function DashboardPage() {
           </p>
         </Link>
         <Link
-          href="/dashboard/catalog"
+          href="/dashboard/settings"
           className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-emerald-200 hover:bg-emerald-50/30"
         >
-          <p className="text-sm font-semibold text-slate-900">Catalog</p>
+          <p className="text-sm font-semibold text-slate-900">Settings</p>
           <p className="mt-2 text-sm text-slate-500">
-            Keep products and stock ready so order entry is faster and cleaner.
+            Keep business details, defaults, and contact info clean for daily operations.
           </p>
         </Link>
       </section>
