@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getViewerContext } from "@/lib/queries";
 import { updateCustomerAction } from "@/app/dashboard/actions";
 import EditCustomerForm from "@/components/forms/edit-customer-form";
 
@@ -12,15 +12,18 @@ export default async function EditCustomerPage({
 }: {
   params: { id: string };
 }) {
-  const supabase = await createClient();
+  const { supabase, businessId } = await getViewerContext();
 
-  const { data: customer, error } = await supabase
+  if (!businessId) notFound();
+
+  const { data: customer } = await supabase
     .from("customers")
     .select("id, name, phone, area, channel, notes, status")
+    .eq("business_id", businessId)
     .eq("id", params.id)
     .maybeSingle();
 
-  if (error || !customer) notFound();
+  if (!customer) notFound();
 
   return (
     <div className="space-y-6">
