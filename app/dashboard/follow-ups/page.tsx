@@ -42,7 +42,7 @@ export default async function FollowUpsPage() {
                     <td className="px-4 py-4 text-sm text-slate-500">{item.area || "—"}</td>
                     <td className="px-4 py-4 text-sm text-slate-700">{item.note || "—"}</td>
                     <td className="px-4 py-4 text-sm text-slate-700">
-                      {item.completed ? "Completed" : "Pending"}
+                      {item.completed ? "Completed" : "Pending"}<div className="mt-1 text-[10px] text-slate-400">{item.id}</div>
                     </td>
                     <td className="px-4 py-4 text-right">
                       <Link

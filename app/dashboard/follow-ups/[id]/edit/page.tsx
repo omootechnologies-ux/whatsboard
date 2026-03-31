@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getViewerContext } from "@/lib/queries";
+import { createClient } from "@/lib/supabase/server";
 import { updateFollowUpAction } from "@/app/dashboard/actions";
 import EditFollowUpForm from "@/components/forms/edit-follow-up-form";
 
@@ -12,18 +12,15 @@ export default async function EditFollowUpPage({
 }: {
   params: { id: string };
 }) {
-  const { supabase, businessId } = await getViewerContext();
+  const supabase = await createClient();
 
-  if (!businessId) notFound();
-
-  const { data: followUp } = await supabase
+  const { data: followUp, error } = await supabase
     .from("follow_ups")
     .select("id, due_at, note, completed")
-    .eq("business_id", businessId)
     .eq("id", params.id)
-    .single();
+    .maybeSingle();
 
-  if (!followUp) notFound();
+  if (error || !followUp) notFound();
 
   return (
     <div className="space-y-6">
