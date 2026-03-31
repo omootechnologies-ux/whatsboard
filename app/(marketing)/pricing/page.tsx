@@ -30,7 +30,7 @@ function CheckoutButton({
     return (
       <Link
         href="/register"
-        className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+        className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-[#173728] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#0f281d]"
       >
         Start Free
       </Link>
@@ -49,7 +49,7 @@ function CheckoutButton({
     <form action={startPlanCheckoutAction.bind(null, tierKey)} className="mt-6">
       <button
         type="submit"
-        className="inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+        className="inline-flex w-full items-center justify-center rounded-2xl bg-[#173728] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#0f281d]"
       >
         {currentPlan ? `Switch to ${PLAN_CONFIG[tierKey].name}` : `Pay for ${PLAN_CONFIG[tierKey].name}`}
       </button>
@@ -146,7 +146,7 @@ export default async function PricingPage({
                 className={[
                   "rounded-[32px] border p-6 shadow-sm",
                   tier.highlight
-                    ? "border-emerald-500 bg-slate-950 text-white shadow-xl"
+                    ? "border-[#173728] bg-[#173728] text-white shadow-xl"
                     : "border-slate-200 bg-white text-slate-900",
                 ].join(" ")}
               >
@@ -155,7 +155,7 @@ export default async function PricingPage({
                     <p
                       className={[
                         "text-sm font-bold uppercase tracking-[0.18em]",
-                        tier.highlight ? "text-emerald-300" : "text-emerald-600",
+                        tier.highlight ? "text-white/76" : "text-emerald-600",
                       ].join(" ")}
                     >
                       {tier.name}
@@ -177,7 +177,7 @@ export default async function PricingPage({
                     className={[
                       "rounded-full px-3 py-1 text-xs font-bold",
                       tier.highlight
-                        ? "bg-emerald-500 text-white"
+                        ? "bg-white text-[#173728]"
                         : "bg-emerald-50 text-emerald-700",
                     ].join(" ")}
                   >
@@ -204,7 +204,7 @@ export default async function PricingPage({
                 <div
                   className={[
                     "my-6 h-px",
-                    tier.highlight ? "bg-white/10" : "bg-slate-200",
+                    tier.highlight ? "bg-white/14" : "bg-slate-200",
                   ].join(" ")}
                 />
 
@@ -221,7 +221,7 @@ export default async function PricingPage({
                         className={[
                           "mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-black",
                           tier.highlight
-                            ? "bg-emerald-500 text-white"
+                            ? "bg-white text-[#173728]"
                             : "bg-emerald-50 text-emerald-700",
                         ].join(" ")}
                       >

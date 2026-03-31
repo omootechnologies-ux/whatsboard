@@ -93,12 +93,12 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-[32px] border border-white/10 bg-[#0b653a] p-6 text-white shadow-[0_24px_100px_rgba(0,0,0,0.16)] sm:p-7">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-200/80">Daily control</p>
+        <div className="rounded-[32px] border border-[#173728]/10 bg-white p-6 text-[#173728] shadow-[0_24px_100px_rgba(23,55,40,0.06)] sm:p-7">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#173728]/56">Daily control</p>
           <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
             Run orders after chat without losing track.
           </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-white/65">
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-[#173728]/68">
             Keep payment status clear, know which orders need packing or dispatch, and follow up with
             the right customers at the right time.
           </p>
@@ -106,14 +106,14 @@ export default async function DashboardPage() {
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link
               href={canCreateOrders ? "/dashboard/orders/new" : "/pricing?status=upgrade&message=Upgrade%20to%20Starter%20for%20unlimited%20orders"}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:opacity-95"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#173728] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0f281d]"
             >
               {canCreateOrders ? "Create order" : "Upgrade for more orders"}
             </Link>
             {canSeeFollowUps ? (
               <Link
                 href="/dashboard/follow-ups"
-                className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                className="inline-flex items-center justify-center rounded-2xl border border-[#173728]/10 bg-[#173728]/4 px-5 py-3 text-sm font-semibold text-[#173728] transition hover:bg-[#173728]/7"
               >
                 Review follow-ups
               </Link>

@@ -35,17 +35,17 @@ export default async function OrdersPage() {
   return (
     <div className="space-y-6">
       <section className="grid gap-4 2xl:grid-cols-[1.25fr_0.75fr]">
-        <div className="rounded-[32px] border border-white/10 bg-[#0b653a] p-6 text-white shadow-[0_24px_100px_rgba(0,0,0,0.16)] sm:p-7">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-200/80">Orders</p>
+        <div className="rounded-[32px] border border-[#173728]/10 bg-white p-6 text-[#173728] shadow-[0_24px_100px_rgba(23,55,40,0.06)] sm:p-7">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#173728]/56">Orders</p>
           <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Manage the order book</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-white/65">
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-[#173728]/68">
             Review live order flow, jump into edits quickly, and keep collections and dispatch work visible
             on every screen.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link
               href={canCreateOrders ? "/dashboard/orders/new" : "/pricing?status=upgrade&message=Upgrade%20to%20Starter%20for%20unlimited%20orders"}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:opacity-95"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#173728] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0f281d]"
             >
               <Plus className="h-4 w-4" />
               {canCreateOrders ? "New Order" : "Upgrade for more orders"}
@@ -53,7 +53,7 @@ export default async function OrdersPage() {
             {canSeeFollowUps ? (
               <Link
                 href="/dashboard/follow-ups"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#173728]/10 bg-[#173728]/4 px-5 py-3 text-sm font-semibold text-[#173728] transition hover:bg-[#173728]/7"
               >
                 Open follow-ups
                 <BellRing className="h-4 w-4" />
@@ -62,7 +62,7 @@ export default async function OrdersPage() {
             {canSeeCustomers ? (
               <Link
                 href="/dashboard/customers"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#173728]/10 bg-[#173728]/4 px-5 py-3 text-sm font-semibold text-[#173728] transition hover:bg-[#173728]/7"
               >
                 Open customers
                 <ArrowRight className="h-4 w-4" />

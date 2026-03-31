@@ -117,23 +117,23 @@ export default async function SettingsPage({
           </div>
         </div>
 
-        <div className="rounded-[32px] border border-slate-200 bg-slate-950 p-6 text-white shadow-sm lg:p-7">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-white/55">
+        <div className="rounded-[32px] border border-[#173728]/10 bg-white p-6 text-[#173728] shadow-[0_24px_80px_rgba(23,55,40,0.06)] lg:p-7">
+          <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#173728]/55">
             Account
           </p>
           <h2 className="mt-3 text-2xl font-black tracking-tight">
             Signed in as
           </h2>
-          <p className="mt-3 break-all text-sm leading-7 text-white/75">
+          <p className="mt-3 break-all text-sm leading-7 text-[#173728]/75">
             {user.email}
           </p>
 
-          <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white/80">
+          <div className="mt-6 rounded-2xl border border-[#173728]/10 bg-[#173728]/4 px-4 py-3 text-sm text-[#173728]/80">
             Keep this page updated so your dashboard reflects the real business behind the orders.
           </div>
 
           <form action={logoutAction} className="mt-6">
-            <button className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-600">
+            <button className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#173728] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0f281d]">
               <LogOut className="h-4 w-4" />
               Sign out
             </button>
