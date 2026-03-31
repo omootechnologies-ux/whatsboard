@@ -181,6 +181,27 @@ export async function getDashboardData() {
   };
 }
 
+export async function getCurrentMonthOrderUsage() {
+  const { supabase, businessId } = await getViewerContext();
+
+  if (!businessId) {
+    return 0;
+  }
+
+  const now = new Date();
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)).toISOString();
+
+  const { count } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("business_id", businessId)
+    .gte("created_at", start)
+    .lt("created_at", end);
+
+  return count ?? 0;
+}
+
 export async function getCustomersData() {
   const { supabase, businessId } = await getViewerContext();
 

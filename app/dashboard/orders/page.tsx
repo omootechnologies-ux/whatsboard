@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, BellRing, Pencil, Plus, Wallet } from "lucide-react";
 import { getDashboardWriteAccess } from "@/lib/dashboard-access";
+import { canAccessDashboardFeature, canUsePlanCapability } from "@/lib/plan-access";
 import { getDashboardData } from "@/lib/queries";
 import { formatTZS } from "@/lib/utils";
 
@@ -21,8 +22,12 @@ function badge(stage: string) {
 }
 
 export default async function OrdersPage() {
-  const { canManageRecords } = await getDashboardWriteAccess();
+  const { business, canCreateOrders, monthlyOrderLimit, orderCountThisMonth, remainingMonthlyOrders } =
+    await getDashboardWriteAccess();
   const { orders } = await getDashboardData();
+  const canSeeCustomers = canAccessDashboardFeature("customers", business);
+  const canSeeFollowUps = canAccessDashboardFeature("followUps", business);
+  const canTrackPayments = canUsePlanCapability("paymentTracking", business);
   const unpaidValue = orders
     .filter((order) => order.paymentStatus !== "paid")
     .reduce((sum, order) => sum + order.amount, 0);
@@ -39,26 +44,30 @@ export default async function OrdersPage() {
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link
-              href={canManageRecords ? "/dashboard/orders/new" : "/pricing?status=upgrade&message=Upgrade%20to%20a%20paid%20plan%20to%20create%20orders"}
+              href={canCreateOrders ? "/dashboard/orders/new" : "/pricing?status=upgrade&message=Upgrade%20to%20Starter%20for%20unlimited%20orders"}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:opacity-95"
             >
               <Plus className="h-4 w-4" />
-              {canManageRecords ? "New Order" : "Upgrade to create"}
+              {canCreateOrders ? "New Order" : "Upgrade for more orders"}
             </Link>
-            <Link
-              href="/dashboard/follow-ups"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-            >
-              Open follow-ups
-              <BellRing className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/dashboard/customers"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-            >
-              Open customers
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            {canSeeFollowUps ? (
+              <Link
+                href="/dashboard/follow-ups"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
+                Open follow-ups
+                <BellRing className="h-4 w-4" />
+              </Link>
+            ) : null}
+            {canSeeCustomers ? (
+              <Link
+                href="/dashboard/customers"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
+                Open customers
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : null}
           </div>
         </div>
 
@@ -69,17 +78,25 @@ export default async function OrdersPage() {
             </span>
             <div>
               <p className="text-sm font-semibold text-slate-900">Unsettled value</p>
-              <p className="text-xs text-slate-500">Orders still waiting to convert to cash</p>
+              <p className="text-xs text-slate-500">
+                {canTrackPayments ? "Orders still waiting to convert to cash" : "Upgrade to Starter to unlock payment tracking"}
+              </p>
             </div>
           </div>
-          <h2 className="mt-5 break-words text-2xl font-black leading-tight tracking-tight text-slate-950 xl:text-[1.75rem] 2xl:text-3xl">{formatTZS(unpaidValue)}</h2>
-          <p className="mt-2 text-sm text-slate-500">{orders.length} total orders currently tracked.</p>
+          <h2 className="mt-5 break-words text-2xl font-black leading-tight tracking-tight text-slate-950 xl:text-[1.75rem] 2xl:text-3xl">
+            {monthlyOrderLimit === null ? formatTZS(unpaidValue) : `${orderCountThisMonth}/${monthlyOrderLimit}`}
+          </h2>
+          <p className="mt-2 text-sm text-slate-500">
+            {monthlyOrderLimit === null
+              ? `${orders.length} total orders currently tracked.`
+              : `${remainingMonthlyOrders ?? 0} free orders left this month.`}
+          </p>
         </div>
       </section>
 
-      {!canManageRecords ? (
+      {monthlyOrderLimit !== null ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          You are on Free. You can review orders here, but adding or editing records needs a paid plan.
+          Free gives you up to {monthlyOrderLimit} orders this month. Follow-ups, payment tracking, and customer workflows start on Starter.
           <Link href="/pricing" className="ml-2 font-semibold underline">
             Upgrade now
           </Link>
@@ -113,18 +130,20 @@ export default async function OrdersPage() {
                   <p className="text-slate-400">Area</p>
                   <p className="mt-1 text-slate-700">{order.area || "—"}</p>
                 </div>
-                <div>
-                  <p className="text-slate-400">Payment</p>
-                  <span
-                    className={`mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
-                      order.paymentStatus === "paid"
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-red-50 text-red-600"
-                    }`}
-                  >
-                    {order.paymentStatus}
-                  </span>
-                </div>
+                {canTrackPayments ? (
+                  <div>
+                    <p className="text-slate-400">Payment</p>
+                    <span
+                      className={`mt-1 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        order.paymentStatus === "paid"
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-red-50 text-red-600"
+                      }`}
+                    >
+                      {order.paymentStatus}
+                    </span>
+                  </div>
+                ) : null}
               </div>
 
               <Link
@@ -153,7 +172,9 @@ export default async function OrdersPage() {
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Area</th>
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Amount</th>
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Stage</th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Payment</th>
+                {canTrackPayments ? (
+                  <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Payment</th>
+                ) : null}
                 <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Action</th>
               </tr>
             </thead>
@@ -175,17 +196,19 @@ export default async function OrdersPage() {
                         {order.stage.replaceAll("_", " ")}
                       </span>
                     </td>
-                    <td className="px-4 py-4">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          order.paymentStatus === "paid"
-                            ? "bg-emerald-50 text-emerald-700"
-                            : "bg-red-50 text-red-600"
-                        }`}
-                      >
-                        {order.paymentStatus}
-                      </span>
-                    </td>
+                    {canTrackPayments ? (
+                      <td className="px-4 py-4">
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            order.paymentStatus === "paid"
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-red-50 text-red-600"
+                          }`}
+                        >
+                          {order.paymentStatus}
+                        </span>
+                      </td>
+                    ) : null}
                     <td className="px-4 py-4 text-right">
                       <Link
                         href={`/dashboard/orders/${order.id}/edit`}
@@ -199,7 +222,7 @@ export default async function OrdersPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-sm text-slate-500">
+                  <td colSpan={canTrackPayments ? 7 : 6} className="px-4 py-12 text-center text-sm text-slate-500">
                     No orders found.
                   </td>
                 </tr>

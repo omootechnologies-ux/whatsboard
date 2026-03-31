@@ -8,7 +8,7 @@ import { isMissingRelationError } from "@/lib/supabase-errors";
 export async function startPlanCheckoutAction(planKey: string) {
   const plan = getPlanConfig(planKey);
 
-  if (!plan) {
+  if (!plan || plan.key === "free" || plan.amount <= 0) {
     redirect("/pricing?status=error&message=Invalid%20plan");
   }
 

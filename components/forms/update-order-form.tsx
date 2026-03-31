@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { useFormState } from "react-dom";
 import { updateOrderAction } from "@/app/dashboard/actions";
+import { ORDER_STAGES } from "@/lib/constants";
+import type { OrderStage, PaymentStatus } from "@/lib/types";
 
 type OrderRecord = {
   id: string;
@@ -40,10 +42,24 @@ export default function UpdateOrderForm({
   order,
   catalogProducts = [],
   canManageRecords = true,
+  allowedStages = ["new_order", "waiting_payment"],
+  allowedPaymentStatuses = ["unpaid"],
+  canUseFollowUps = false,
+  canUsePaymentTracking = false,
+  monthlyOrderLimit = null,
+  orderCountThisMonth = 0,
+  remainingMonthlyOrders = null,
 }: {
   order: OrderRecord;
   catalogProducts?: CatalogOption[];
   canManageRecords?: boolean;
+  allowedStages?: OrderStage[];
+  allowedPaymentStatuses?: PaymentStatus[];
+  canUseFollowUps?: boolean;
+  canUsePaymentTracking?: boolean;
+  monthlyOrderLimit?: number | null;
+  orderCountThisMonth?: number;
+  remainingMonthlyOrders?: number | null;
 }) {
   const action = updateOrderAction.bind(null, order.id);
   const [state, formAction, isPending] = useFormState(action, initialState);
@@ -51,12 +67,20 @@ export default function UpdateOrderForm({
   const [customProduct, setCustomProduct] = useState(order.product_name ?? "");
   const [customAmount, setCustomAmount] = useState(String(order.amount ?? 0));
   const selectedCatalogProduct = catalogProducts.find((item) => item.id === catalogProductId) ?? null;
+  const visibleStages = ORDER_STAGES.filter((stage) => allowedStages.includes(stage.key));
 
   return (
     <form action={formAction} className="grid gap-4 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+      {monthlyOrderLimit !== null ? (
+        <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+          Free includes {monthlyOrderLimit} orders per month. You have used {orderCountThisMonth} this month
+          {remainingMonthlyOrders !== null ? ` and have ${remainingMonthlyOrders} left.` : "."}
+        </div>
+      ) : null}
+
       {!canManageRecords ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Free plan is view-only. Upgrade to Starter or above to edit orders.
+          You have reached this month&apos;s Free order limit. Upgrade to Starter or above for unlimited orders.
           <Link href="/pricing" className="ml-2 font-semibold underline">
             Upgrade now
           </Link>
@@ -125,25 +149,43 @@ export default function UpdateOrderForm({
 
         <label className="grid gap-2">
           <span className="text-sm font-semibold text-slate-700">Stage</span>
-          <select name="stage" defaultValue={order.stage ?? "new_order"} className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900">
-            <option value="new_order">New Order</option>
-            <option value="waiting_payment">Waiting Payment</option>
-            <option value="paid">Paid</option>
-            <option value="packing">Packing</option>
-            <option value="dispatched">Dispatched</option>
-            <option value="delivered">Delivered</option>
+          <select
+            name="stage"
+            defaultValue={allowedStages.includes((order.stage as OrderStage) ?? "new_order") ? order.stage ?? "new_order" : allowedStages[0] ?? "new_order"}
+            className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900"
+          >
+            {visibleStages.map((stage) => (
+              <option key={stage.key} value={stage.key}>
+                {stage.label}
+              </option>
+            ))}
           </select>
         </label>
 
         <label className="grid gap-2">
           <span className="text-sm font-semibold text-slate-700">Payment status</span>
-          <select name="paymentStatus" defaultValue={order.payment_status ?? "unpaid"} className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900">
-            <option value="unpaid">Unpaid</option>
-            <option value="partial">Partial</option>
-            <option value="paid">Paid</option>
-            <option value="cod">COD</option>
+          <select
+            name="paymentStatus"
+            defaultValue={
+              allowedPaymentStatuses.includes((order.payment_status as PaymentStatus) ?? "unpaid")
+                ? order.payment_status ?? "unpaid"
+                : allowedPaymentStatuses[0] ?? "unpaid"
+            }
+            className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900"
+          >
+            {allowedPaymentStatuses.map((item) => (
+              <option key={item} value={item}>
+                {item.toUpperCase() === "COD" ? "COD" : item[0].toUpperCase() + item.slice(1)}
+              </option>
+            ))}
           </select>
         </label>
+
+        {canUsePaymentTracking ? null : (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 md:col-span-2">
+            Payment tracking starts on Starter. Free orders stay in basic tracking mode.
+          </div>
+        )}
 
         <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 md:col-span-2">
           {selectedCatalogProduct
@@ -151,20 +193,28 @@ export default function UpdateOrderForm({
             : "Leave catalog product empty to keep this order as a custom line item."}
         </div>
 
-        <label className="flex items-center gap-3 rounded-2xl border border-slate-300 bg-white px-4 py-3 md:col-span-2">
-          <input type="checkbox" name="addFollowUp" className="h-4 w-4" />
-          <span className="text-sm font-semibold text-slate-700">Add or update follow-up</span>
-        </label>
+        {canUseFollowUps ? (
+          <>
+            <label className="flex items-center gap-3 rounded-2xl border border-slate-300 bg-white px-4 py-3 md:col-span-2">
+              <input type="checkbox" name="addFollowUp" className="h-4 w-4" />
+              <span className="text-sm font-semibold text-slate-700">Add or update follow-up</span>
+            </label>
 
-        <label className="grid gap-2">
-          <span className="text-sm font-semibold text-slate-700">Follow-up date</span>
-          <input name="followUpDate" type="datetime-local" className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
-        </label>
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-slate-700">Follow-up date</span>
+              <input name="followUpDate" type="datetime-local" className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
+            </label>
 
-        <label className="grid gap-2">
-          <span className="text-sm font-semibold text-slate-700">Follow-up note</span>
-          <input name="followUpNote" className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
-        </label>
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-slate-700">Follow-up note</span>
+              <input name="followUpNote" className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
+            </label>
+          </>
+        ) : (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 md:col-span-2">
+            Follow-up reminders start on Starter.
+          </div>
+        )}
       </div>
 
       <label className="grid gap-2">

@@ -3,7 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getViewerContext } from "@/lib/queries";
-import { canManageImportantRecords } from "@/lib/plan-access";
+import {
+  canCreateOrders,
+  canUsePlanCapability,
+  getAllowedOrderStages,
+  getAllowedPaymentStatuses,
+  getMonthlyOrderLimit,
+} from "@/lib/plan-access";
 
 type ActionState = {
   success: boolean;
@@ -41,11 +47,103 @@ async function getDashboardActionContext() {
     return null;
   }
 
-  if (!context.isAdmin && !canManageImportantRecords(context.business)) {
-    return null;
+  return context;
+}
+
+function getCurrentMonthWindow() {
+  const now = new Date();
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
+
+  return {
+    start: start.toISOString(),
+    end: end.toISOString(),
+  };
+}
+
+async function getCurrentMonthOrderCount(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  businessId: string
+) {
+  const { start, end } = getCurrentMonthWindow();
+  const { count } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("business_id", businessId)
+    .gte("created_at", start)
+    .lt("created_at", end);
+
+  return count ?? 0;
+}
+
+async function getOrderWriteAccess(
+  context: NonNullable<Awaited<ReturnType<typeof getDashboardActionContext>>>,
+  mode: "create" | "edit"
+) {
+  if (context.isAdmin) {
+    return {
+      allowed: true,
+      message: null,
+      orderCountThisMonth: 0,
+      monthlyOrderLimit: null as number | null,
+    };
   }
 
-  return context;
+  const orderCountThisMonth = await getCurrentMonthOrderCount(context.supabase, context.businessId);
+  const monthlyOrderLimit = getMonthlyOrderLimit(context.business);
+
+  if (mode === "create" && !canCreateOrders(context.business, orderCountThisMonth)) {
+    return {
+      allowed: false,
+      message: `Free includes ${monthlyOrderLimit ?? 30} orders per month. Upgrade to Starter for unlimited orders.`,
+      orderCountThisMonth,
+      monthlyOrderLimit,
+    };
+  }
+
+  return {
+    allowed: true,
+    message: null,
+    orderCountThisMonth,
+    monthlyOrderLimit,
+  };
+}
+
+function validateOrderFieldsForPlan(
+  business: NonNullable<Awaited<ReturnType<typeof getDashboardActionContext>>>["business"],
+  payload: {
+    stage: string;
+    paymentStatus: string;
+    addFollowUp?: boolean;
+  }
+) {
+  const allowedStages = getAllowedOrderStages(business);
+  const allowedPaymentStatuses = getAllowedPaymentStatuses(business);
+
+  if (!allowedStages.includes(payload.stage as any)) {
+    return {
+      valid: false,
+      error: canUsePlanCapability("dispatchTracking", business)
+        ? "Stage is not allowed."
+        : "Dispatch tracking starts on Growth. Upgrade to unlock packing, dispatch, and delivery stages.",
+    };
+  }
+
+  if (!allowedPaymentStatuses.includes(payload.paymentStatus as any)) {
+    return {
+      valid: false,
+      error: "Payment tracking starts on Starter. Free orders are saved as unpaid only.",
+    };
+  }
+
+  if (payload.addFollowUp && !canUsePlanCapability("followUpReminders", business)) {
+    return {
+      valid: false,
+      error: "Follow-up reminders start on Starter.",
+    };
+  }
+
+  return { valid: true, error: null };
 }
 
 function normalizeText(value: string) {
@@ -276,7 +374,9 @@ export async function createOrderAction(
   formData: FormData
 ): Promise<ActionState> {
   const context = await getDashboardActionContext();
-  if (!context) return { success: false, error: "Upgrade to a paid plan to add or edit records." };
+  if (!context) return { success: false, error: "Business not found." };
+  const orderAccess = await getOrderWriteAccess(context, "create");
+  if (!orderAccess.allowed) return { success: false, error: orderAccess.message };
   const { supabase, businessId } = context;
 
   const customerName = String(formData.get("customerName") || "").trim();
@@ -291,6 +391,15 @@ export async function createOrderAction(
   const addFollowUp = String(formData.get("addFollowUp") || "") === "on";
   const followUpDateRaw = String(formData.get("followUpDate") || "").trim();
   const followUpNote = String(formData.get("followUpNote") || "").trim();
+  const validation = validateOrderFieldsForPlan(context.business, {
+    stage,
+    paymentStatus,
+    addFollowUp,
+  });
+
+  if (!validation.valid) {
+    return { success: false, error: validation.error };
+  }
 
   return createOrderWithExistingFlow(supabase, businessId, {
     customerName,
@@ -310,7 +419,17 @@ export async function createOrderAction(
 
 export async function updateOrderStageAction(id: string, stage: string) {
   const context = await getDashboardActionContext();
-  if (!context) throw new Error("Upgrade to a paid plan to update records.");
+  if (!context) throw new Error("Business not found.");
+  if (!context.isAdmin) {
+    const validation = validateOrderFieldsForPlan(context.business, {
+      stage,
+      paymentStatus: "unpaid",
+    });
+
+    if (!validation.valid) {
+      throw new Error(validation.error ?? "Stage is not allowed.");
+    }
+  }
   const supabase = await createClient();
 
   const { error } = await supabase.from("orders").update({ stage }).eq("id", id);
@@ -328,7 +447,9 @@ export async function updateOrderAction(
   formData: FormData
 ): Promise<ActionState> {
   const context = await getDashboardActionContext();
-  if (!context) return { success: false, error: "Upgrade to a paid plan to add or edit records." };
+  if (!context) return { success: false, error: "Business not found." };
+  const orderAccess = await getOrderWriteAccess(context, "edit");
+  if (!orderAccess.allowed) return { success: false, error: orderAccess.message };
   const { supabase, businessId } = context;
 
   const customerName = String(formData.get("customerName") || "").trim();
@@ -343,6 +464,15 @@ export async function updateOrderAction(
   const addFollowUp = String(formData.get("addFollowUp") || "") === "on";
   const followUpDateRaw = String(formData.get("followUpDate") || "").trim();
   const followUpNote = String(formData.get("followUpNote") || "").trim();
+  const validation = validateOrderFieldsForPlan(context.business, {
+    stage,
+    paymentStatus,
+    addFollowUp,
+  });
+
+  if (!validation.valid) {
+    return { success: false, error: validation.error };
+  }
 
   if (!customerName) return { success: false, error: "Customer name is required." };
   if (!phone) return { success: false, error: "Phone number is required." };
@@ -529,7 +659,10 @@ export async function updateCustomerAction(
   formData: FormData
 ): Promise<ActionState> {
   const context = await getDashboardActionContext();
-  if (!context) return { success: false, error: "Upgrade to a paid plan to add or edit records." };
+  if (!context) return { success: false, error: "Business not found." };
+  if (!context.isAdmin && !canUsePlanCapability("customerProfiles", context.business)) {
+    return { success: false, error: "Customer profiles start on Starter." };
+  }
   const { supabase, businessId } = context;
 
   const payload = {
@@ -563,7 +696,10 @@ export async function updateFollowUpAction(
   formData: FormData
 ): Promise<ActionState> {
   const context = await getDashboardActionContext();
-  if (!context) return { success: false, error: "Upgrade to a paid plan to add or edit records." };
+  if (!context) return { success: false, error: "Business not found." };
+  if (!context.isAdmin && !canUsePlanCapability("followUpReminders", context.business)) {
+    return { success: false, error: "Follow-up reminders start on Starter." };
+  }
   const { supabase, businessId } = context;
 
   const dueAtRaw = String(formData.get("dueAt") || "").trim();
@@ -599,7 +735,10 @@ export async function createCatalogProductAction(
   formData: FormData
 ): Promise<ActionState> {
   const context = await getDashboardActionContext();
-  if (!context) return { success: false, error: "Upgrade to a paid plan to add or edit records." };
+  if (!context) return { success: false, error: "Business not found." };
+  if (!context.isAdmin && !canUsePlanCapability("catalog", context.business)) {
+    return { success: false, error: "Catalog access starts on Growth." };
+  }
   const { supabase, businessId } = context;
 
   const name = String(formData.get("name") || "").trim();
@@ -644,6 +783,7 @@ export async function createCatalogProductAction(
 export async function updateCatalogStockAction(id: string, formData: FormData) {
   const context = await getDashboardActionContext();
   if (!context) return;
+  if (!context.isAdmin && !canUsePlanCapability("catalog", context.business)) return;
   const { supabase, businessId } = context;
 
   const stockCount = Number(formData.get("stockCount") || 0);
@@ -663,7 +803,10 @@ export async function updateCatalogStockAction(id: string, formData: FormData) {
 
 export async function completeFollowUpAction(id: string) {
   const context = await getDashboardActionContext();
-  if (!context) throw new Error("Upgrade to a paid plan to update records.");
+  if (!context) throw new Error("Business not found.");
+  if (!context.isAdmin && !canUsePlanCapability("followUpReminders", context.business)) {
+    throw new Error("Follow-up reminders start on Starter.");
+  }
   const { supabase, businessId } = context;
 
   const { error } = await supabase
@@ -686,7 +829,10 @@ export async function saveAiOrderCaptureAction(
   formData: FormData
 ): Promise<ActionState> {
   const context = await getDashboardActionContext();
-  if (!context) return { success: false, error: "Upgrade to a paid plan to add or edit records." };
+  if (!context) return { success: false, error: "Business not found." };
+  if (!context.isAdmin) {
+    return { success: false, error: "AI capture is not part of the current launch plans." };
+  }
   const { supabase, businessId } = context;
 
   const customerName = String(formData.get("customerName") || "").trim();

@@ -5,8 +5,7 @@ import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import { createOrderAction } from "@/app/dashboard/actions";
 import { ORDER_STAGES } from "@/lib/constants";
-
-const PAYMENT_OPTIONS = ["unpaid", "partial", "paid", "cod"];
+import type { OrderStage, PaymentStatus } from "@/lib/types";
 
 type OrderFormState = {
   error: string | null;
@@ -37,9 +36,23 @@ function SubmitButton() {
 export function OrderForm({
   catalogProducts = [],
   canManageRecords = true,
+  allowedStages = ["new_order", "waiting_payment"],
+  allowedPaymentStatuses = ["unpaid"],
+  canUseFollowUps = false,
+  canUsePaymentTracking = false,
+  monthlyOrderLimit = null,
+  orderCountThisMonth = 0,
+  remainingMonthlyOrders = null,
 }: {
   catalogProducts?: CatalogOption[];
   canManageRecords?: boolean;
+  allowedStages?: OrderStage[];
+  allowedPaymentStatuses?: PaymentStatus[];
+  canUseFollowUps?: boolean;
+  canUsePaymentTracking?: boolean;
+  monthlyOrderLimit?: number | null;
+  orderCountThisMonth?: number;
+  remainingMonthlyOrders?: number | null;
 }) {
   const [state, formAction] = useFormState(createOrderAction, {
     error: null,
@@ -49,12 +62,20 @@ export function OrderForm({
   const [customProduct, setCustomProduct] = useState("");
   const [customAmount, setCustomAmount] = useState("");
   const selectedCatalogProduct = catalogProducts.find((item) => item.id === catalogProductId) ?? null;
+  const visibleStages = ORDER_STAGES.filter((stage) => allowedStages.includes(stage.key));
 
   return (
     <form action={formAction} className="grid gap-4 md:grid-cols-2">
+      {monthlyOrderLimit !== null ? (
+        <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800 md:col-span-2">
+          Free includes {monthlyOrderLimit} orders per month. You have used {orderCountThisMonth} this month
+          {remainingMonthlyOrders !== null ? ` and have ${remainingMonthlyOrders} left.` : "."}
+        </div>
+      ) : null}
+
       {!canManageRecords ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 md:col-span-2">
-          You are on the Free plan. Upgrade to Starter or above to create orders and follow-ups.
+          You have reached this month&apos;s Free order limit. Upgrade to Starter or above for unlimited orders.
           <Link href="/pricing" className="ml-2 font-semibold underline">
             Upgrade now
           </Link>
@@ -114,38 +135,56 @@ export function OrderForm({
         </div>
       )}
 
-      <select name="stage" defaultValue="new_order" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3">
-        {ORDER_STAGES.map((stage) => (
+      <select name="stage" defaultValue={visibleStages[0]?.key ?? "new_order"} className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3">
+        {visibleStages.map((stage) => (
           <option key={stage.key} value={stage.key}>
             {stage.label}
           </option>
         ))}
       </select>
 
-      <select name="paymentStatus" defaultValue="unpaid" className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3">
-        {PAYMENT_OPTIONS.map((item) => (
+      <select
+        name="paymentStatus"
+        defaultValue={allowedPaymentStatuses[0] ?? "unpaid"}
+        className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3"
+      >
+        {allowedPaymentStatuses.map((item) => (
           <option key={item} value={item}>
             {item}
           </option>
         ))}
       </select>
 
-      <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 md:col-span-2">
-        <input type="checkbox" name="addFollowUp" className="h-4 w-4" />
-        <span>Add follow-up</span>
-      </label>
+      {canUsePaymentTracking ? null : (
+        <div className="rounded-2xl border border-slate-700 bg-slate-950/40 px-4 py-3 text-sm text-white/55 md:col-span-2">
+          Payment tracking starts on Starter. Free orders are saved as unpaid until you upgrade.
+        </div>
+      )}
 
-      <input
-        name="followUpDate"
-        type="datetime-local"
-        className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3"
-      />
+      {canUseFollowUps ? (
+        <>
+          <label className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 md:col-span-2">
+            <input type="checkbox" name="addFollowUp" className="h-4 w-4" />
+            <span>Add follow-up</span>
+          </label>
 
-      <input
-        name="followUpNote"
-        placeholder="Follow-up note"
-        className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3"
-      />
+          <input
+            name="followUpDate"
+            type="datetime-local"
+            className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3"
+          />
+
+          <input
+            name="followUpNote"
+            placeholder="Follow-up note"
+            className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3"
+          />
+        </>
+      ) : (
+        <div className="rounded-2xl border border-slate-700 bg-slate-950/40 px-4 py-3 text-sm text-white/55 md:col-span-2">
+          Follow-up reminders start on Starter. Free is focused on basic order tracking only.
+        </div>
+      )}
 
       <textarea name="notes" placeholder="Notes" className="min-h-28 rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 md:col-span-2" />
 

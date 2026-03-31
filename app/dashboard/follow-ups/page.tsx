@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { ArrowRight, BellRing, Pencil } from "lucide-react";
+import { requireDashboardFeatureAccess } from "@/lib/dashboard-access";
 import { getFollowUpsData } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function FollowUpsPage() {
+  await requireDashboardFeatureAccess("followUps");
   const followUps = await getFollowUpsData();
   const pendingCount = followUps.filter((item) => !item.completed).length;
 

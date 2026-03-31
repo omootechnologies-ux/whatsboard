@@ -2,6 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDashboardWriteAccess } from "@/lib/dashboard-access";
 import { getOrderCatalogOptions, getViewerContext } from "@/lib/queries";
+import {
+  canUsePlanCapability,
+  getAllowedOrderStages,
+  getAllowedPaymentStatuses,
+} from "@/lib/plan-access";
 import UpdateOrderForm from "@/components/forms/update-order-form";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +17,8 @@ export default async function EditOrderPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { canManageRecords } = await getDashboardWriteAccess();
+  const { business, canManageRecords, monthlyOrderLimit, orderCountThisMonth, remainingMonthlyOrders } =
+    await getDashboardWriteAccess();
   const { supabase, businessId } = await getViewerContext();
   const { id } = await params;
   const catalogProducts = businessId ? await getOrderCatalogOptions() : [];
@@ -69,7 +75,18 @@ export default async function EditOrderPage({
         </Link>
       </div>
 
-      <UpdateOrderForm order={normalizedOrder} catalogProducts={catalogProducts} canManageRecords={canManageRecords} />
+      <UpdateOrderForm
+        order={normalizedOrder}
+        catalogProducts={catalogProducts}
+        canManageRecords={canManageRecords}
+        allowedStages={getAllowedOrderStages(business)}
+        allowedPaymentStatuses={getAllowedPaymentStatuses(business)}
+        canUseFollowUps={canUsePlanCapability("followUpReminders", business)}
+        canUsePaymentTracking={canUsePlanCapability("paymentTracking", business)}
+        monthlyOrderLimit={monthlyOrderLimit}
+        orderCountThisMonth={orderCountThisMonth}
+        remainingMonthlyOrders={remainingMonthlyOrders}
+      />
     </div>
   );
 }

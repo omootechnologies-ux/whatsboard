@@ -1,19 +1,30 @@
 import Link from "next/link";
 import { UserCircle2, Building2, Mail, Phone, Palette, Coins, CalendarDays, CreditCard, LogOut } from "lucide-react";
-import { getAccountData } from "@/lib/queries";
+import { getAccountData, getCurrentMonthOrderUsage } from "@/lib/queries";
 import { logoutAction } from "@/app/(auth)/actions";
-import { canAccessDashboardFeature, getPlanName } from "@/lib/plan-access";
+import { PLAN_CONFIG } from "@/lib/billing";
+import {
+  canAccessDashboardFeature,
+  getEffectivePlanKey,
+  getMonthlyOrderLimit,
+  getPlanName,
+  getRemainingMonthlyOrders,
+} from "@/lib/plan-access";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AccountPage() {
   const { user, profile, business, billingTransaction } = await getAccountData();
+  const effectivePlan = getEffectivePlanKey(business);
+  const monthlyOrderLimit = getMonthlyOrderLimit(business);
+  const orderCountThisMonth = await getCurrentMonthOrderUsage();
+  const remainingMonthlyOrders = getRemainingMonthlyOrders(business, orderCountThisMonth);
   const unlockedFeatures = [
     { label: "Orders", allowed: canAccessDashboardFeature("orders", business) },
     { label: "Customers", allowed: canAccessDashboardFeature("customers", business) },
     { label: "Follow-ups", allowed: canAccessDashboardFeature("followUps", business) },
-    { label: "Catalog", allowed: canAccessDashboardFeature("catalog", business) },
+    { label: "Analytics", allowed: canAccessDashboardFeature("analytics", business) },
     { label: "Account", allowed: canAccessDashboardFeature("account", business) },
     { label: "Settings", allowed: canAccessDashboardFeature("settings", business) },
   ];
@@ -136,12 +147,14 @@ export default async function AccountPage() {
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs text-slate-500">Current plan</p>
             <p className="mt-2 font-medium capitalize text-slate-900">
-              {getPlanName(business?.billing_plan)}
+              {getPlanName(effectivePlan)}
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs text-slate-500">Billing status</p>
-            <p className="mt-2 font-medium capitalize text-slate-900">{business?.billing_status ?? "free"}</p>
+            <p className="mt-2 font-medium capitalize text-slate-900">
+              {effectivePlan === "free" ? "free" : business?.billing_status ?? "inactive"}
+            </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs text-slate-500">Paid through</p>
@@ -158,6 +171,17 @@ export default async function AccountPage() {
         </div>
 
         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs text-slate-500">Order allowance this month</p>
+          <p className="mt-2 text-sm font-medium text-slate-900">
+            {monthlyOrderLimit === null
+              ? `${orderCountThisMonth} orders used this month. Your plan is unlimited.`
+              : `${orderCountThisMonth} of ${monthlyOrderLimit} orders used this month${
+                  remainingMonthlyOrders !== null ? ` • ${remainingMonthlyOrders} left` : ""
+                }.`}
+          </p>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs text-slate-500">Unlocked dashboard features</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {unlockedFeatures.map((feature) => (
@@ -168,6 +192,23 @@ export default async function AccountPage() {
                 }`}
               >
                 {feature.label}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs text-slate-500">What this plan includes</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {PLAN_CONFIG[effectivePlan].features.map((feature) => (
+              <span
+                key={feature.label}
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  feature.comingSoon ? "bg-slate-200 text-slate-600" : "bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                {feature.label}
+                {feature.comingSoon ? " (coming soon)" : ""}
               </span>
             ))}
           </div>

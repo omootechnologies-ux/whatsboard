@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BarChart3,
   Bell,
-  Boxes,
   ChevronRight,
   Menu,
   LayoutDashboard,
@@ -19,7 +19,11 @@ import {
   Wallet,
 } from "lucide-react";
 import { logoutAction } from "@/app/(auth)/actions";
-import { canAccessDashboardFeature, canManageImportantRecords, getPlanName } from "@/lib/plan-access";
+import {
+  canAccessDashboardFeature,
+  getEffectivePlanKey,
+  getPlanName,
+} from "@/lib/plan-access";
 
 type NavItemConfig = {
   href: string;
@@ -36,7 +40,7 @@ const PRIMARY_NAV: NavItemConfig[] = [
 ];
 
 const SECONDARY_NAV: NavItemConfig[] = [
-  { href: "/dashboard/catalog", label: "Catalog", icon: Boxes },
+  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/account", label: "Account", icon: ReceiptText },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
@@ -100,11 +104,13 @@ function MobileBottomNavItem({ href, label, icon: Icon, exact }: NavItemConfig) 
 export function DashboardShell({
   children,
   isAdmin,
+  canCreateOrders,
   profile,
   business,
 }: {
   children: React.ReactNode;
   isAdmin: boolean;
+  canCreateOrders: boolean;
   profile?: { full_name?: string | null; email?: string | null } | null;
   business?: {
     name?: string | null;
@@ -114,11 +120,21 @@ export function DashboardShell({
   } | null;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const canManageRecords = isAdmin || canManageImportantRecords(business);
-  const visiblePrimaryNav = PRIMARY_NAV;
+  const effectivePlan = getEffectivePlanKey(business);
+  const visiblePrimaryNav = PRIMARY_NAV.filter((item) => {
+    if (item.href === "/dashboard/customers") {
+      return canAccessDashboardFeature("customers", business);
+    }
+
+    if (item.href === "/dashboard/follow-ups") {
+      return canAccessDashboardFeature("followUps", business);
+    }
+
+    return true;
+  });
   const visibleSecondaryNav = SECONDARY_NAV.filter((item) => {
-    if (item.href === "/dashboard/catalog") {
-      return canAccessDashboardFeature("catalog", business);
+    if (item.href === "/dashboard/analytics") {
+      return canAccessDashboardFeature("analytics", business);
     }
 
     return true;
@@ -181,20 +197,20 @@ export function DashboardShell({
               <div className="mt-4 rounded-2xl border border-white/8 bg-slate-950/35 px-4 py-3">
                 <p className="text-[10px] uppercase tracking-[0.18em] text-white/35">Current plan</p>
                 <p className="mt-2 text-sm font-semibold text-white">
-                  {getPlanName(business?.billing_plan) ?? "No active plan"}
+                  {getPlanName(effectivePlan)}
                 </p>
               </div>
 
               <Link
                 href={
-                  canManageRecords
+                  canCreateOrders
                     ? "/dashboard/orders/new"
-                    : "/pricing?status=upgrade&message=Upgrade%20to%20a%20paid%20plan%20to%20create%20orders"
+                    : "/pricing?status=upgrade&message=Upgrade%20when%20you%20need%20more%20than%2030%20orders%20this%20month"
                 }
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:opacity-95"
               >
                 <Plus className="h-4 w-4" />
-                {canManageRecords ? "Add New Order" : "Upgrade to Create"}
+                {canCreateOrders ? "Add New Order" : "Upgrade Plan"}
               </Link>
 
               <div className="mt-5 grid grid-cols-1 gap-3 2xl:grid-cols-2">
@@ -295,14 +311,14 @@ export function DashboardShell({
 
                 <Link
                   href={
-                    canManageRecords
+                    canCreateOrders
                       ? "/dashboard/orders/new"
-                      : "/pricing?status=upgrade&message=Upgrade%20to%20a%20paid%20plan%20to%20create%20orders"
+                      : "/pricing?status=upgrade&message=Upgrade%20when%20you%20need%20more%20than%2030%20orders%20this%20month"
                   }
                   className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:opacity-95"
                 >
                   <Plus className="h-4 w-4" />
-                  {canManageRecords ? "New Order" : "Upgrade"}
+                  {canCreateOrders ? "New Order" : "Upgrade"}
                 </Link>
               </div>
             </div>

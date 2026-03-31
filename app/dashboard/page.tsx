@@ -9,6 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { getDashboardWriteAccess } from "@/lib/dashboard-access";
+import { canAccessDashboardFeature, canUsePlanCapability } from "@/lib/plan-access";
 import { getCustomersData, getDashboardData, getFollowUpsData } from "@/lib/queries";
 import { formatTZS } from "@/lib/utils";
 
@@ -56,12 +57,22 @@ function statusTone(stage: string) {
 }
 
 export default async function DashboardPage() {
-  const { canManageRecords } = await getDashboardWriteAccess();
+  const {
+    business,
+    canCreateOrders,
+    monthlyOrderLimit,
+    orderCountThisMonth,
+    remainingMonthlyOrders,
+  } = await getDashboardWriteAccess();
   const [{ orders, metrics }, customers, followUps] = await Promise.all([
     getDashboardData(),
     getCustomersData(),
     getFollowUpsData(),
   ]);
+  const canSeeCustomers = canAccessDashboardFeature("customers", business);
+  const canSeeFollowUps = canAccessDashboardFeature("followUps", business);
+  const canSeeAnalytics = canAccessDashboardFeature("analytics", business);
+  const canTrackPayments = canUsePlanCapability("paymentTracking", business);
 
   const totalOrders = metrics?.totalOrders ?? 0;
   const unpaidOrders = metrics?.unpaidOrders ?? 0;
@@ -94,17 +105,19 @@ export default async function DashboardPage() {
 
           <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <Link
-              href={canManageRecords ? "/dashboard/orders/new" : "/pricing?status=upgrade&message=Upgrade%20to%20a%20paid%20plan%20to%20create%20orders"}
+              href={canCreateOrders ? "/dashboard/orders/new" : "/pricing?status=upgrade&message=Upgrade%20to%20Starter%20for%20unlimited%20orders"}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:opacity-95"
             >
-              {canManageRecords ? "Create order" : "Upgrade to create"}
+              {canCreateOrders ? "Create order" : "Upgrade for more orders"}
             </Link>
-            <Link
-              href="/dashboard/follow-ups"
-              className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-            >
-              Review follow-ups
-            </Link>
+            {canSeeFollowUps ? (
+              <Link
+                href="/dashboard/follow-ups"
+                className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
+              >
+                Review follow-ups
+              </Link>
+            ) : null}
           </div>
         </div>
 
@@ -113,8 +126,14 @@ export default async function DashboardPage() {
           <div className="mt-5 space-y-3">
             <div className="rounded-[22px] bg-amber-50 p-4">
               <p className="text-sm font-semibold text-slate-900">Waiting payment</p>
-              <p className="mt-1 text-2xl font-black text-slate-950">{unpaidOrders}</p>
-              <p className="mt-1 text-sm text-slate-600">{formatTZS(unpaidValue)} still not collected.</p>
+              <p className="mt-1 text-2xl font-black text-slate-950">
+                {canTrackPayments ? unpaidOrders : `${orderCountThisMonth}/${monthlyOrderLimit ?? totalOrders}`}
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                {canTrackPayments
+                  ? `${formatTZS(unpaidValue)} still not collected.`
+                  : `${remainingMonthlyOrders ?? 0} free orders left this month.`}
+              </p>
             </div>
             <div className="rounded-[22px] bg-sky-50 p-4">
               <p className="text-sm font-semibold text-slate-900">Ready for packing or dispatch</p>
@@ -123,8 +142,14 @@ export default async function DashboardPage() {
             </div>
             <div className="rounded-[22px] bg-emerald-50 p-4">
               <p className="text-sm font-semibold text-slate-900">Pending follow-ups</p>
-              <p className="mt-1 text-2xl font-black text-slate-950">{pendingFollowUps.length}</p>
-              <p className="mt-1 text-sm text-slate-600">Customers still waiting for a reply or reminder.</p>
+              <p className="mt-1 text-2xl font-black text-slate-950">
+                {canSeeFollowUps ? pendingFollowUps.length : "Starter"}
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                {canSeeFollowUps
+                  ? "Customers still waiting for a reply or reminder."
+                  : "Follow-up reminders unlock on Starter."}
+              </p>
             </div>
           </div>
         </div>
@@ -138,9 +163,9 @@ export default async function DashboardPage() {
           icon={<ShoppingBag className="h-5 w-5" />}
         />
         <StatCard
-          label="Customers"
-          value={String(customers.length)}
-          detail="Customers created from your orders"
+          label={canSeeCustomers ? "Customers" : "Free quota"}
+          value={canSeeCustomers ? String(customers.length) : String(remainingMonthlyOrders ?? monthlyOrderLimit ?? 0)}
+          detail={canSeeCustomers ? "Customers created from your orders" : "Orders left this month on Free"}
           icon={<Users className="h-5 w-5" />}
         />
         <StatCard
@@ -151,8 +176,8 @@ export default async function DashboardPage() {
         />
         <StatCard
           label="Follow-ups"
-          value={String(pendingFollowUps.length)}
-          detail="Open reminders still pending"
+          value={canSeeFollowUps ? String(pendingFollowUps.length) : "Starter"}
+          detail={canSeeFollowUps ? "Open reminders still pending" : "Upgrade to unlock reminders"}
           icon={<BellRing className="h-5 w-5" />}
         />
       </section>
@@ -190,15 +215,17 @@ export default async function DashboardPage() {
                     <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusTone(order.stage)}`}>
                       {order.stage.replaceAll("_", " ")}
                     </span>
-                    <span
-                      className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                        order.paymentStatus === "paid"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-amber-50 text-amber-700"
-                      }`}
-                    >
-                      {order.paymentStatus === "paid" ? "Paid" : "Unpaid"}
-                    </span>
+                    {canTrackPayments ? (
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
+                          order.paymentStatus === "paid"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-amber-50 text-amber-700"
+                        }`}
+                      >
+                        {order.paymentStatus === "paid" ? "Paid" : "Unpaid"}
+                      </span>
+                    ) : null}
                   </div>
                   <div className="flex items-center justify-between gap-3 sm:justify-end">
                     <p className="text-sm font-bold text-slate-900">{formatTZS(order.amount)}</p>
@@ -218,10 +245,10 @@ export default async function DashboardPage() {
                   Start with your first order and WhatsBoard will build customers and follow-ups from there.
                 </p>
                 <Link
-                  href={canManageRecords ? "/dashboard/orders/new" : "/pricing?status=upgrade&message=Upgrade%20to%20a%20paid%20plan%20to%20create%20orders"}
+                  href={canCreateOrders ? "/dashboard/orders/new" : "/pricing?status=upgrade&message=Upgrade%20to%20Starter%20for%20unlimited%20orders"}
                   className="mt-4 inline-flex rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 transition hover:opacity-95"
                 >
-                  {canManageRecords ? "Add order" : "Upgrade to add orders"}
+                  {canCreateOrders ? "Add order" : "Upgrade to add more orders"}
                 </Link>
               </div>
             )}
@@ -236,14 +263,22 @@ export default async function DashboardPage() {
               </span>
               <div>
                 <p className="text-sm font-semibold text-slate-900">Payment control</p>
-                <p className="text-xs text-slate-500">Know exactly what still needs collection.</p>
+                <p className="text-xs text-slate-500">
+                  {canTrackPayments ? "Know exactly what still needs collection." : "Unlock payment tracking on Starter."}
+                </p>
               </div>
             </div>
             <div className="mt-4 rounded-[22px] bg-slate-50 p-4">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Unpaid value</p>
-              <p className="mt-2 break-words text-2xl font-black text-slate-950">{formatTZS(unpaidValue)}</p>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
+                {canTrackPayments ? "Unpaid value" : "Free usage"}
+              </p>
+              <p className="mt-2 break-words text-2xl font-black text-slate-950">
+                {canTrackPayments ? formatTZS(unpaidValue) : `${orderCountThisMonth}/${monthlyOrderLimit ?? totalOrders}`}
+              </p>
               <p className="mt-2 text-sm text-slate-500">
-                {unpaidOrders} orders still need payment confirmation.
+                {canTrackPayments
+                  ? `${unpaidOrders} orders still need payment confirmation.`
+                  : `${remainingMonthlyOrders ?? 0} free orders left this month.`}
               </p>
             </div>
           </div>
@@ -255,12 +290,14 @@ export default async function DashboardPage() {
               </span>
               <div>
                 <p className="text-sm font-semibold text-slate-900">Next follow-ups</p>
-                <p className="text-xs text-slate-500">Keep delayed chats and orders moving.</p>
+                <p className="text-xs text-slate-500">
+                  {canSeeFollowUps ? "Keep delayed chats and orders moving." : "Follow-up reminders unlock on Starter."}
+                </p>
               </div>
             </div>
 
             <div className="mt-4 space-y-3">
-              {nextFollowUps.length ? (
+              {canSeeFollowUps && nextFollowUps.length ? (
                 nextFollowUps.map((item) => (
                   <div key={item.id} className="rounded-[22px] bg-slate-50 p-4">
                     <p className="font-semibold text-slate-900">{item.customerName}</p>
@@ -272,55 +309,71 @@ export default async function DashboardPage() {
                 ))
               ) : (
                 <div className="rounded-[22px] border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
-                  No follow-ups pending right now.
+                  {canSeeFollowUps ? "No follow-ups pending right now." : "Follow-up reminders unlock on Starter."}
                 </div>
               )}
             </div>
 
-            <Link
-              href="/dashboard/follow-ups"
-              className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 transition hover:text-emerald-700"
-            >
-              Open follow-ups
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            {canSeeFollowUps ? (
+              <Link
+                href="/dashboard/follow-ups"
+                className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 transition hover:text-emerald-700"
+              >
+                Open follow-ups
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : null}
           </div>
         </div>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-3">
         <Link
-          href={canManageRecords ? "/dashboard/orders/new" : "/pricing?status=upgrade&message=Upgrade%20to%20a%20paid%20plan%20to%20create%20orders"}
+          href={canCreateOrders ? "/dashboard/orders/new" : "/pricing?status=upgrade&message=Upgrade%20to%20Starter%20for%20unlimited%20orders"}
           className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-emerald-200 hover:bg-emerald-50/30"
         >
-          <p className="text-sm font-semibold text-slate-900">{canManageRecords ? "Create order" : "Upgrade to create"}</p>
+          <p className="text-sm font-semibold text-slate-900">{canCreateOrders ? "Create order" : "Upgrade for more orders"}</p>
           <p className="mt-2 text-sm text-slate-500">
-            {canManageRecords
+            {canCreateOrders
               ? "Start from a fresh sale and let WhatsBoard create or match the customer automatically."
-              : "Free plan is read-only. Upgrade to Starter or above to add orders, customers, and follow-ups."}
+              : "Free gives you 30 orders per month. Upgrade to Starter for unlimited orders and deeper workflows."}
           </p>
         </Link>
+        {canSeeCustomers ? (
+          <Link
+            href="/dashboard/customers"
+            className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-emerald-200 hover:bg-emerald-50/30"
+          >
+            <p className="text-sm font-semibold text-slate-900">Customer list</p>
+            <p className="mt-2 text-sm text-slate-500">
+              See repeat buyers and dormant customers who may need a quick follow-up.
+            </p>
+          </Link>
+        ) : (
+          <Link
+            href="/pricing?status=upgrade&message=Upgrade%20to%20Starter%20to%20unlock%20customer%20profiles"
+            className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-emerald-200 hover:bg-emerald-50/30"
+          >
+            <p className="text-sm font-semibold text-slate-900">Customer profiles</p>
+            <p className="mt-2 text-sm text-slate-500">
+              Upgrade to Starter to unlock customer history, follow-ups, and profile editing.
+            </p>
+          </Link>
+        )}
         <Link
-          href="/dashboard/customers"
+          href={canSeeAnalytics ? "/dashboard/analytics" : "/dashboard/settings"}
           className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-emerald-200 hover:bg-emerald-50/30"
         >
-          <p className="text-sm font-semibold text-slate-900">Customer list</p>
+          <p className="text-sm font-semibold text-slate-900">{canSeeAnalytics ? "Reports & analytics" : "Settings"}</p>
           <p className="mt-2 text-sm text-slate-500">
-            See repeat buyers and dormant customers who may need a quick follow-up.
-          </p>
-        </Link>
-        <Link
-          href="/dashboard/settings"
-          className="rounded-[26px] border border-slate-200 bg-white p-5 shadow-[0_24px_80px_rgba(15,23,42,0.06)] transition hover:border-emerald-200 hover:bg-emerald-50/30"
-        >
-          <p className="text-sm font-semibold text-slate-900">Settings</p>
-          <p className="mt-2 text-sm text-slate-500">
-            Keep business details, defaults, and contact info clean for daily operations.
+            {canSeeAnalytics
+              ? "Growth and Business can track reports from live order and customer data."
+              : "Keep business details, defaults, and contact info clean for daily operations."}
           </p>
         </Link>
       </section>
 
-      {customers.length > 0 && dormantCustomers.length > 0 ? (
+      {canSeeCustomers && customers.length > 0 && dormantCustomers.length > 0 ? (
         <section className="rounded-[28px] border border-amber-200 bg-amber-50 p-5 shadow-sm">
           <p className="text-sm font-semibold text-slate-900">Dormant customers to re-engage</p>
           <p className="mt-2 text-sm text-slate-600">

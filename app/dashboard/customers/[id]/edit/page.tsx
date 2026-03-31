@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getDashboardWriteAccess } from "@/lib/dashboard-access";
+import { getDashboardWriteAccess, requireDashboardFeatureAccess } from "@/lib/dashboard-access";
 import { getViewerContext } from "@/lib/queries";
 import { updateCustomerAction } from "@/app/dashboard/actions";
 import EditCustomerForm from "@/components/forms/edit-customer-form";
@@ -13,6 +13,7 @@ export default async function EditCustomerPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireDashboardFeatureAccess("customers");
   const { canManageRecords } = await getDashboardWriteAccess();
   const { supabase, businessId } = await getViewerContext();
   const { id } = await params;

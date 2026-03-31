@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { ArrowRight, MessageCircle, Pencil, Users } from "lucide-react";
+import { requireDashboardFeatureAccess } from "@/lib/dashboard-access";
 import { getCustomersData } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function CustomersPage() {
+  await requireDashboardFeatureAccess("customers");
   const customers = await getCustomersData();
   const repeatCustomers = customers.filter((customer) => customer.isRepeat).length;
   const now = Date.now();

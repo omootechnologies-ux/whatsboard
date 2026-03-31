@@ -2,78 +2,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getViewerContext } from "@/lib/queries";
 import { PLAN_CONFIG, type PlanKey } from "@/lib/billing";
+import { getEffectivePlanKey, getPlanName } from "@/lib/plan-access";
 import { startPlanCheckoutAction } from "./actions";
-
-const tiers = [
-  {
-    key: "free" as PlanKey,
-    name: "Free",
-    price: "TZS 0",
-    period: "/forever",
-    description: "For new sellers who want to view the dashboard first before paying.",
-    badge: "Default after signup",
-    highlight: false,
-    features: [
-      "Dashboard access after signup",
-      "View orders, customers, and follow-ups",
-      "See payment and delivery status",
-      "Read-only account and settings",
-      "No adding or editing important records",
-      "Upgrade when ready to start working",
-    ],
-  },
-  {
-    key: "starter" as PlanKey,
-    name: "Starter",
-    price: "TZS 29,000",
-    period: "/month",
-    description: "For solo sellers who are tired of running biashara by screenshots and memory.",
-    badge: "Good for beginners",
-    highlight: false,
-    features: [
-      "Unlocks order and customer updates",
-      "Orders, customers, and follow-ups",
-      "Payment status tracking",
-      "Packing / dispatch / delivery flow",
-      "Settings and account access",
-      "Mobile-friendly dashboard",
-    ],
-  },
-  {
-    key: "growth" as PlanKey,
-    name: "Growth",
-    price: "TZS 79,000",
-    period: "/month",
-    description: "For serious sellers and small teams handling many chats every day.",
-    badge: "Most Popular",
-    highlight: true,
-    features: [
-      "Everything in Starter",
-      "Catalog and stock management",
-      "WhatsApp-ready product sharing",
-      "Faster order entry with saved products",
-      "Best fit for active daily sellers",
-      "Priority support",
-    ],
-  },
-  {
-    key: "business" as PlanKey,
-    name: "Business",
-    price: "TZS 149,000",
-    period: "/month",
-    description: "For growing brands that want clean operations, more control, and less stress.",
-    badge: "For teams",
-    highlight: false,
-    features: [
-      "Everything in Growth",
-      "Best for larger seller operations",
-      "Extra room for admin-managed teams",
-      "Priority support",
-      "Cleaner control for higher order volume",
-      "Advanced tools roll out on this plan first",
-    ],
-  },
-];
 
 function CheckoutButton({
   loggedIn,
@@ -137,7 +67,9 @@ export default async function PricingPage({
     data: { user },
   } = await supabase.auth.getUser();
   const { business } = user ? await getViewerContext() : { business: null };
+  const effectivePlan = getEffectivePlanKey(business);
   const resolvedSearch = (await searchParams) ?? {};
+  const tiers = Object.values(PLAN_CONFIG);
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -164,7 +96,7 @@ export default async function PricingPage({
 
           {resolvedSearch.status === "required" ? (
             <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-              {resolvedSearch.message || "You are on Free. Upgrade to a paid plan to add or edit records."}
+              {resolvedSearch.message || "You are on Free. Upgrade when you need more than 30 orders, follow-ups, payments, and customer workflows."}
             </div>
           ) : null}
 
@@ -186,12 +118,14 @@ export default async function PricingPage({
               <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-lg font-black text-slate-950">
-                    {business.billing_plan ? PLAN_CONFIG[business.billing_plan as PlanKey]?.name ?? business.billing_plan : "Free"}
+                    {getPlanName(effectivePlan)}
                   </p>
                   <p className="text-sm text-slate-600">
-                    Status: {business.billing_status || "free"}
+                    Status: {effectivePlan === "free" ? "free" : business.billing_status || "inactive"}
                     {business.billing_current_period_ends_at
-                      ? ` • Paid through ${new Date(business.billing_current_period_ends_at).toLocaleDateString()}`
+                      ? effectivePlan !== "free"
+                        ? ` • Paid through ${new Date(business.billing_current_period_ends_at).toLocaleDateString()}`
+                        : ""
                       : ""}
                   </p>
                 </div>
@@ -208,7 +142,7 @@ export default async function PricingPage({
           <div className="mt-12 grid gap-6 lg:grid-cols-4">
             {tiers.map((tier) => (
               <div
-                key={tier.name}
+                key={tier.key}
                 className={[
                   "rounded-[32px] border p-6 shadow-sm",
                   tier.highlight
@@ -227,14 +161,14 @@ export default async function PricingPage({
                       {tier.name}
                     </p>
                     <h2 className="mt-3 text-4xl font-black tracking-tight">
-                      {tier.price}
+                      {tier.priceLabel}
                       <span
                         className={[
                           "ml-1 text-sm font-semibold",
                           tier.highlight ? "text-white/70" : "text-slate-500",
                         ].join(" ")}
                       >
-                        {tier.period}
+                        {tier.key === "free" ? "/forever" : "/month"}
                       </span>
                     </h2>
                   </div>
@@ -262,7 +196,7 @@ export default async function PricingPage({
 
                 <CheckoutButton
                   loggedIn={Boolean(user)}
-                  currentPlan={business?.billing_plan}
+                  currentPlan={effectivePlan}
                   currentStatus={business?.billing_status}
                   tierKey={tier.key}
                 />
@@ -277,7 +211,7 @@ export default async function PricingPage({
                 <ul className="space-y-3">
                   {tier.features.map((feature) => (
                     <li
-                      key={feature}
+                      key={feature.label}
                       className={[
                         "flex items-start gap-3 text-sm",
                         tier.highlight ? "text-white/85" : "text-slate-700",
@@ -293,7 +227,10 @@ export default async function PricingPage({
                       >
                         ✓
                       </span>
-                      <span>{feature}</span>
+                      <span>
+                        {feature.label}
+                        {feature.comingSoon ? " (coming soon)" : ""}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -309,7 +246,7 @@ export default async function PricingPage({
               That keeps checkout secure and keeps your plan state tied to the business record already used by the dashboard.
             </p>
             <p className="mt-3 text-sm font-semibold text-slate-700">
-              Free users can view the dashboard, but only paid plans can add or change important records.
+              Free includes 30 orders per month. Paid plans unlock deeper operations based on the tools that are already live in the app.
             </p>
           </div>
         </div>

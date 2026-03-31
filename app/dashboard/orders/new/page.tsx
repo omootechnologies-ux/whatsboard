@@ -2,13 +2,19 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { OrderForm } from "@/components/forms/order-form";
 import { getDashboardWriteAccess } from "@/lib/dashboard-access";
+import {
+  canUsePlanCapability,
+  getAllowedOrderStages,
+  getAllowedPaymentStatuses,
+} from "@/lib/plan-access";
 import { getOrderCatalogOptions } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function NewOrderPage() {
-  const { canManageRecords } = await getDashboardWriteAccess();
+  const { business, canCreateOrders, monthlyOrderLimit, orderCountThisMonth, remainingMonthlyOrders } =
+    await getDashboardWriteAccess();
   const catalogProducts = await getOrderCatalogOptions();
 
   return (
@@ -31,7 +37,17 @@ export default async function NewOrderPage() {
       </div>
 
       <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <OrderForm catalogProducts={catalogProducts} canManageRecords={canManageRecords} />
+        <OrderForm
+          catalogProducts={catalogProducts}
+          canManageRecords={canCreateOrders}
+          allowedStages={getAllowedOrderStages(business)}
+          allowedPaymentStatuses={getAllowedPaymentStatuses(business)}
+          canUseFollowUps={canUsePlanCapability("followUpReminders", business)}
+          canUsePaymentTracking={canUsePlanCapability("paymentTracking", business)}
+          monthlyOrderLimit={monthlyOrderLimit}
+          orderCountThisMonth={orderCountThisMonth}
+          remainingMonthlyOrders={remainingMonthlyOrders}
+        />
       </section>
     </div>
   );

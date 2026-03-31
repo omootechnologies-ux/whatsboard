@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getViewerContext } from "@/lib/queries";
-import { canManageImportantRecords } from "@/lib/plan-access";
+import {
+  canCreateOrders,
+  getAllowedOrderStages,
+  getAllowedPaymentStatuses,
+} from "@/lib/plan-access";
 
 const createOrderSchema = z.object({
   customerName: z.string().min(1),
@@ -35,8 +39,42 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Business not found" }, { status: 401 });
     }
 
-    if (!isAdmin && !canManageImportantRecords(business)) {
-      return NextResponse.json({ error: "Upgrade to a paid plan to create orders" }, { status: 403 });
+    if (!isAdmin) {
+      const now = new Date();
+      const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+      const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)).toISOString();
+      const { count } = await supabase
+        .from("orders")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", businessId)
+        .gte("created_at", start)
+        .lt("created_at", end);
+
+      if (!canCreateOrders(business, count ?? 0)) {
+        return NextResponse.json(
+          { error: "Free includes 30 orders per month. Upgrade to Starter for unlimited orders." },
+          { status: 403 }
+        );
+      }
+    }
+
+    if (!isAdmin) {
+      const allowedStages = getAllowedOrderStages(business);
+      const allowedPaymentStatuses = getAllowedPaymentStatuses(business);
+
+      if (!allowedStages.includes(parsed.data.stage as any)) {
+        return NextResponse.json(
+          { error: "Dispatch tracking starts on Growth. Upgrade to unlock packing, dispatch, and delivery stages." },
+          { status: 403 }
+        );
+      }
+
+      if (!allowedPaymentStatuses.includes(parsed.data.paymentStatus as any)) {
+        return NextResponse.json(
+          { error: "Payment tracking starts on Starter. Free orders are saved as unpaid only." },
+          { status: 403 }
+        );
+      }
     }
 
     const customerName = parsed.data.customerName.trim();
