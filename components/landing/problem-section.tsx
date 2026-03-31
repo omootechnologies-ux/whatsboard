@@ -32,6 +32,21 @@ const problems = [
   }
 ]
 
+const painStats = [
+  {
+    value: "5+",
+    label: "Orders can disappear in one busy day",
+  },
+  {
+    value: "1 reply",
+    label: "too late can push a customer to another seller",
+  },
+  {
+    value: "Every delay",
+    label: "makes your business look less serious",
+  },
+]
+
 export function ProblemSection() {
   const [activeIndex, setActiveIndex] = useState(0)
   const [isVisible, setIsVisible] = useState(false)
@@ -91,6 +106,27 @@ export function ProblemSection() {
           <p className="mt-6 text-lg text-muted-foreground text-pretty">
             {t("You started selling online to build freedom. But now, WhatsApp runs your life.")}
           </p>
+          <p className="mt-4 text-base font-medium text-foreground/80 text-pretty">
+            {t("Every missed reply, forgotten payment, or delayed delivery gives another seller a chance to win your customer.")}
+          </p>
+        </div>
+
+        <div
+          className={cn(
+            "mb-12 grid gap-4 md:grid-cols-3 transition-all duration-700 delay-150",
+            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+          )}
+        >
+          {painStats.map((item, index) => (
+            <div
+              key={item.label}
+              className="rounded-2xl border border-[#e8e8e2] bg-white p-5 shadow-sm"
+              style={{ transitionDelay: `${index * 120}ms` }}
+            >
+              <p className="text-2xl font-bold tracking-tight text-[#111111]">{item.value}</p>
+              <p className="mt-2 text-sm leading-6 text-[#5e6461]">{t(item.label)}</p>
+            </div>
+          ))}
         </div>
 
         {/* Problem Cards Grid */}
@@ -173,6 +209,9 @@ export function ProblemSection() {
             {t("You're not alone.")}{" "}
             <span className="text-primary">{t("Thousands of East African sellers")}</span>{" "}
             {t("face this chaos every single day.")}
+          </p>
+          <p className="mt-4 max-w-3xl mx-auto text-base leading-7 text-muted-foreground text-pretty">
+            {t("The sellers who fix this early look faster, more trustworthy, and more professional. The ones who wait keep losing sales inside the same chats that bring them customers.")}
           </p>
         </div>
       </div>

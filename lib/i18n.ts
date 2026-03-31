@@ -97,7 +97,12 @@ const swTranslations: Record<string, string> = {
   "Does This Sound Like Your Daily Struggle?": "Je, hii ndiyo changamoto yako ya kila siku?",
   "You started selling online to build freedom. But now, WhatsApp runs your life.":
     "Ulianza kuuza mtandaoni kutafuta uhuru. Lakini sasa, WhatsApp inaendesha maisha yako.",
+  "Every missed reply, forgotten payment, or delayed delivery gives another seller a chance to win your customer.":
+    "Kila jibu linalochelewa, malipo yaliyosahaulika, au delivery iliyochelewa humpa muuzaji mwingine nafasi ya kuchukua mteja wako.",
   "You're not alone.": "Huko peke yako.",
+  "Orders can disappear in one busy day": "Oda zinaweza kupotea ndani ya siku moja yenye pilikapilika",
+  "too late can push a customer to another seller": "kuchelewa kidogo tu kunaweza kumpeleka mteja kwa muuzaji mwingine",
+  "makes your business look less serious": "kunafanya biashara yako ionekane si ya kitaalamu",
   "Drowning in Messages": "Kuzama kwenye jumbe",
   "Hundreds of unread chats. Important orders buried in the chaos.": "Mamia ya chat ambazo hazijasomwa. Oda muhimu zimezama kwenye vurugu.",
   "Forgetting Orders": "Kusahau oda",
@@ -108,6 +113,8 @@ const swTranslations: Record<string, string> = {
   "Working late. Mental overload. Your business is running you.": "Unafanya kazi hadi usiku. Akili imeelemewa. Biashara yako inakuendesha.",
   "Thousands of East African sellers": "Maelfu ya wauzaji wa Afrika Mashariki",
   "face this chaos every single day.": "wanakabiliwa na vurugu hizi kila siku.",
+  "The sellers who fix this early look faster, more trustworthy, and more professional. The ones who wait keep losing sales inside the same chats that bring them customers.":
+    "Wauzaji wanaorekebisha hili mapema wanaonekana wa haraka, wa kuaminika, na wa kitaalamu zaidi. Wanaosubiri wanaendelea kupoteza mauzo ndani ya chat zilezile zinazowaletea wateja.",
   "Simple & Powerful": "Rahisi na nguvu",
   "How WhatsBoard Works": "Jinsi WhatsBoard inavyofanya kazi",
   "Four simple steps to transform your WhatsApp selling into a professional operation.":
