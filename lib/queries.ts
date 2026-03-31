@@ -1,10 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
 
-function matchesMissingSchemaError(message?: string) {
+function matchesMissingRelationError(message?: string) {
   const value = (message || "").toLowerCase();
   return (
     value.includes("schema cache") ||
     value.includes("could not find the table") ||
+    value.includes('relation "public.') ||
+    value.includes("relation ") && value.includes(" does not exist")
+  );
+}
+
+function matchesMissingOptionalFieldError(message?: string) {
+  const value = (message || "").toLowerCase();
+  return (
+    matchesMissingRelationError(message) ||
     value.includes("column") ||
     value.includes("does not exist")
   );
@@ -69,7 +78,7 @@ export async function getViewerContext() {
       .limit(1)
       .maybeSingle();
 
-    if (!billingTransactionError || !matchesMissingSchemaError(billingTransactionError.message)) {
+    if (!billingTransactionError || !matchesMissingOptionalFieldError(billingTransactionError.message)) {
       billingTransaction = billingTransactionData ?? null;
     }
   }
@@ -256,7 +265,7 @@ export async function getReferralProgramData() {
   return {
     business,
     referralEvents: referralEvents ?? [],
-    setupRequired: Boolean(error && matchesMissingSchemaError(error.message)),
+    setupRequired: Boolean(error && matchesMissingRelationError(error.message)),
   };
 }
 
@@ -285,6 +294,6 @@ export async function getCatalogProductsData() {
       isActive: Boolean(item.is_active),
       createdAt: item.created_at,
     })),
-    setupRequired: Boolean(error && matchesMissingSchemaError(error.message)),
+    setupRequired: Boolean(error && matchesMissingRelationError(error.message)),
   };
 }
