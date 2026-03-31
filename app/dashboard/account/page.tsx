@@ -2,12 +2,21 @@ import Link from "next/link";
 import { UserCircle2, Building2, Mail, Phone, Palette, Coins, CalendarDays, CreditCard, LogOut } from "lucide-react";
 import { getAccountData } from "@/lib/queries";
 import { logoutAction } from "@/app/(auth)/actions";
+import { canAccessDashboardFeature } from "@/lib/plan-access";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AccountPage() {
   const { user, profile, business, billingTransaction } = await getAccountData();
+  const unlockedFeatures = [
+    { label: "Orders", allowed: canAccessDashboardFeature("orders", business) },
+    { label: "Customers", allowed: canAccessDashboardFeature("customers", business) },
+    { label: "Follow-ups", allowed: canAccessDashboardFeature("followUps", business) },
+    { label: "Catalog", allowed: canAccessDashboardFeature("catalog", business) },
+    { label: "AI Capture", allowed: canAccessDashboardFeature("aiCapture", business) },
+    { label: "Analytics", allowed: canAccessDashboardFeature("analytics", business) },
+  ];
 
   return (
     <div className="space-y-6">
@@ -143,6 +152,22 @@ export default async function AccountPage() {
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <p className="text-xs text-slate-500">Latest transaction</p>
             <p className="mt-2 font-medium capitalize text-slate-900">{billingTransaction?.status ?? "None yet"}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs text-slate-500">Unlocked dashboard features</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {unlockedFeatures.map((feature) => (
+              <span
+                key={feature.label}
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  feature.allowed ? "bg-emerald-50 text-emerald-700" : "bg-slate-200 text-slate-600"
+                }`}
+              >
+                {feature.label}
+              </span>
+            ))}
           </div>
         </div>
 

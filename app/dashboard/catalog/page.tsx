@@ -1,6 +1,7 @@
 import { Boxes, MessageCircle } from "lucide-react";
 import CatalogProductForm from "@/components/forms/catalog-product-form";
 import { updateCatalogStockAction } from "@/app/dashboard/actions";
+import { requireDashboardFeatureAccess } from "@/lib/dashboard-access";
 import { getCatalogProductsData } from "@/lib/queries";
 import { formatTZS } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ function getWhatsAppShareLink(businessName: string | null | undefined, product: 
 }
 
 export default async function CatalogPage() {
+  await requireDashboardFeatureAccess("catalog");
   const { business, products, setupRequired } = await getCatalogProductsData();
 
   return (

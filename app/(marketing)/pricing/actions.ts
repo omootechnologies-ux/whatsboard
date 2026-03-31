@@ -54,7 +54,7 @@ export async function startPlanCheckoutAction(planKey: string) {
       amount: plan.amount,
       currency: plan.currency,
       description: `${plan.name} plan for ${business.name}`,
-      redirectUrl: `${appUrl}/dashboard/account?billing=processing`,
+      redirectUrl: `${appUrl}/pricing?status=processing&message=${encodeURIComponent("Payment received. We are confirming your plan now.")}`,
       webhookUrl: `${appUrl}/api/billing/snippe/webhook`,
       customer: {
         name: profile?.full_name ?? business.name,

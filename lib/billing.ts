@@ -1,52 +1,5 @@
 import crypto from "node:crypto";
-
-export type PlanKey = "starter" | "growth" | "business";
-
-export const PLAN_CONFIG: Record<
-  PlanKey,
-  {
-    key: PlanKey;
-    name: string;
-    priceLabel: string;
-    amount: number;
-    currency: "TZS";
-    periodDays: number;
-    description: string;
-  }
-> = {
-  starter: {
-    key: "starter",
-    name: "Starter",
-    priceLabel: "TZS 29,000",
-    amount: 29000,
-    currency: "TZS",
-    periodDays: 30,
-    description: "Starter monthly plan",
-  },
-  growth: {
-    key: "growth",
-    name: "Growth",
-    priceLabel: "TZS 79,000",
-    amount: 79000,
-    currency: "TZS",
-    periodDays: 30,
-    description: "Growth monthly plan",
-  },
-  business: {
-    key: "business",
-    name: "Business",
-    priceLabel: "TZS 149,000",
-    amount: 149000,
-    currency: "TZS",
-    periodDays: 30,
-    description: "Business monthly plan",
-  },
-};
-
-export function getPlanConfig(planKey: string) {
-  if (!(planKey in PLAN_CONFIG)) return null;
-  return PLAN_CONFIG[planKey as PlanKey];
-}
+export { PLAN_CONFIG, getPlanConfig, getPlanName, type DashboardFeature, type PlanKey } from "@/lib/plan-access";
 
 export function getAppUrl() {
   const explicitUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();

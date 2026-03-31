@@ -14,11 +14,11 @@ const tiers = [
     badge: "Good for beginners",
     highlight: false,
     features: [
-      "Up to 150 orders / month",
-      "Order tracking board",
-      "Customer list",
+      "Unlocks dashboard access",
+      "Orders, customers, and follow-ups",
       "Payment status tracking",
-      "Basic follow-ups",
+      "Packing / dispatch / delivery flow",
+      "Settings and account access",
       "Mobile-friendly dashboard",
     ],
   },
@@ -31,11 +31,11 @@ const tiers = [
     badge: "Most Popular",
     highlight: true,
     features: [
-      "Up to 1,000 orders / month",
       "Everything in Starter",
-      "Advanced follow-ups",
-      "Delivery / dispatch tracking",
-      "Team workflow support",
+      "Catalog and stock management",
+      "WhatsApp-ready product sharing",
+      "Faster order entry with saved products",
+      "Best fit for active daily sellers",
       "Priority support",
     ],
   },
@@ -48,12 +48,12 @@ const tiers = [
     badge: "For teams",
     highlight: false,
     features: [
-      "Unlimited orders",
       "Everything in Growth",
-      "Multi-staff operations",
-      "Deeper reporting",
+      "AI Order Capture from chat",
+      "Analytics dashboard",
+      "Referral tools",
+      "Best for larger seller operations",
       "Faster support",
-      "More serious-looking business energy",
     ],
   },
 ];
@@ -134,6 +134,24 @@ export default async function PricingPage({
           {resolvedSearch.status === "error" ? (
             <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
               {resolvedSearch.message || "Unable to start checkout."}
+            </div>
+          ) : null}
+
+          {resolvedSearch.status === "required" ? (
+            <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+              {resolvedSearch.message || "Pay for any plan to start using the dashboard."}
+            </div>
+          ) : null}
+
+          {resolvedSearch.status === "upgrade" ? (
+            <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">
+              {resolvedSearch.message || "Upgrade your plan to unlock this feature."}
+            </div>
+          ) : null}
+
+          {resolvedSearch.status === "processing" ? (
+            <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              {resolvedSearch.message || "Payment received. We are confirming your plan now."}
             </div>
           ) : null}
 
@@ -264,6 +282,9 @@ export default async function PricingPage({
             </p>
             <p className="mt-2 text-sm text-slate-600">
               That keeps checkout secure and keeps your plan state tied to the business record already used by the dashboard.
+            </p>
+            <p className="mt-3 text-sm font-semibold text-slate-700">
+              Dashboard access starts only after at least the Starter plan is active.
             </p>
           </div>
         </div>

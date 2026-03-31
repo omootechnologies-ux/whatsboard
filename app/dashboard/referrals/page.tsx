@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { Gift, Link2 } from "lucide-react";
 import { getAppUrl } from "@/lib/billing";
+import { requireDashboardFeatureAccess } from "@/lib/dashboard-access";
 import { getReferralProgramData } from "@/lib/queries";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function ReferralsPage() {
+  await requireDashboardFeatureAccess("referrals");
   const { business, referralEvents, setupRequired } = await getReferralProgramData();
   const referralCode =
     business?.id && business?.name

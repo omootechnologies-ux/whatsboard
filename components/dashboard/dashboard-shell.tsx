@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BarChart3,
   Bell,
   Boxes,
   ChevronRight,
@@ -13,10 +14,12 @@ import {
   Settings,
   ShieldCheck,
   ShoppingBag,
+  Sparkles,
   Users,
   Wallet,
 } from "lucide-react";
 import { logoutAction } from "@/app/(auth)/actions";
+import { canAccessDashboardFeature, getPlanName } from "@/lib/plan-access";
 
 type NavItemConfig = {
   href: string;
@@ -34,6 +37,8 @@ const PRIMARY_NAV: NavItemConfig[] = [
 ];
 
 const SECONDARY_NAV: NavItemConfig[] = [
+  { href: "/dashboard/ai-order-capture", label: "AI Capture", icon: Sparkles },
+  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/account", label: "Account", icon: ReceiptText },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
@@ -103,11 +108,34 @@ export function DashboardShell({
   children: React.ReactNode;
   isAdmin: boolean;
   profile?: { full_name?: string | null; email?: string | null } | null;
-  business?: { name?: string | null } | null;
+  business?: {
+    name?: string | null;
+    billing_plan?: string | null;
+    billing_status?: string | null;
+    billing_current_period_ends_at?: string | null;
+  } | null;
 }) {
+  const visiblePrimaryNav = PRIMARY_NAV.filter((item) => {
+    if (item.href === "/dashboard/catalog") {
+      return canAccessDashboardFeature("catalog", business);
+    }
+
+    return true;
+  });
+  const visibleSecondaryNav = SECONDARY_NAV.filter((item) => {
+    if (item.href === "/dashboard/ai-order-capture") {
+      return canAccessDashboardFeature("aiCapture", business);
+    }
+
+    if (item.href === "/dashboard/analytics") {
+      return canAccessDashboardFeature("analytics", business);
+    }
+
+    return true;
+  });
   const pathname = usePathname();
   const currentSection =
-    [...PRIMARY_NAV, ...SECONDARY_NAV].find((item) =>
+    [...visiblePrimaryNav, ...visibleSecondaryNav].find((item) =>
       item.exact ? pathname === item.href : pathname.startsWith(item.href)
     )?.label ??
     "Overview";
@@ -160,6 +188,13 @@ export function DashboardShell({
                 Made for WhatsApp sellers who need less screenshot hunting and clearer daily control.
               </p>
 
+              <div className="mt-4 rounded-2xl border border-white/8 bg-slate-950/35 px-4 py-3">
+                <p className="text-[10px] uppercase tracking-[0.18em] text-white/35">Current plan</p>
+                <p className="mt-2 text-sm font-semibold text-white">
+                  {getPlanName(business?.billing_plan) ?? "No active plan"}
+                </p>
+              </div>
+
               <Link
                 href="/dashboard/orders/new"
                 className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-emerald-400 to-cyan-400 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:opacity-95"
@@ -182,14 +217,14 @@ export function DashboardShell({
           </div>
 
           <nav className="flex-1 space-y-1 px-5 py-5">
-            {PRIMARY_NAV.map((item) => (
+            {visiblePrimaryNav.map((item) => (
               <NavItem key={item.href} {...item} />
             ))}
           </nav>
 
           <div className="border-t border-white/8 p-5">
             <div className="mb-3 space-y-1">
-              {SECONDARY_NAV.map((item) => (
+              {visibleSecondaryNav.map((item) => (
                 <NavItem key={item.href} {...item} />
               ))}
             </div>
@@ -279,7 +314,7 @@ export function DashboardShell({
             </div>
 
             <div className="mx-auto flex w-full max-w-[1600px] gap-2 px-4 pb-3 sm:px-5 lg:hidden">
-              {SECONDARY_NAV.map((item) => (
+              {visibleSecondaryNav.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
@@ -298,7 +333,7 @@ export function DashboardShell({
 
           <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-white/10 bg-[#07111f]/92 backdrop-blur-xl lg:hidden">
             <div className="mx-auto flex max-w-screen-sm items-stretch justify-between px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2">
-              {PRIMARY_NAV.map((item) => (
+              {visiblePrimaryNav.slice(0, 5).map((item) => (
                 <MobileBottomNavItem key={item.href} {...item} />
               ))}
             </div>

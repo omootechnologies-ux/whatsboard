@@ -1,9 +1,12 @@
 import AiOrderCaptureForm from "@/components/forms/ai-order-capture-form";
+import { requireDashboardFeatureAccess } from "@/lib/dashboard-access";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default function AiOrderCapturePage() {
+export default async function AiOrderCapturePage() {
+  await requireDashboardFeatureAccess("aiCapture");
+
   return (
     <div className="space-y-6">
       <section className="rounded-[32px] border border-white/10 bg-[#08192d] p-6 text-white shadow-[0_24px_100px_rgba(2,8,23,0.28)] sm:p-7">
