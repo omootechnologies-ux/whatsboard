@@ -101,8 +101,31 @@ export default function UpdateOrderForm({ order }: { order: OrderRecord }) {
             className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
           >
             <option value="unpaid">Unpaid</option>
+            <option value="partial">Partial</option>
             <option value="paid">Paid</option>
+            <option value="cod">COD</option>
           </select>
+        </Field>
+
+        <label className="flex items-center gap-3 rounded-2xl border border-slate-300 bg-white px-4 py-3 md:col-span-2">
+          <input type="checkbox" name="addFollowUp" className="h-4 w-4" />
+          <span className="text-sm font-semibold text-slate-700">Add or update follow-up</span>
+        </label>
+
+        <Field label="Follow-up date">
+          <input
+            name="followUpDate"
+            type="datetime-local"
+            className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
+          />
+        </Field>
+
+        <Field label="Follow-up note">
+          <input
+            name="followUpNote"
+            placeholder="Follow-up note"
+            className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
+          />
         </Field>
       </div>
 

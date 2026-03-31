@@ -9,6 +9,10 @@ type ActionState = {
   error: string | null;
 };
 
+function normalizeText(value: string) {
+  return value.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
 export async function createOrderAction(
   _prevState: ActionState,
   formData: FormData
@@ -27,6 +31,9 @@ export async function createOrderAction(
   const stage = String(formData.get("stage") || "new_order").trim();
   const paymentStatus = String(formData.get("paymentStatus") || "unpaid").trim();
   const notes = String(formData.get("notes") || "").trim();
+  const addFollowUp = String(formData.get("addFollowUp") || "") === "on";
+  const followUpDateRaw = String(formData.get("followUpDate") || "").trim();
+  const followUpNote = String(formData.get("followUpNote") || "").trim();
 
   if (!customerName) return { success: false, error: "Customer name is required." };
   if (!phone) return { success: false, error: "Phone number is required." };
@@ -35,21 +42,27 @@ export async function createOrderAction(
     return { success: false, error: "Amount must be a valid number." };
   }
 
-  let customerId: string | null = null;
+  const normalizedCustomerName = normalizeText(customerName);
 
-  const { data: existingCustomer, error: existingCustomerError } = await supabase
+  const { data: phoneMatches, error: phoneMatchesError } = await supabase
     .from("customers")
-    .select("id")
+    .select("id, name")
     .eq("business_id", businessId)
-    .eq("phone", phone)
-    .maybeSingle();
+    .eq("phone", phone);
 
-  if (existingCustomerError) {
-    return { success: false, error: existingCustomerError.message };
+  if (phoneMatchesError) {
+    return { success: false, error: phoneMatchesError.message };
   }
 
-  if (existingCustomer?.id) {
-    customerId = existingCustomer.id;
+  const matchedCustomer =
+    (phoneMatches ?? []).find(
+      (customer) => normalizeText(customer.name ?? "") === normalizedCustomerName
+    ) ?? null;
+
+  let customerId: string | null = null;
+
+  if (matchedCustomer?.id) {
+    customerId = matchedCustomer.id;
 
     const { error: updateCustomerError } = await supabase
       .from("customers")
@@ -85,24 +98,47 @@ export async function createOrderAction(
     customerId = newCustomer.id;
   }
 
-  const { error } = await supabase.from("orders").insert({
-    business_id: businessId,
-    customer_id: customerId,
-    product_name: productName,
-    amount,
-    delivery_area: deliveryArea,
-    stage,
-    payment_status: paymentStatus,
-    notes,
-  });
+  const { data: createdOrder, error: orderError } = await supabase
+    .from("orders")
+    .insert({
+      business_id: businessId,
+      customer_id: customerId,
+      product_name: productName,
+      amount,
+      delivery_area: deliveryArea,
+      stage,
+      payment_status: paymentStatus,
+      notes,
+    })
+    .select("id")
+    .single();
 
-  if (error) {
-    return { success: false, error: error.message };
+  if (orderError || !createdOrder) {
+    return { success: false, error: orderError?.message || "Unable to create order." };
+  }
+
+  if (addFollowUp) {
+    const dueAt = followUpDateRaw
+      ? new Date(followUpDateRaw).toISOString()
+      : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+    const { error: followUpError } = await supabase.from("follow_ups").insert({
+      business_id: businessId,
+      order_id: createdOrder.id,
+      due_at: dueAt,
+      note: followUpNote || `Follow up with ${customerName} about ${productName}`,
+      completed: false,
+    });
+
+    if (followUpError) {
+      return { success: false, error: followUpError.message };
+    }
   }
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/orders");
   revalidatePath("/dashboard/customers");
+  revalidatePath("/dashboard/follow-ups");
 
   return { success: true, error: null };
 }
@@ -138,6 +174,9 @@ export async function updateOrderAction(
   const stage = String(formData.get("stage") || "new_order").trim();
   const paymentStatus = String(formData.get("paymentStatus") || "unpaid").trim();
   const notes = String(formData.get("notes") || "").trim();
+  const addFollowUp = String(formData.get("addFollowUp") || "") === "on";
+  const followUpDateRaw = String(formData.get("followUpDate") || "").trim();
+  const followUpNote = String(formData.get("followUpNote") || "").trim();
 
   if (!customerName) return { success: false, error: "Customer name is required." };
   if (!phone) return { success: false, error: "Phone number is required." };
@@ -161,20 +200,39 @@ export async function updateOrderAction(
 
   let customerId = currentOrder.customer_id;
 
-  if (!customerId) {
-    const { data: existingCustomer, error: existingCustomerError } = await supabase
+  if (customerId) {
+    const { error: updateCustomerError } = await supabase
       .from("customers")
-      .select("id")
-      .eq("business_id", businessId)
-      .eq("phone", phone)
-      .maybeSingle();
+      .update({
+        name: customerName,
+        phone,
+        area: deliveryArea,
+      })
+      .eq("id", customerId);
 
-    if (existingCustomerError) {
-      return { success: false, error: existingCustomerError.message };
+    if (updateCustomerError) {
+      return { success: false, error: updateCustomerError.message };
+    }
+  } else {
+    const normalizedCustomerName = normalizeText(customerName);
+
+    const { data: phoneMatches, error: phoneMatchesError } = await supabase
+      .from("customers")
+      .select("id, name")
+      .eq("business_id", businessId)
+      .eq("phone", phone);
+
+    if (phoneMatchesError) {
+      return { success: false, error: phoneMatchesError.message };
     }
 
-    if (existingCustomer?.id) {
-      customerId = existingCustomer.id;
+    const matchedCustomer =
+      (phoneMatches ?? []).find(
+        (customer) => normalizeText(customer.name ?? "") === normalizedCustomerName
+      ) ?? null;
+
+    if (matchedCustomer?.id) {
+      customerId = matchedCustomer.id;
     } else {
       const { data: newCustomer, error: newCustomerError } = await supabase
         .from("customers")
@@ -197,19 +255,6 @@ export async function updateOrderAction(
 
       customerId = newCustomer.id;
     }
-  } else {
-    const { error: updateCustomerError } = await supabase
-      .from("customers")
-      .update({
-        name: customerName,
-        phone,
-        area: deliveryArea,
-      })
-      .eq("id", customerId);
-
-    if (updateCustomerError) {
-      return { success: false, error: updateCustomerError.message };
-    }
   }
 
   const { error } = await supabase
@@ -229,11 +274,52 @@ export async function updateOrderAction(
     return { success: false, error: error.message };
   }
 
+  if (addFollowUp) {
+    const dueAt = followUpDateRaw
+      ? new Date(followUpDateRaw).toISOString()
+      : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+    const { data: existingFollowUp } = await supabase
+      .from("follow_ups")
+      .select("id")
+      .eq("business_id", businessId)
+      .eq("order_id", id)
+      .eq("completed", false)
+      .maybeSingle();
+
+    if (existingFollowUp?.id) {
+      const { error: updateFollowUpError } = await supabase
+        .from("follow_ups")
+        .update({
+          due_at: dueAt,
+          note: followUpNote || `Follow up with ${customerName} about ${productName}`,
+        })
+        .eq("id", existingFollowUp.id);
+
+      if (updateFollowUpError) {
+        return { success: false, error: updateFollowUpError.message };
+      }
+    } else {
+      const { error: createFollowUpError } = await supabase.from("follow_ups").insert({
+        business_id: businessId,
+        order_id: id,
+        due_at: dueAt,
+        note: followUpNote || `Follow up with ${customerName} about ${productName}`,
+        completed: false,
+      });
+
+      if (createFollowUpError) {
+        return { success: false, error: createFollowUpError.message };
+      }
+    }
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/orders");
   revalidatePath(`/dashboard/orders/${id}`);
   revalidatePath(`/dashboard/orders/${id}/edit`);
   revalidatePath("/dashboard/customers");
+  revalidatePath("/dashboard/follow-ups");
 
   return { success: true, error: null };
 }
@@ -282,7 +368,9 @@ export async function completeFollowUpAction(id: string) {
     })
     .eq("id", id);
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    throw new Error(error.message);
+  }
 
   revalidatePath("/dashboard/follow-ups");
   revalidatePath("/dashboard");

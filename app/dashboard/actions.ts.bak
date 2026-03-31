@@ -28,18 +28,9 @@ export async function createOrderAction(
   const paymentStatus = String(formData.get("paymentStatus") || "unpaid").trim();
   const notes = String(formData.get("notes") || "").trim();
 
-  if (!customerName) {
-    return { success: false, error: "Customer name is required." };
-  }
-
-  if (!phone) {
-    return { success: false, error: "Phone number is required." };
-  }
-
-  if (!productName) {
-    return { success: false, error: "Product is required." };
-  }
-
+  if (!customerName) return { success: false, error: "Customer name is required." };
+  if (!phone) return { success: false, error: "Phone number is required." };
+  if (!productName) return { success: false, error: "Product is required." };
   if (!Number.isFinite(amount) || amount < 0) {
     return { success: false, error: "Amount must be a valid number." };
   }
@@ -121,9 +112,7 @@ export async function updateOrderStageAction(id: string, stage: string) {
 
   const { error } = await supabase.from("orders").update({ stage }).eq("id", id);
 
-  if (error) {
-    throw new Error(error.message);
-  }
+  if (error) throw new Error(error.message);
 
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/orders");
@@ -150,18 +139,9 @@ export async function updateOrderAction(
   const paymentStatus = String(formData.get("paymentStatus") || "unpaid").trim();
   const notes = String(formData.get("notes") || "").trim();
 
-  if (!customerName) {
-    return { success: false, error: "Customer name is required." };
-  }
-
-  if (!phone) {
-    return { success: false, error: "Phone number is required." };
-  }
-
-  if (!productName) {
-    return { success: false, error: "Product is required." };
-  }
-
+  if (!customerName) return { success: false, error: "Customer name is required." };
+  if (!phone) return { success: false, error: "Phone number is required." };
+  if (!productName) return { success: false, error: "Product is required." };
   if (!Number.isFinite(amount) || amount < 0) {
     return { success: false, error: "Amount must be a valid number." };
   }
@@ -302,9 +282,7 @@ export async function completeFollowUpAction(id: string) {
     })
     .eq("id", id);
 
-  if (error) {
-    throw new Error(error.message);
-  }
+  if (error) throw new Error(error.message);
 
   revalidatePath("/dashboard/follow-ups");
   revalidatePath("/dashboard");
