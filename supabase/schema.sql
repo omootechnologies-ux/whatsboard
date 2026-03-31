@@ -20,6 +20,14 @@ create table public.businesses (
   phone text,
   brand_color text default '#22c55e',
   currency text default 'TZS',
+  billing_provider text,
+  billing_plan text,
+  billing_status text not null default 'inactive',
+  billing_provider_reference text,
+  billing_provider_session_reference text,
+  billing_last_paid_at timestamptz,
+  billing_current_period_starts_at timestamptz,
+  billing_current_period_ends_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -92,6 +100,29 @@ create table public.follow_ups (
   created_at timestamptz not null default now()
 );
 
+create table public.billing_transactions (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses(id) on delete cascade,
+  provider text not null default 'snippe',
+  plan_key text not null,
+  status text not null default 'pending',
+  amount numeric(12,2) not null default 0,
+  currency text not null default 'TZS',
+  session_reference text unique,
+  payment_reference text unique,
+  webhook_event_id text unique,
+  checkout_url text,
+  customer_name text,
+  customer_phone text,
+  customer_email text,
+  paid_at timestamptz,
+  period_starts_at timestamptz,
+  period_ends_at timestamptz,
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 alter table public.businesses enable row level security;
 alter table public.profiles enable row level security;
 alter table public.customers enable row level security;
@@ -99,3 +130,4 @@ alter table public.orders enable row level security;
 alter table public.order_notes enable row level security;
 alter table public.order_activity enable row level security;
 alter table public.follow_ups enable row level security;
+alter table public.billing_transactions enable row level security;

@@ -12,6 +12,7 @@ export async function getViewerContext() {
       businessId: null,
       profile: null,
       business: null,
+      billingTransaction: null,
       isAdmin: false,
     };
   }
@@ -27,11 +28,25 @@ export async function getViewerContext() {
   if (profile?.business_id) {
     const { data: businessData } = await supabase
       .from("businesses")
-      .select("id, name, phone, brand_color, currency, created_at")
+      .select("id, name, phone, brand_color, currency, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at, created_at")
       .eq("id", profile.business_id)
       .single();
 
     business = businessData ?? null;
+  }
+
+  let billingTransaction = null;
+
+  if (profile?.business_id) {
+    const { data: billingTransactionData } = await supabase
+      .from("billing_transactions")
+      .select("id, plan_key, status, amount, currency, checkout_url, session_reference, payment_reference, paid_at, period_starts_at, period_ends_at, created_at")
+      .eq("business_id", profile.business_id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    billingTransaction = billingTransactionData ?? null;
   }
 
   return {
@@ -40,6 +55,7 @@ export async function getViewerContext() {
     businessId: profile?.business_id ?? null,
     profile,
     business,
+    billingTransaction,
     isAdmin: profile?.is_admin ?? false,
   };
 }
@@ -188,12 +204,13 @@ export async function getFollowUpsData() {
 }
 
 export async function getAccountData() {
-  const { user, profile, business, isAdmin } = await getViewerContext();
+  const { user, profile, business, billingTransaction, isAdmin } = await getViewerContext();
 
   return {
     user,
     profile,
     business,
+    billingTransaction,
     isAdmin
   };
 }

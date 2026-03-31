@@ -1,4 +1,5 @@
-import { UserCircle2, Building2, Mail, Phone, Palette, Coins, CalendarDays, LogOut } from "lucide-react";
+import Link from "next/link";
+import { UserCircle2, Building2, Mail, Phone, Palette, Coins, CalendarDays, CreditCard, LogOut } from "lucide-react";
 import { getAccountData } from "@/lib/queries";
 import { logoutAction } from "@/app/(auth)/actions";
 
@@ -6,7 +7,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function AccountPage() {
-  const { user, profile, business } = await getAccountData();
+  const { user, profile, business, billingTransaction } = await getAccountData();
 
   return (
     <div className="space-y-6">
@@ -110,6 +111,57 @@ export default async function AccountPage() {
           </form>
         </section>
       </div>
+
+      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="mb-5 flex items-center gap-3">
+          <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-600">
+            <CreditCard className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">Billing</h3>
+            <p className="text-sm text-slate-500">Current plan and latest payment state</p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs text-slate-500">Current plan</p>
+            <p className="mt-2 font-medium capitalize text-slate-900">{business?.billing_plan ?? "No active plan"}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs text-slate-500">Billing status</p>
+            <p className="mt-2 font-medium capitalize text-slate-900">{business?.billing_status ?? "inactive"}</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs text-slate-500">Paid through</p>
+            <p className="mt-2 font-medium text-slate-900">
+              {business?.billing_current_period_ends_at
+                ? new Date(business.billing_current_period_ends_at).toLocaleDateString()
+                : "Not available"}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs text-slate-500">Latest transaction</p>
+            <p className="mt-2 font-medium capitalize text-slate-900">{billingTransaction?.status ?? "None yet"}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs text-slate-500">Provider reference</p>
+          <p className="mt-2 break-all text-sm font-medium text-slate-900">
+            {business?.billing_provider_reference ?? billingTransaction?.payment_reference ?? billingTransaction?.session_reference ?? "Not available"}
+          </p>
+        </div>
+
+        <div className="mt-6">
+          <Link
+            href="/pricing"
+            className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 transition hover:border-slate-400"
+          >
+            Manage plan on pricing page
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

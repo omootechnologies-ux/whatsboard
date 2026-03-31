@@ -1,7 +1,12 @@
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { getViewerContext } from "@/lib/queries";
+import { PLAN_CONFIG, type PlanKey } from "@/lib/billing";
+import { startPlanCheckoutAction } from "./actions";
 
 const tiers = [
   {
+    key: "starter" as PlanKey,
     name: "Starter",
     price: "TZS 29,000",
     period: "/month",
@@ -16,10 +21,9 @@ const tiers = [
       "Basic follow-ups",
       "Mobile-friendly dashboard",
     ],
-    cta: "Start Free",
-    href: "/register",
   },
   {
+    key: "growth" as PlanKey,
     name: "Growth",
     price: "TZS 79,000",
     period: "/month",
@@ -34,10 +38,9 @@ const tiers = [
       "Team workflow support",
       "Priority support",
     ],
-    cta: "Get Growth",
-    href: "/register",
   },
   {
+    key: "business" as PlanKey,
     name: "Business",
     price: "TZS 149,000",
     period: "/month",
@@ -52,12 +55,65 @@ const tiers = [
       "Faster support",
       "More serious-looking business energy",
     ],
-    cta: "Talk to Us",
-    href: "/register",
   },
 ];
 
-export default function PricingPage() {
+function CheckoutButton({
+  loggedIn,
+  currentPlan,
+  currentStatus,
+  tierKey,
+}: {
+  loggedIn: boolean;
+  currentPlan?: string | null;
+  currentStatus?: string | null;
+  tierKey: PlanKey;
+}) {
+  const isCurrentPlan = currentPlan === tierKey && currentStatus === "active";
+
+  if (!loggedIn) {
+    return (
+      <Link
+        href="/register"
+        className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+      >
+        Start Free
+      </Link>
+    );
+  }
+
+  if (isCurrentPlan) {
+    return (
+      <span className="mt-6 inline-flex w-full items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm font-bold text-emerald-700">
+        Current Plan
+      </span>
+    );
+  }
+
+  return (
+    <form action={startPlanCheckoutAction.bind(null, tierKey)} className="mt-6">
+      <button
+        type="submit"
+        className="inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800"
+      >
+        {currentPlan ? `Switch to ${PLAN_CONFIG[tierKey].name}` : `Pay for ${PLAN_CONFIG[tierKey].name}`}
+      </button>
+    </form>
+  );
+}
+
+export default async function PricingPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ status?: string; message?: string }>;
+}) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { business } = user ? await getViewerContext() : { business: null };
+  const resolvedSearch = (await searchParams) ?? {};
+
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <section className="border-b border-slate-100 bg-white">
@@ -67,14 +123,44 @@ export default function PricingPage() {
               Pricing
             </p>
             <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">
-              Pay in TZS. Trust faster. Work cleaner.
+              Pay in TZS. Activate your plan on real checkout.
             </h1>
             <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">
-              No vague foreign pricing. No “we’ll tell you later” energy.
-              WHATSBOARD pricing is simple, local-looking, and built for East African sellers
-              who want control after the chat starts.
+              WHATSBOARD pricing is now connected to live Snippe hosted payments. Pick a plan,
+              pay securely, and your business plan updates automatically after webhook confirmation.
             </p>
           </div>
+
+          {resolvedSearch.status === "error" ? (
+            <div className="mx-auto mt-8 max-w-3xl rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+              {resolvedSearch.message || "Unable to start checkout."}
+            </div>
+          ) : null}
+
+          {user && business ? (
+            <div className="mx-auto mt-8 max-w-3xl rounded-[28px] border border-slate-200 bg-slate-50 p-5 text-left">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Current billing</p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-lg font-black text-slate-950">
+                    {business.billing_plan ? PLAN_CONFIG[business.billing_plan as PlanKey]?.name ?? business.billing_plan : "No active plan"}
+                  </p>
+                  <p className="text-sm text-slate-600">
+                    Status: {business.billing_status || "inactive"}
+                    {business.billing_current_period_ends_at
+                      ? ` • Paid through ${new Date(business.billing_current_period_ends_at).toLocaleDateString()}`
+                      : ""}
+                  </p>
+                </div>
+                <Link
+                  href="/dashboard/account"
+                  className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:border-slate-400"
+                >
+                  View account billing
+                </Link>
+              </div>
+            </div>
+          ) : null}
 
           <div className="mt-12 grid gap-6 lg:grid-cols-3">
             {tiers.map((tier) => (
@@ -131,17 +217,12 @@ export default function PricingPage() {
                   {tier.description}
                 </p>
 
-                <Link
-                  href={tier.href}
-                  className={[
-                    "mt-6 inline-flex w-full items-center justify-center rounded-2xl px-5 py-3 text-sm font-bold transition",
-                    tier.highlight
-                      ? "bg-emerald-500 text-white hover:bg-emerald-400"
-                      : "bg-slate-900 text-white hover:bg-slate-800",
-                  ].join(" ")}
-                >
-                  {tier.cta}
-                </Link>
+                <CheckoutButton
+                  loggedIn={Boolean(user)}
+                  currentPlan={business?.billing_plan}
+                  currentStatus={business?.billing_status}
+                  tierKey={tier.key}
+                />
 
                 <div
                   className={[
@@ -179,62 +260,11 @@ export default function PricingPage() {
 
           <div className="mt-10 rounded-[28px] border border-slate-200 bg-slate-50 p-6 text-center">
             <p className="text-lg font-black text-slate-900">
-              Still cheaper than losing orders because “nilidhani alishalipa.”
+              Snippe checkout handles the payment page. WHATSBOARD handles the plan activation after webhook confirmation.
             </p>
             <p className="mt-2 text-sm text-slate-600">
-              TZS pricing builds trust fast because your customer already knows this app was made
-              for the kind of biashara they actually run.
+              That keeps checkout secure and keeps your plan state tied to the business record already used by the dashboard.
             </p>
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-white">
-        <div className="mx-auto max-w-5xl px-4 py-14 sm:px-6 lg:px-8">
-          <div className="rounded-[36px] bg-slate-950 px-6 py-10 text-white sm:px-10 lg:px-14">
-            <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
-              <div>
-                <p className="text-sm font-black uppercase tracking-[0.22em] text-emerald-400">
-                  Final push
-                </p>
-                <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
-                  Acha biashara yako ionekane serious before customers notice the chaos.
-                </h2>
-                <p className="mt-4 text-base leading-7 text-white/75">
-                  Start with the plan that matches your order volume now. Upgrade when chats,
-                  payments, and follow-ups become too many for vibes and screenshots.
-                </p>
-
-                <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    href="/register"
-                    className="inline-flex items-center justify-center rounded-2xl bg-emerald-500 px-6 py-4 text-sm font-black text-white transition hover:bg-emerald-400"
-                  >
-                    Start Free
-                  </Link>
-                  <Link
-                    href="/login"
-                    className="inline-flex items-center justify-center rounded-2xl border border-white/15 bg-white/5 px-6 py-4 text-sm font-black text-white transition hover:bg-white/10"
-                  >
-                    Log in
-                  </Link>
-                </div>
-              </div>
-
-              <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
-                <div className="rounded-[24px] bg-white p-5 text-slate-900">
-                  <p className="text-xs font-black uppercase tracking-[0.22em] text-emerald-600">
-                    Why TZS pricing matters
-                  </p>
-                  <ul className="mt-4 space-y-3 text-sm text-slate-700">
-                    <li>• Feels local and trustworthy immediately</li>
-                    <li>• Easier for sellers to compare with daily business costs</li>
-                    <li>• No exchange-rate confusion</li>
-                    <li>• Makes the product feel built for East African operators, not tourists</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </section>

@@ -36,3 +36,8 @@ create policy "Followups scoped by business"
 on public.follow_ups for all
 using (business_id in (select id from public.businesses where owner_id = auth.uid()))
 with check (business_id in (select id from public.businesses where owner_id = auth.uid()));
+
+create policy "Billing transactions scoped by business"
+on public.billing_transactions for all
+using (business_id in (select id from public.businesses where owner_id = auth.uid()))
+with check (business_id in (select id from public.businesses where owner_id = auth.uid()));
