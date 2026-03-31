@@ -318,7 +318,6 @@ export async function updateCustomerAction(
     name: String(formData.get("name") || "").trim(),
     phone: String(formData.get("phone") || "").trim(),
     area: String(formData.get("area") || "").trim(),
-    channel: String(formData.get("channel") || "").trim(),
     notes: String(formData.get("notes") || "").trim(),
   };
 

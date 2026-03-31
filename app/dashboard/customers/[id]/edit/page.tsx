@@ -19,7 +19,7 @@ export default async function EditCustomerPage({
 
   const { data: customer } = await supabase
     .from("customers")
-    .select("id, name, phone, area, channel, notes, status")
+    .select("id, name, phone, area, notes, status")
     .eq("business_id", businessId)
     .eq("id", id)
     .maybeSingle();

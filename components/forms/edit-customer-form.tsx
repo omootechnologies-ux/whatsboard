@@ -21,7 +21,6 @@ export default function EditCustomerForm({
     name?: string | null;
     phone?: string | null;
     area?: string | null;
-    channel?: string | null;
     notes?: string | null;
     status?: string | null;
   };
@@ -47,10 +46,6 @@ export default function EditCustomerForm({
           <input name="area" defaultValue={customer.area ?? ""} className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
         </label>
 
-        <label className="grid gap-2">
-          <span className="text-sm font-semibold text-slate-700">Channel</span>
-          <input name="channel" defaultValue={customer.channel ?? ""} className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
-        </label>
       </div>
 
       <label className="grid gap-2">
