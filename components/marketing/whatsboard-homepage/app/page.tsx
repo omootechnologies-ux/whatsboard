@@ -1,8 +1,37 @@
 "use client";
 
+import type { ComponentType, ReactNode } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
+import {
+  AlertCircle,
+  ArrowRight,
+  ArrowUpRight,
+  CheckCircle2,
+  ChevronRight,
+  CreditCard,
+  MessageSquare,
+  Package,
+  Play,
+  Truck,
+} from "lucide-react";
 import { PLAN_CONFIG } from "@/lib/plan-access";
+
+const fadeInUp = {
+  hidden: { opacity: 0, y: 40 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
+
+type ChatBubbleProps = {
+  sender: "user" | "seller";
+  text: string;
+  delay: number;
+  color?: string;
+};
 
 type OrderStatus =
   | "new"
@@ -11,6 +40,7 @@ type OrderStatus =
   | "packing"
   | "dispatch"
   | "delivered";
+
 type PaymentStatus = "unpaid" | "partial" | "paid" | "confirmed";
 
 type OrderRecord = {
@@ -81,867 +111,490 @@ const customers: CustomerRecord[] = [
   },
 ];
 
-const features = [
-  {
-    label: "Orders",
-    title: "Turn incoming chats into a visible order pipeline.",
-    body: "Every order gets an ID, total, source, stage, and next action instead of staying trapped in chat.",
-  },
-  {
-    label: "Payments",
-    title: "See unpaid, partial, paid, and confirmed clearly.",
-    body: "Collection work becomes visible before dispatch starts moving.",
-  },
-  {
-    label: "Customers",
-    title: "Keep the customer record attached to the sale.",
-    body: "Phone numbers, last orders, follow-ups, and repeat history stay in one place.",
-  },
-  {
-    label: "Follow-ups",
-    title: "Stop relying on memory for the next reply.",
-    body: "Overdue, due today, and upcoming actions stay visible without digging through old messages.",
-  },
-  {
-    label: "Dispatch",
-    title: "Move from paid to packed to delivered cleanly.",
-    body: "Operational steps become trackable for the seller and the team.",
-  },
-  {
-    label: "Visibility",
-    title: "Run the day from one calm overview.",
-    body: "See total orders, pending payments, repeat customers, and pressure points instantly.",
-  },
-];
-
-const faqs = [
-  {
-    q: "What does WhatsBoard do exactly?",
-    a: "It gives sellers one place to manage orders, payments, customers, follow-ups, and delivery after the sale starts in chat.",
-  },
-  {
-    q: "Is this only for WhatsApp?",
-    a: "No. It fits sellers getting orders from WhatsApp, Instagram, TikTok, and Facebook.",
-  },
-  {
-    q: "Do I need a team to use it?",
-    a: "No. It works for solo sellers first, then scales into a more structured workflow as volume grows.",
-  },
-  {
-    q: "Can this connect to real backend data later?",
-    a: "Yes. The homepage product previews are built from typed records that mirror real app entities like orders, customers, payments, and follow-ups.",
-  },
-];
-
 const testimonials = [
   {
     quote:
-      "Before WhatsBoard, I was checking screenshots to confirm payments. Now I know exactly what is pending and what moves next.",
+      "Before WhatsBoard, I was checking screenshots to confirm payments. Now I know what is pending and what should move next.",
     name: "Amina",
     role: "Fashion seller, Dar es Salaam",
   },
   {
     quote:
-      "The biggest change is follow-up speed. Orders stopped disappearing inside chats and the business feels more serious.",
+      "The biggest shift is follow-up speed. Orders stopped disappearing inside chats and the business feels more serious.",
     name: "Brian",
     role: "Accessories seller, Nairobi",
   },
   {
     quote:
-      "It gave me more delivery control without making the system heavy. I can still run it from my phone.",
+      "It made delivery and customer replies feel more professional without making the workflow heavy.",
     name: "Neema",
     role: "Beauty seller, Arusha",
   },
 ];
 
-const pricing = Object.values(PLAN_CONFIG);
-
-export default function WhatsBoardHomepage() {
-  return (
-    <main className="min-h-screen bg-[#fafaf7] text-[#111111]">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(15,93,70,0.07),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0),rgba(15,93,70,0.025))]" />
-      <Navbar />
-      <Hero />
-      <ProblemMath />
-      <FeatureRail />
-      <FounderStyleSection />
-      <ProductScenes />
-      <WallOfLove />
-      <PricingSection />
-      <FaqSection />
-      <FinalCta />
-      <Footer />
-    </main>
-  );
-}
+const tiers = [PLAN_CONFIG.free, PLAN_CONFIG.starter, PLAN_CONFIG.growth];
 
 function Navbar() {
   return (
-    <header className="sticky top-0 z-50 border-b border-[#e8e8e2] bg-[#fafaf7]/88 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
-        <Link href="/" className="text-sm font-semibold text-[#111111]">
-          WhatsBoard
+    <motion.nav
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      className="fixed top-0 z-50 w-full border-b border-[#e8e8e2]/80 bg-[#fafaf7]/90 py-4 backdrop-blur-md"
+    >
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="flex items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#0f5d46] text-white">
+            <Package className="h-5 w-5" />
+          </div>
+          <span className="text-xl font-bold tracking-tight text-[#111111]">WhatsBoard</span>
         </Link>
-        <nav className="hidden items-center gap-6 text-sm text-[#5e6461] md:flex">
-          <a href="#product" className="transition hover:text-[#111111]">
-            Product
-          </a>
-          <a href="#features" className="transition hover:text-[#111111]">
-            Features
-          </a>
-          <a href="#pricing" className="transition hover:text-[#111111]">
-            Pricing
-          </a>
-          <a href="#testimonials" className="transition hover:text-[#111111]">
-            Testimonials
-          </a>
-        </nav>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/login"
-            className="rounded-full border border-[#e8e8e2] bg-white px-3 py-2 text-xs text-[#0a3d2e] transition hover:bg-[#f2f3ee] sm:px-4 sm:text-sm"
-          >
-            Log in
-          </Link>
+
+        <div className="hidden items-center gap-10 md:flex">
+          {[
+            ["Product", "#product"],
+            ["Process", "#process"],
+            ["Pricing", "#pricing"],
+          ].map(([label, href]) => (
+            <a
+              key={label}
+              href={href}
+              className="text-sm font-medium text-[#5e6461] transition-colors hover:text-[#0f5d46]"
+            >
+              {label}
+            </a>
+          ))}
           <Link
             href="/register"
-            className="rounded-full bg-[#0f5d46] px-3 py-2 text-xs text-white transition hover:bg-[#0a3d2e] sm:px-4 sm:text-sm"
+            className="rounded-full bg-[#0f5d46] px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-[#111111]"
           >
             Start Free
           </Link>
         </div>
       </div>
-    </header>
+    </motion.nav>
   );
 }
 
-function Hero() {
-  return (
-    <section className="relative overflow-hidden">
-      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:py-24">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className="max-w-2xl"
-        >
-          <p className="text-sm font-semibold text-[#0f5d46]">From chat chaos to sales control</p>
-          <h1 className="mt-5 text-[2.8rem] leading-[0.95] font-semibold tracking-[-0.07em] text-[#111111] sm:text-6xl xl:text-7xl">
-            The operating layer for sellers who get orders in chats.
-          </h1>
-          <p className="mt-6 max-w-xl text-base leading-8 text-[#5e6461]">
-            WhatsBoard helps African online sellers track orders, payments, customers, follow-ups,
-            and delivery workflow in one place after the message lands.
-          </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <PrimaryLink href="/register">Start Free</PrimaryLink>
-            <SecondaryLink href="/pricing">See Pricing</SecondaryLink>
-          </div>
-          <div className="mt-8 flex items-center gap-3">
-            <div className="flex -space-x-2">
-              {["A", "B", "N", "K"].map((item) => (
-                <span
-                  key={item}
-                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white bg-[#0f5d46] text-xs font-semibold text-white"
-                >
-                  {item}
-                </span>
-              ))}
-            </div>
-            <div className="text-sm text-[#5e6461]">
-              <p className="font-medium text-[#111111]">Built for modern African online sellers</p>
-              <p>Used to organize orders after WhatsApp, Instagram, Facebook, and TikTok chats.</p>
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.55, ease: "easeOut", delay: 0.05 }}
-          className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]"
-        >
-          <HeroPanel title="Orders moving now" className="lg:row-span-2">
-            <div className="grid gap-3">
-              {orders.map((order) => (
-                <div
-                  key={order.id}
-                  className="rounded-[1.1rem] border border-[#e8e8e2] bg-[#fcfcfa] px-4 py-4"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-medium text-[#111111]">{order.customer}</p>
-                      <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#5e6461]">
-                        {order.id} • {order.source}
-                      </p>
-                    </div>
-                    <PaymentPill status={order.paymentStatus} />
-                  </div>
-                  <div className="mt-4 flex items-center justify-between gap-3 text-sm">
-                    <span className="text-[#5e6461]">{order.total}</span>
-                    <span className="rounded-full border border-[#e8e8e2] bg-white px-2 py-1 text-[11px] uppercase tracking-[0.16em] text-[#0f5d46]">
-                      {order.status.replaceAll("_", " ")}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </HeroPanel>
-
-          <HeroPanel title="Customer context">
-            <div className="space-y-3">
-              {customers.map((customer) => (
-                <div key={customer.id} className="rounded-[1rem] border border-[#e8e8e2] bg-[#fcfcfa] px-3 py-3">
-                  <p className="font-medium text-[#111111]">{customer.name}</p>
-                  <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#5e6461]">
-                    {customer.history} • {customer.nextAction}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </HeroPanel>
-
-          <HeroPanel title="Seller pressure">
-            <div className="grid grid-cols-2 gap-3">
-              <MiniStat label="Pending payments" value="6" />
-              <MiniStat label="Follow-ups due" value="8" />
-              <MiniStat label="Repeat customers" value="17" />
-              <MiniStat label="Delivered this month" value="38" />
-            </div>
-          </HeroPanel>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-function ProblemMath() {
-  const rows = [
-    "Checking old chats for order details",
-    "Looking for payment proof screenshots",
-    "Remembering who needs a follow-up",
-    "Reconfirming delivery status by hand",
-    "Tracking repeat buyers from memory",
-    "Overthinking the next action",
-  ];
-
-  return (
-    <section className="py-18 lg:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.35 }}
-            transition={{ duration: 0.45 }}
-          >
-            <p className="text-sm font-semibold text-[#0f5d46]">There’s an easier way</p>
-            <h2 className="mt-4 text-[2.4rem] leading-[0.98] font-semibold tracking-[-0.06em] text-[#111111] sm:text-5xl xl:text-6xl">
-              Selling should feel busy. Running the business should not feel messy.
-            </h2>
-            <p className="mt-5 max-w-xl text-base leading-8 text-[#5e6461]">
-              Most sellers are not losing because demand is low. They are losing because the system
-              after the message is weak.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.45, delay: 0.05 }}
-            className="rounded-[2rem] border border-[#e8e8e2] bg-white p-6 shadow-[0_20px_60px_rgba(17,17,17,0.05)]"
-          >
-            <div className="space-y-3">
-              {rows.map((row) => (
-                <div key={row} className="flex items-start gap-3 text-sm text-[#5e6461]">
-                  <span className="mt-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-[#f1f2ec] text-[11px] text-[#111111]">
-                    +
-                  </span>
-                  <span>{row}</span>
-                </div>
-              ))}
-            </div>
-            <div className="my-6 h-px bg-[#e8e8e2]" />
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-[11px] uppercase tracking-[0.2em] text-[#5e6461]">
-                  Weekly cost of chaos
-                </p>
-                <p className="mt-2 text-3xl font-semibold tracking-[-0.05em] text-[#111111]">
-                  15+ hours
-                </p>
-              </div>
-              <div className="rounded-full bg-[#0f5d46] px-4 py-2 text-sm font-medium text-white">
-                Fix the workflow
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FeatureRail() {
-  return (
-    <section id="features" className="py-18 lg:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.35 }}
-          transition={{ duration: 0.45 }}
-          className="max-w-3xl"
-        >
-          <p className="text-sm font-semibold text-[#0f5d46]">What changes after WhatsBoard</p>
-          <h2 className="mt-4 text-[2.4rem] leading-[0.98] font-semibold tracking-[-0.06em] text-[#111111] sm:text-5xl xl:text-6xl">
-            The business becomes structured fast.
-          </h2>
-        </motion.div>
-
-        <div className="mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {features.map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.35, delay: index * 0.04 }}
-              className="rounded-[1.7rem] border border-[#e8e8e2] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.04)]"
-            >
-              <p className="text-[11px] uppercase tracking-[0.2em] text-[#5e6461]">{feature.label}</p>
-              <h3 className="mt-4 text-2xl font-semibold tracking-[-0.05em] text-[#111111]">
-                {feature.title}
-              </h3>
-              <p className="mt-3 text-sm leading-7 text-[#5e6461]">{feature.body}</p>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FounderStyleSection() {
-  return (
-    <section className="py-18 lg:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <div className="grid gap-10 lg:grid-cols-[0.78fr_1.22fr] lg:items-start">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.35 }}
-            transition={{ duration: 0.45 }}
-            className="rounded-[1.8rem] border border-[#e8e8e2] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.04)]"
-          >
-            <p className="text-sm font-semibold text-[#111111]">Why this exists</p>
-            <p className="mt-4 text-sm leading-7 text-[#5e6461]">
-              Most commerce tools were not built for sellers whose first system is a chat thread.
-              WhatsBoard starts exactly there and gives the seller a cleaner operating layer without
-              making the workflow feel heavy.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.45, delay: 0.05 }}
-          >
-            <p className="text-[11px] uppercase tracking-[0.2em] text-[#5e6461]">Built for execution</p>
-            <h2 className="mt-4 text-[2.4rem] leading-[0.98] font-semibold tracking-[-0.06em] text-[#111111] sm:text-5xl xl:text-6xl">
-              The goal is simple: less screenshot hunting, less guessing, more control.
-            </h2>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <StoryCard
-                title="Before"
-                body="Orders live in WhatsApp. Payments live in screenshots. Delivery status lives in memory."
-                tone="muted"
-              />
-              <StoryCard
-                title="After"
-                body="Orders, payments, customers, and dispatch move through one structured system the seller can trust."
-                tone="positive"
-              />
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ProductScenes() {
-  return (
-    <section id="product" className="py-18 lg:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.35 }}
-          transition={{ duration: 0.45 }}
-          className="max-w-3xl"
-        >
-          <p className="text-sm font-semibold text-[#0f5d46]">Product proof</p>
-          <h2 className="mt-4 text-[2.4rem] leading-[0.98] font-semibold tracking-[-0.06em] text-[#111111] sm:text-5xl xl:text-6xl">
-            See the product the way a seller uses it.
-          </h2>
-        </motion.div>
-
-        <div className="mt-12 grid gap-5 xl:grid-cols-[1.12fr_0.88fr]">
-          <ScenePanel title="Order pipeline" meta="Structured flow">
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-              {[
-                ["New", "12"],
-                ["Awaiting payment", "6"],
-                ["Paid", "9"],
-                ["Packing", "5"],
-                ["Dispatch", "4"],
-                ["Delivered", "18"],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-[1rem] border border-[#e8e8e2] bg-[#f9f9f5] px-3 py-4">
-                  <p className="text-[11px] uppercase tracking-[0.16em] text-[#5e6461]">{label}</p>
-                  <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[#111111]">{value}</p>
-                </div>
-              ))}
-            </div>
-          </ScenePanel>
-
-          <ScenePanel title="Customer records" meta="Context that stays">
-            <div className="space-y-3">
-              {customers.map((customer) => (
-                <div key={customer.id} className="rounded-[1rem] border border-[#e8e8e2] bg-[#f9f9f5] px-3 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-medium text-[#111111]">{customer.name}</p>
-                      <p className="mt-1 break-all text-[11px] uppercase tracking-[0.12em] text-[#5e6461] sm:tracking-[0.16em]">
-                        {customer.phone}
-                      </p>
-                    </div>
-                    <span className="shrink-0 rounded-full border border-[#e8e8e2] bg-white px-2 py-1 text-[11px] uppercase tracking-[0.12em] text-[#0f5d46] sm:tracking-[0.16em]">
-                      {customer.history}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </ScenePanel>
-
-          <ScenePanel title="Payment tracking" meta="Collection visibility">
-            <div className="space-y-3">
-              {orders.map((order) => (
-                <div key={order.id} className="rounded-[1rem] border border-[#e8e8e2] bg-[#f9f9f5] px-3 py-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-medium text-[#111111]">{order.customer}</p>
-                      <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#5e6461]">{order.total}</p>
-                    </div>
-                    <PaymentPill status={order.paymentStatus} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </ScenePanel>
-
-          <ScenePanel title="Next actions" meta="Follow-ups and dispatch">
-            <div className="space-y-3">
-              <div className="rounded-[1rem] border border-[#e8e8e2] bg-[#fff6f4] px-3 py-3">
-                <p className="font-medium text-[#111111]">Grace Mollel</p>
-                <p className="mt-1 text-sm text-[#5e6461]">Payment proof overdue by 1 day</p>
-              </div>
-              <div className="rounded-[1rem] border border-[#e8e8e2] bg-[#f9f9f5] px-3 py-3">
-                <p className="font-medium text-[#111111]">#WB-1087</p>
-                <p className="mt-1 text-sm text-[#5e6461]">Packed and ready for dispatch</p>
-              </div>
-              <div className="rounded-[1rem] border border-[#e8e8e2] bg-[#f9f9f5] px-3 py-3">
-                <p className="font-medium text-[#111111]">Repeat buyer likely</p>
-                <p className="mt-1 text-sm text-[#5e6461]">Amina Yusuf followed up today</p>
-              </div>
-            </div>
-          </ScenePanel>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function WallOfLove() {
-  return (
-    <section id="testimonials" className="py-18 lg:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.35 }}
-          transition={{ duration: 0.45 }}
-          className="max-w-3xl"
-        >
-          <p className="text-sm font-semibold text-[#0f5d46]">Seller proof</p>
-          <h2 className="mt-4 text-[2.4rem] leading-[0.98] font-semibold tracking-[-0.06em] text-[#111111] sm:text-5xl xl:text-6xl">
-            Sellers feel the difference quickly.
-          </h2>
-        </motion.div>
-
-        <div className="mt-12 grid gap-4 lg:grid-cols-3">
-          {testimonials.map((item, index) => (
-            <motion.div
-              key={item.name}
-              initial={{ opacity: 0, y: 18 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.35 }}
-              transition={{ duration: 0.35, delay: index * 0.04 }}
-              className="rounded-[1.8rem] border border-[#e8e8e2] bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.04)]"
-            >
-              <p className="text-sm leading-7 text-[#5e6461]">&ldquo;{item.quote}&rdquo;</p>
-              <div className="mt-5 border-t border-[#e8e8e2] pt-4">
-                <p className="text-sm font-semibold text-[#111111]">{item.name}</p>
-                <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-[#5e6461]">{item.role}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {[
-            "Fewer missed orders",
-            "Faster follow-up",
-            "Clearer payment status",
-            "Better delivery control",
-          ].map((item) => (
-            <div
-              key={item}
-              className="rounded-[1.25rem] border border-[#e8e8e2] bg-white px-4 py-4 text-sm text-[#111111]"
-            >
-              {item}
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function PricingSection() {
-  return (
-    <section id="pricing" className="py-18 lg:py-24">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.35 }}
-          transition={{ duration: 0.45 }}
-          className="max-w-3xl"
-        >
-          <p className="text-sm font-semibold text-[#0f5d46]">Pricing</p>
-          <h2 className="mt-4 text-[2.4rem] leading-[0.98] font-semibold tracking-[-0.06em] text-[#111111] sm:text-5xl xl:text-6xl">
-            Simple pricing for sellers who want better control.
-          </h2>
-        </motion.div>
-
-        <div className="mt-12 grid gap-6 lg:grid-cols-4">
-          {pricing.map((tier) => (
-            <div
-              key={tier.key}
-              className={[
-                "rounded-[2rem] border p-6 shadow-sm",
-                tier.highlight
-                  ? "border-[#173728] bg-[#173728] text-white shadow-xl"
-                  : "border-[#e8e8e2] bg-white text-[#111111]",
-              ].join(" ")}
-            >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0">
-                  <p
-                    className={[
-                      "text-sm font-bold uppercase tracking-[0.18em]",
-                      tier.highlight ? "text-white/76" : "text-[#0f5d46]",
-                    ].join(" ")}
-                  >
-                    {tier.name}
-                  </p>
-                  <h3 className="mt-3 break-words text-3xl font-semibold tracking-[-0.05em] sm:text-4xl">
-                    {tier.priceLabel}
-                    <span className={["ml-1 text-sm font-semibold", tier.highlight ? "text-white/70" : "text-[#5e6461]"].join(" ")}>
-                      {tier.key === "free" ? "/forever" : "/month"}
-                    </span>
-                  </h3>
-                </div>
-                <span
-                  className={[
-                    "inline-flex self-start rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em]",
-                    tier.highlight ? "bg-white text-[#173728]" : "bg-[#f4f6f1] text-[#0f5d46]",
-                  ].join(" ")}
-                >
-                  {tier.badge}
-                </span>
-              </div>
-
-              <p className={["mt-5 text-sm leading-7", tier.highlight ? "text-white/80" : "text-[#5e6461]"].join(" ")}>
-                {tier.description}
-              </p>
-
-              <Link
-                href="/pricing"
-                className={[
-                  "mt-6 inline-flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-medium transition",
-                  tier.highlight
-                    ? "bg-white text-[#173728] hover:bg-white/92"
-                    : "border border-[#e8e8e2] text-[#0a3d2e] hover:bg-[#f2f3ee]",
-                ].join(" ")}
-              >
-                {tier.key === "free" ? "Start free" : `View ${tier.name}`}
-              </Link>
-
-              <div className={["my-6 h-px", tier.highlight ? "bg-white/14" : "bg-[#e8e8e2]"].join(" ")} />
-
-              <ul className="space-y-3">
-                {tier.features.slice(0, 5).map((feature) => (
-                  <li
-                    key={feature.label}
-                    className={["flex items-start gap-3 text-sm", tier.highlight ? "text-white/85" : "text-[#5e6461]"].join(" ")}
-                  >
-                    <span
-                      className={[
-                        "mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-black",
-                        tier.highlight ? "bg-white text-[#173728]" : "bg-[#f4f6f1] text-[#0f5d46]",
-                      ].join(" ")}
-                    >
-                      ✓
-                    </span>
-                    <span>
-                      {feature.label}
-                      {feature.comingSoon ? " (coming soon)" : ""}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FaqSection() {
-  return (
-    <section className="py-18 lg:py-24">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6">
-        <div className="max-w-3xl">
-          <p className="text-sm font-semibold text-[#0f5d46]">Frequently asked questions</p>
-          <h2 className="mt-4 text-[2.4rem] leading-[0.98] font-semibold tracking-[-0.06em] text-[#111111] sm:text-5xl">
-            Questions sellers ask before they switch.
-          </h2>
-        </div>
-        <div className="mt-12 grid gap-4">
-          {faqs.map((item) => (
-            <div key={item.q} className="rounded-[1.6rem] border border-[#e8e8e2] bg-white p-6">
-              <p className="text-lg font-semibold text-[#111111]">{item.q}</p>
-              <p className="mt-3 text-sm leading-7 text-[#5e6461]">{item.a}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FinalCta() {
-  return (
-    <section className="py-18 lg:py-24">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6">
-        <div className="rounded-[2rem] border border-[#e8e8e2] bg-[linear-gradient(180deg,#ffffff,#f5f6f0)] px-6 py-12 text-center shadow-[0_20px_60px_rgba(17,17,17,0.05)] sm:px-10">
-          <p className="text-sm font-semibold text-[#0f5d46]">Start now</p>
-          <h2 className="mt-4 text-[2.4rem] leading-[0.98] font-semibold tracking-[-0.06em] text-[#111111] sm:text-5xl xl:text-6xl">
-            Chats help you sell. WhatsBoard helps you scale.
-          </h2>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-[#5e6461]">
-            Put the business into a system that knows what is paid, who needs a follow-up, and what
-            should move next.
-          </p>
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <PrimaryLink href="/register">Start Free</PrimaryLink>
-            <SecondaryLink href="/pricing">See Pricing</SecondaryLink>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="border-t border-[#e8e8e2] bg-[#fafaf7]">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.2fr_1fr_1fr_1fr]">
-        <div>
-          <p className="text-sm font-semibold text-[#111111]">WhatsBoard</p>
-          <p className="mt-4 max-w-xs text-sm leading-7 text-[#5e6461]">
-            A cleaner operating layer for online sellers running business after chat.
-          </p>
-        </div>
-        <FooterColumn
-          title="Product"
-          links={[
-            { href: "/pricing", label: "Pricing" },
-            { href: "/register", label: "Start free" },
-            { href: "/login", label: "Log in" },
-          ]}
-        />
-        <FooterColumn
-          title="Company"
-          links={[
-            { href: "/pricing", label: "Plans" },
-            { href: "/register", label: "Get started" },
-            { href: "/", label: "Homepage" },
-          ]}
-        />
-        <FooterColumn
-          title="Support"
-          links={[
-            { href: "/login", label: "Account" },
-            { href: "/pricing", label: "Billing" },
-            { href: "/register", label: "Contact" },
-          ]}
-        />
-      </div>
-    </footer>
-  );
-}
-
-function HeroPanel({
-  title,
-  className = "",
-  children,
-}: {
-  title: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className={`rounded-[2rem] border border-[#e8e8e2] bg-white p-5 shadow-[0_20px_50px_rgba(17,17,17,0.05)] ${className}`}>
-      <p className="text-[11px] uppercase tracking-[0.2em] text-[#5e6461]">{title}</p>
-      <div className="mt-4">{children}</div>
-    </div>
-  );
-}
-
-function ScenePanel({
-  title,
-  meta,
-  children,
-}: {
-  title: string;
-  meta: string;
-  children: React.ReactNode;
-}) {
+function ChatBubble({ sender, text, delay, color = "bg-[#f4f5f0]" }: ChatBubbleProps) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3 }}
-      transition={{ duration: 0.45 }}
-      className="rounded-[1.8rem] border border-[#e8e8e2] bg-white p-5 shadow-[0_20px_50px_rgba(17,17,17,0.04)]"
+      initial={{ opacity: 0, x: sender === "user" ? -20 : 20, scale: 0.8 }}
+      whileInView={{ opacity: 1, x: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.5 }}
+      transition={{ delay, duration: 0.5 }}
+      className={`mb-3 max-w-[80%] rounded-2xl border border-[#e8e8e2]/70 p-4 text-sm shadow-sm ${
+        sender === "user"
+          ? `${color} self-start rounded-tl-none text-[#111111]`
+          : "self-end rounded-tr-none bg-[#0f5d46] text-white"
+      }`}
     >
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-[11px] uppercase tracking-[0.18em] text-[#5e6461] sm:tracking-[0.22em]">{title}</p>
-        <p className="text-[11px] uppercase tracking-[0.18em] text-[#5e6461] sm:text-right sm:tracking-[0.22em]">{meta}</p>
-      </div>
-      <div className="mt-5">{children}</div>
+      <p className="font-medium">{text}</p>
     </motion.div>
   );
 }
 
-function StoryCard({
+function FeatureScene({
   title,
-  body,
-  tone,
+  desc,
+  icon: Icon,
+  imageContent,
 }: {
   title: string;
-  body: string;
-  tone: "muted" | "positive";
+  desc: string;
+  icon: ComponentType<{ className?: string }>;
+  imageContent: ReactNode;
 }) {
   return (
-    <div
-      className={`rounded-[1.6rem] border p-5 ${
-        tone === "positive"
-          ? "border-[#0f5d46]/18 bg-[linear-gradient(180deg,#ffffff,#f4f7f3)]"
-          : "border-[#e8e8e2] bg-white"
-      }`}
-    >
-      <p className="text-sm font-semibold text-[#111111]">{title}</p>
-      <p className="mt-3 text-sm leading-7 text-[#5e6461]">{body}</p>
+    <div className="flex min-h-[70vh] flex-col items-center gap-12 py-16 lg:flex-row lg:gap-16 lg:py-20">
+      <motion.div
+        className="lg:w-1/2"
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, amount: 0.3 }}
+        variants={fadeInUp}
+      >
+        <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#edf6f1]">
+          <Icon className="h-7 w-7 text-[#0f5d46]" />
+        </div>
+        <h3 className="mb-6 text-4xl font-bold leading-tight tracking-tight text-[#111111]">
+          {title}
+        </h3>
+        <p className="max-w-md text-xl leading-relaxed text-[#5e6461]">{desc}</p>
+      </motion.div>
+
+      <motion.div
+        className="w-full lg:w-1/2"
+        initial={{ opacity: 0, scale: 0.95, x: 40 }}
+        whileInView={{ opacity: 1, scale: 1, x: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
+        <div className="min-h-[360px] overflow-hidden rounded-3xl border border-[#e8e8e2] bg-white p-6 shadow-[0_24px_80px_rgba(17,17,17,0.06)] lg:min-h-[400px]">
+          {imageContent}
+        </div>
+      </motion.div>
     </div>
   );
 }
 
-function MiniStat({ label, value }: { label: string; value: string }) {
+export default function WhatsBoardHomepage() {
+  const { scrollYProgress } = useScroll();
+  const heroScale = useTransform(scrollYProgress, [0, 0.1], [1, 0.94]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0.08]);
+
   return (
-    <div className="rounded-[1rem] border border-[#e8e8e2] bg-[#fcfcfa] px-3 py-4">
-      <p className="text-[11px] uppercase tracking-[0.16em] text-[#5e6461]">{label}</p>
-      <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[#111111]">{value}</p>
+    <div className="overflow-x-hidden bg-[#fafaf7] text-[#111111] selection:bg-[#dff2e9] selection:text-[#0f5d46]">
+      <Navbar />
+
+      <section className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 pt-24 sm:px-8">
+        <motion.div style={{ scale: heroScale, opacity: heroOpacity }} className="z-10 max-w-5xl text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mb-10 inline-flex items-center gap-2 rounded-full border border-[#e8e8e2] bg-white px-4 py-2 text-xs font-bold uppercase tracking-widest text-[#5e6461]"
+          >
+            <span className="h-2 w-2 rounded-full bg-[#0f5d46]" />
+            The future of social selling
+          </motion.div>
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 1 }}
+            className="mb-10 text-5xl font-black leading-[0.95] tracking-tighter text-[#111111] sm:text-7xl md:text-8xl"
+          >
+            Stop chatting. <br />
+            <span className="text-[#0f5d46]">Start selling.</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.6 }}
+            className="mx-auto mb-12 max-w-2xl text-xl font-medium text-[#5e6461] md:text-2xl"
+          >
+            WhatsBoard turns messy chat threads into a high-performance sales machine for African online sellers.
+          </motion.p>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.8 }}
+            className="flex flex-col items-center justify-center gap-6 sm:flex-row"
+          >
+            <Link
+              href="/register"
+              className="group flex h-16 items-center gap-3 rounded-full bg-[#0f5d46] px-10 text-xl font-bold text-white transition-transform hover:scale-105"
+            >
+              Get Started Free <ArrowRight className="transition-transform group-hover:translate-x-1" />
+            </Link>
+            <Link
+              href="/pricing"
+              className="flex h-16 items-center gap-3 text-lg font-bold text-[#111111] transition-colors hover:text-[#0f5d46] sm:text-xl"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#e8e8e2]">
+                <Play size={16} fill="currentColor" />
+              </div>
+              See Pricing
+            </Link>
+          </motion.div>
+        </motion.div>
+
+        <div className="pointer-events-none absolute inset-0">
+          <motion.div
+            animate={{ y: [0, -20, 0], opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 5, repeat: Infinity }}
+            className="absolute left-10 top-1/4 h-64 w-64 rounded-full bg-[#dff2e9] blur-[100px]"
+          />
+          <motion.div
+            animate={{ y: [0, 30, 0], opacity: [0.2, 0.4, 0.2] }}
+            transition={{ duration: 7, repeat: Infinity, delay: 1 }}
+            className="absolute bottom-1/4 right-10 h-96 w-96 rounded-full bg-[#eef7f2] blur-[120px]"
+          />
+        </div>
+      </section>
+
+      <section className="relative z-20 rounded-t-[3rem] bg-[#111111] px-4 py-24 text-white sm:px-8 lg:py-32">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid items-center gap-16 lg:grid-cols-2 lg:gap-24">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={fadeInUp}
+              className="space-y-8"
+            >
+              <h2 className="text-5xl font-bold leading-tight md:text-7xl">
+                Business shouldn&apos;t <br />
+                <span className="text-[#c7675d]">feel like chaos.</span>
+              </h2>
+              <p className="max-w-lg text-xl leading-relaxed text-white/65">
+                Scrolling for screenshots, forgetting follow-ups, and losing payments in unread chats is not a strategy. It is operational risk.
+              </p>
+              <div className="space-y-4 pt-10">
+                {[
+                  "Missed follow-ups are lost money.",
+                  "Payment verification takes hours.",
+                  "Dispatch becomes a guessing game.",
+                ].map((item, i) => (
+                  <motion.div
+                    key={item}
+                    initial={{ x: -20, opacity: 0 }}
+                    whileInView={{ x: 0, opacity: 1 }}
+                    viewport={{ once: true, amount: 0.5 }}
+                    transition={{ delay: i * 0.15 }}
+                    className="flex items-center gap-4 text-lg font-medium"
+                  >
+                    <AlertCircle className="text-[#c7675d]" /> {item}
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+
+            <div className="relative flex flex-col">
+              <ChatBubble sender="user" text="Hey, is the dress still available?" delay={0.1} color="bg-[#1b1b1b] text-white border-white/10" />
+              <ChatBubble sender="user" text="Sent the money. Check M-Pesa" delay={0.3} color="bg-[#1b1b1b] text-white border-white/10" />
+              <ChatBubble sender="user" text="Where is my order? 3 days now..." delay={0.6} color="bg-[#4d1f1a] text-white border-white/10" />
+              <ChatBubble sender="user" text="Can I get a discount?" delay={0.8} color="bg-[#1b1b1b] text-white border-white/10" />
+              <ChatBubble sender="user" text="I will pay tomorrow I promise" delay={1.0} color="bg-[#1b1b1b] text-white border-white/10" />
+              <motion.div
+                animate={{ rotate: [0, 2, -2, 0], scale: [1, 1.02, 1] }}
+                transition={{ duration: 0.2, repeat: Infinity, repeatDelay: 3 }}
+                className="pointer-events-none absolute left-1/2 top-1/2 h-48 w-48 -translate-x-1/2 -translate-y-1/2 bg-[#c7675d]/20 blur-[80px]"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="process" className="relative overflow-hidden bg-white px-4 py-28 sm:px-8 lg:py-40">
+        <div className="mx-auto mb-24 max-w-7xl text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="mb-8 inline-block rounded-full bg-[#0f5d46] px-6 py-2 text-sm font-bold text-white"
+          >
+            The Shift
+          </motion.div>
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-10 text-5xl font-black tracking-tight text-[#111111] md:text-7xl"
+          >
+            Clean. Calm. <span className="text-[#0f5d46]">Controlled.</span>
+          </motion.h2>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mx-auto max-w-4xl rounded-[3rem] border border-[#e8e8e2] bg-[#f4f5f0] p-1 shadow-inner"
+          >
+            <div className="flex flex-wrap justify-between gap-4 p-4 md:flex-nowrap">
+              {[
+                ["New Order", MessageSquare],
+                ["Paid", CreditCard],
+                ["Packing", Package],
+                ["Dispatch", Truck],
+              ].map(([label, Icon], i) => {
+                const Comp = Icon as typeof MessageSquare;
+
+                return (
+                  <motion.div
+                    key={label}
+                    whileHover={{ scale: 1.05 }}
+                    className={`flex min-w-[140px] flex-1 flex-col items-center gap-3 rounded-[2rem] p-6 transition-all ${
+                      i === 0 ? "bg-[#0f5d46] text-white shadow-xl" : "bg-white text-[#5e6461]"
+                    }`}
+                  >
+                    <Comp size={18} />
+                    <span className="text-center text-xs font-bold uppercase tracking-tight">{label}</span>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+        </div>
+
+        <div className="mx-auto max-w-6xl">
+          <FeatureScene
+            title="Automated order pipelines"
+            desc="Drag and move orders from inquiry to delivered. Never lose a customer name again."
+            icon={Package}
+            imageContent={
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ x: -30, opacity: 0 }}
+                    whileInView={{ x: 0, opacity: 1 }}
+                    viewport={{ once: true, amount: 0.5 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="flex items-center justify-between rounded-2xl border border-[#e8e8e2] bg-[#fafaf7] p-4"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-xs font-bold shadow-sm">JD</div>
+                      <div>
+                        <p className="text-sm font-bold text-[#111111]">John Doe — Order #443{i}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-[#5e6461]">Awaiting verification</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={16} className="text-[#b8bcb8]" />
+                  </motion.div>
+                ))}
+              </div>
+            }
+          />
+
+          <FeatureScene
+            title="Payment visibility"
+            desc="Verify M-Pesa, bank transfer, and card payments. See your cashflow in real time, not in old chat logs."
+            icon={CreditCard}
+            imageContent={
+              <div className="p-4 text-center">
+                <div className="mb-2 text-4xl font-black text-[#0f5d46]">TZS 452,000</div>
+                <p className="mb-8 text-xs font-bold uppercase tracking-widest text-[#5e6461]">Total revenue this week</p>
+                <div className="flex h-32 items-end justify-center gap-2">
+                  {[40, 70, 45, 90, 65, 80, 100].map((h, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ height: 0 }}
+                      whileInView={{ height: `${h}%` }}
+                      viewport={{ once: true, amount: 0.5 }}
+                      className="w-full rounded-t-lg bg-[#0f5d46]"
+                    />
+                  ))}
+                </div>
+              </div>
+            }
+          />
+        </div>
+      </section>
+
+      <section className="border-y border-[#e8e8e2] bg-[#f7f7f3] px-4 py-24 sm:px-8 lg:py-32">
+        <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-3">
+          {[
+            ["2.5x", "Faster turnaround", "Sellers process orders faster once payments and next actions are visible."],
+            ["98%", "Accuracy", "Reduce human error in payment checks, customer records, and location notes."],
+            ["0", "Missed follow-ups", "A visible reminder queue keeps warm leads from going cold."],
+          ].map(([stat, label, text]) => (
+            <motion.div key={label} whileHover={{ y: -10 }} className="rounded-[2.4rem] border border-[#e8e8e2] bg-white p-10 shadow-sm">
+              <h4 className="mb-4 text-6xl font-black text-[#0f5d46]">{stat}</h4>
+              <p className="mb-2 text-lg font-bold uppercase tracking-tight text-[#111111]">{label}</p>
+              <p className="leading-relaxed text-[#5e6461]">{text}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      <section id="pricing" className="bg-white px-4 py-28 sm:px-8 lg:py-40">
+        <div className="mx-auto mb-20 max-w-3xl text-center">
+          <h2 className="mb-6 text-5xl font-black tracking-tight text-[#111111]">The investment in growth.</h2>
+          <p className="text-xl text-[#5e6461]">Premium tools for serious businesses. No hidden fees.</p>
+        </div>
+
+        <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-3">
+          {tiers.map((plan) => (
+            <motion.div
+              key={plan.key}
+              whileHover={{ scale: 1.02 }}
+              className={`rounded-[3rem] border p-10 ${
+                plan.highlight
+                  ? "border-[#173728] bg-[#173728] text-white shadow-2xl shadow-[#173728]/20"
+                  : "border-[#e8e8e2] bg-white text-[#111111] shadow-sm"
+              }`}
+            >
+              {plan.highlight ? <div className="mb-6 text-[10px] font-black uppercase tracking-widest opacity-60">Most popular</div> : null}
+              <h4 className="mb-2 text-2xl font-bold">{plan.name}</h4>
+              <p className={`mb-10 text-sm ${plan.highlight ? "text-white/75" : "text-[#5e6461]"}`}>{plan.description}</p>
+              <div className="mb-12 flex items-baseline gap-1">
+                <span className="text-5xl font-black">{plan.priceLabel}</span>
+                <span className="text-sm opacity-60">{plan.key === "free" ? "/forever" : "/month"}</span>
+              </div>
+              <ul className="mb-12 space-y-4">
+                {plan.features.slice(0, 5).map((f) => (
+                  <li key={f.label} className="flex items-center gap-3 text-sm font-medium">
+                    <CheckCircle2 size={16} className={plan.highlight ? "text-green-300" : "text-green-700"} />
+                    <span>
+                      {f.label}
+                      {f.comingSoon ? " (coming soon)" : ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/pricing"
+                className={`block w-full rounded-full py-5 text-center text-lg font-bold transition-all ${
+                  plan.highlight ? "bg-white text-[#173728] hover:bg-slate-100" : "bg-[#0f5d46] text-white hover:bg-black"
+                }`}
+              >
+                {plan.key === "free" ? "Start Free" : `Choose ${plan.name}`}
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      <section id="testimonials" className="bg-[#111111] px-4 py-28 text-white sm:px-8 lg:py-40">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-16 max-w-3xl">
+            <p className="text-sm font-semibold text-green-400">Seller proof</p>
+            <h2 className="mt-4 text-5xl font-black tracking-tight">Sellers feel the difference fast.</h2>
+          </div>
+          <div className="grid gap-6 lg:grid-cols-3">
+            {testimonials.map((item) => (
+              <div key={item.name} className="rounded-[2rem] border border-white/10 bg-white/5 p-6">
+                <p className="text-sm leading-7 text-white/78">&ldquo;{item.quote}&rdquo;</p>
+                <div className="mt-5 border-t border-white/10 pt-4">
+                  <p className="text-sm font-semibold">{item.name}</p>
+                  <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-white/50">{item.role}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-[#111111] px-4 py-28 text-center text-white sm:px-8 lg:py-40">
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.4 }}
+          className="relative z-10 mx-auto max-w-4xl"
+        >
+          <h2 className="mb-10 text-5xl font-black leading-none tracking-tighter md:text-8xl">
+            Ready to <span className="text-green-500">lead?</span>
+          </h2>
+          <p className="mx-auto mb-16 max-w-2xl text-xl text-white/65 md:text-2xl">
+            Join sellers who have reclaimed their time and built a more professional business system.
+          </p>
+          <div className="flex flex-col items-center justify-center gap-8 sm:flex-row">
+            <Link href="/register" className="flex h-20 items-center gap-4 rounded-full bg-white px-12 text-2xl font-black text-[#111111] transition-transform hover:scale-105">
+              Start Free Trial <ArrowUpRight size={24} />
+            </Link>
+            <Link href="/pricing" className="text-lg font-bold transition-colors hover:text-green-400">
+              See Pricing
+            </Link>
+          </div>
+        </motion.div>
+      </section>
+
+      <footer className="border-t border-[#e8e8e2] bg-white px-4 py-16 sm:px-8 lg:py-20">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-10 md:flex-row">
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0f5d46] text-white">
+              <Package className="h-5 w-5" />
+            </div>
+            <span className="text-xl font-bold text-[#111111]">WhatsBoard</span>
+          </div>
+          <div className="flex flex-wrap gap-8 text-sm font-bold uppercase tracking-tight text-[#5e6461]">
+            <Link href="/pricing" className="transition-colors hover:text-[#0f5d46]">Pricing</Link>
+            <Link href="/login" className="transition-colors hover:text-[#0f5d46]">Login</Link>
+            <Link href="/register" className="transition-colors hover:text-[#0f5d46]">Start Free</Link>
+            <Link href="/dashboard" className="transition-colors hover:text-[#0f5d46]">Dashboard</Link>
+          </div>
+          <p className="text-xs font-bold uppercase tracking-widest text-[#b8bcb8]">© 2026 WhatsBoard</p>
+        </div>
+      </footer>
     </div>
-  );
-}
-
-function PaymentPill({ status }: { status: PaymentStatus }) {
-  const styles =
-    status === "unpaid"
-      ? "border-[#c7675d]/18 bg-[#fff5f3] text-[#a94b40]"
-      : status === "partial"
-        ? "border-[#e8e8e2] bg-[#f7f7f2] text-[#5e6461]"
-        : status === "paid"
-          ? "border-[#0f5d46]/18 bg-[#f2fbf6] text-[#0f5d46]"
-          : "border-[#0a3d2e]/16 bg-[#0a3d2e] text-white";
-
-  return (
-    <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] ${styles}`}>
-      {status}
-    </span>
-  );
-}
-
-function FooterColumn({
-  title,
-  links,
-}: {
-  title: string;
-  links: { href: string; label: string }[];
-}) {
-  return (
-    <div>
-      <p className="text-xs uppercase tracking-[0.24em] text-[#5e6461]">{title}</p>
-      <div className="mt-4 grid gap-3 text-sm">
-        {links.map((link) => (
-          <Link key={link.label} href={link.href} className="text-[#111111] transition hover:text-[#0a3d2e]">
-            {link.label}
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function PrimaryLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="rounded-full bg-[#0f5d46] px-5 py-3 text-center text-sm font-medium text-white transition hover:bg-[#0a3d2e]"
-    >
-      {children}
-    </Link>
-  );
-}
-
-function SecondaryLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      className="rounded-full border border-[#e8e8e2] bg-white px-5 py-3 text-center text-sm font-medium text-[#0a3d2e] transition hover:bg-[#f2f3ee]"
-    >
-      {children}
-    </Link>
   );
 }
