@@ -230,6 +230,16 @@ export function DashboardShell({
               </div>
 
               <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
+                <form action={logoutAction} className="sm:hidden">
+                  <button
+                    type="submit"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white/80 transition hover:bg-red-500/10 hover:text-red-200"
+                    aria-label="Sign out"
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </button>
+                </form>
+
                 <div className="hidden min-w-0 items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-white/80 lg:flex">
                   <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-400 text-xs font-bold text-slate-950">
                     {initials}
