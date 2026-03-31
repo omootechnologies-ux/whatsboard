@@ -68,6 +68,12 @@ export function Navigation() {
             >
               {t("Testimonials")}
             </Link>
+            <Link
+              href="/pricing"
+              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {t("Pricing")}
+            </Link>
           </div>
 
           {/* Desktop CTA */}
@@ -126,6 +132,13 @@ export function Navigation() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {t("Testimonials")}
+              </Link>
+              <Link
+                href="/pricing"
+                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {t("Pricing")}
               </Link>
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
                 <LanguageToggle />
