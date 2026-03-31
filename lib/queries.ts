@@ -1,5 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 
+function matchesMissingSchemaError(message?: string) {
+  const value = (message || "").toLowerCase();
+  return (
+    value.includes("schema cache") ||
+    value.includes("could not find the table") ||
+    value.includes("column") ||
+    value.includes("does not exist")
+  );
+}
+
 export async function getViewerContext() {
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
@@ -26,19 +36,32 @@ export async function getViewerContext() {
   let business = null;
 
   if (profile?.business_id) {
-    const { data: businessData } = await supabase
+    const { data: baseBusinessData } = await supabase
       .from("businesses")
-      .select("id, name, phone, brand_color, currency, referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at, created_at")
+      .select("id, name, phone, brand_color, currency, created_at")
       .eq("id", profile.business_id)
       .single();
 
-    business = businessData ?? null;
+    business = baseBusinessData ?? null;
+
+    const { data: extendedBusinessData, error: extendedBusinessError } = await supabase
+      .from("businesses")
+      .select("referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at")
+      .eq("id", profile.business_id)
+      .maybeSingle();
+
+    if (!extendedBusinessError && extendedBusinessData && business) {
+      business = {
+        ...business,
+        ...extendedBusinessData,
+      };
+    }
   }
 
   let billingTransaction = null;
 
   if (profile?.business_id) {
-    const { data: billingTransactionData } = await supabase
+    const { data: billingTransactionData, error: billingTransactionError } = await supabase
       .from("billing_transactions")
       .select("id, plan_key, status, amount, currency, checkout_url, session_reference, payment_reference, paid_at, period_starts_at, period_ends_at, created_at")
       .eq("business_id", profile.business_id)
@@ -46,7 +69,9 @@ export async function getViewerContext() {
       .limit(1)
       .maybeSingle();
 
-    billingTransaction = billingTransactionData ?? null;
+    if (!billingTransactionError || !matchesMissingSchemaError(billingTransactionError.message)) {
+      billingTransaction = billingTransactionData ?? null;
+    }
   }
 
   return {
@@ -219,10 +244,10 @@ export async function getReferralProgramData() {
   const { supabase, businessId, business } = await getViewerContext();
 
   if (!businessId) {
-    return { business: null, referralEvents: [] };
+    return { business: null, referralEvents: [], setupRequired: false };
   }
 
-  const { data: referralEvents } = await supabase
+  const { data: referralEvents, error } = await supabase
     .from("referral_events")
     .select("id, referred_email, referral_code, reward_days, status, created_at, converted_at")
     .eq("referrer_business_id", businessId)
@@ -231,6 +256,7 @@ export async function getReferralProgramData() {
   return {
     business,
     referralEvents: referralEvents ?? [],
+    setupRequired: Boolean(error && matchesMissingSchemaError(error.message)),
   };
 }
 
@@ -238,10 +264,10 @@ export async function getCatalogProductsData() {
   const { supabase, businessId, business } = await getViewerContext();
 
   if (!businessId) {
-    return { business: null, products: [] };
+    return { business: null, products: [], setupRequired: false };
   }
 
-  const { data: products } = await supabase
+  const { data: products, error } = await supabase
     .from("catalog_products")
     .select("id, name, description, image_url, price, stock_count, is_active, created_at")
     .eq("business_id", businessId)
@@ -259,5 +285,6 @@ export async function getCatalogProductsData() {
       isActive: Boolean(item.is_active),
       createdAt: item.created_at,
     })),
+    setupRequired: Boolean(error && matchesMissingSchemaError(error.message)),
   };
 }

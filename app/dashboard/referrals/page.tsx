@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { Gift, Link2, Sparkles } from "lucide-react";
-import { ensureReferralCodeAction } from "@/app/dashboard/actions";
+import { Gift, Link2 } from "lucide-react";
 import { getAppUrl } from "@/lib/billing";
 import { getReferralProgramData } from "@/lib/queries";
 
@@ -8,8 +7,15 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function ReferralsPage() {
-  const { business, referralEvents } = await getReferralProgramData();
-  const referralCode = business?.referral_code;
+  const { business, referralEvents, setupRequired } = await getReferralProgramData();
+  const referralCode =
+    business?.id && business?.name
+      ? `${business.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "")
+          .slice(0, 6)
+          .padEnd(4, "x")}-${business.id.replace(/-/g, "").slice(0, 6)}`.toUpperCase()
+      : null;
   const referralLink = referralCode ? `${getAppUrl()}/register?ref=${encodeURIComponent(referralCode)}` : "";
 
   return (
@@ -43,14 +49,6 @@ export default async function ReferralsPage() {
             <p className="text-sm font-semibold text-slate-900">Your invite link</p>
             <p className="mt-1 text-xs text-slate-500">Share this directly with another seller.</p>
           </div>
-          {!referralCode ? (
-            <form action={ensureReferralCodeAction}>
-              <button className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-semibold text-white">
-                <Sparkles className="h-4 w-4" />
-                Generate referral link
-              </button>
-            </form>
-          ) : null}
         </div>
 
         {referralCode ? (
@@ -74,6 +72,12 @@ export default async function ReferralsPage() {
           </div>
         ) : null}
       </section>
+
+      {setupRequired ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          Referral activity tracking needs the latest Supabase migration applied. Your share link still works now.
+        </div>
+      ) : null}
 
       <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
         <div>

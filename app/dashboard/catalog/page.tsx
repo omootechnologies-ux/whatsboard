@@ -27,7 +27,7 @@ function getWhatsAppShareLink(businessName: string | null | undefined, product: 
 }
 
 export default async function CatalogPage() {
-  const { business, products } = await getCatalogProductsData();
+  const { business, products, setupRequired } = await getCatalogProductsData();
 
   return (
     <div className="space-y-6">
@@ -55,6 +55,12 @@ export default async function CatalogPage() {
       </section>
 
       <CatalogProductForm />
+
+      {setupRequired ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          Catalog database setup is not applied yet. Run the latest Supabase migration to enable persistent catalog storage.
+        </div>
+      ) : null}
 
       <section className="space-y-4">
         {products.length ? (

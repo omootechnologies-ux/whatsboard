@@ -19,6 +19,16 @@ function generateReferralCode(businessName: string, userId: string) {
   return `${slug}-${userId.replace(/-/g, "").slice(0, 6)}`.toUpperCase();
 }
 
+function matchesMissingSchemaError(message?: string) {
+  const value = (message || "").toLowerCase();
+  return (
+    value.includes("schema cache") ||
+    value.includes("could not find the table") ||
+    value.includes("column") ||
+    value.includes("does not exist")
+  );
+}
+
 export async function registerAction(
   prevState: AuthFormState,
   formData: FormData
@@ -86,47 +96,56 @@ export async function registerAction(
   }
 
   if (referralCode) {
-    const { data: referrerBusiness } = await adminClient
+    const { data: candidateBusinesses } = await adminClient
       .from("businesses")
-      .select("id, billing_status, billing_current_period_ends_at, referral_credit_days")
-      .eq("referral_code", referralCode)
-      .neq("id", business.id)
-      .maybeSingle();
+      .select("id, name, billing_status, billing_current_period_ends_at, referral_credit_days")
+      .neq("id", business.id);
+
+    const referrerBusiness =
+      (candidateBusinesses ?? []).find(
+        (item) => generateReferralCode(item.name ?? "", item.id) === referralCode
+      ) ?? null;
 
     if (referrerBusiness?.id) {
-      await adminClient.from("referral_events").insert({
+      const convertedAt = new Date().toISOString();
+
+      const referralInsert = await adminClient.from("referral_events").insert({
         referrer_business_id: referrerBusiness.id,
         referred_business_id: business.id,
         referred_email: email,
         referral_code: referralCode,
         reward_days: 30,
         status: "converted",
-        converted_at: new Date().toISOString(),
+        converted_at: convertedAt,
       });
 
-      const nextCreditDays = Number(referrerBusiness.referral_credit_days ?? 0) + 30;
-      let nextBillingPeriodEnd = referrerBusiness.billing_current_period_ends_at;
+      if (!referralInsert.error || !matchesMissingSchemaError(referralInsert.error?.message)) {
+        const nextCreditDays = Number(referrerBusiness.referral_credit_days ?? 0) + 30;
+        let nextBillingPeriodEnd = referrerBusiness.billing_current_period_ends_at;
 
-      if (referrerBusiness.billing_status === "active" && referrerBusiness.billing_current_period_ends_at) {
-        const end = new Date(referrerBusiness.billing_current_period_ends_at);
-        end.setUTCDate(end.getUTCDate() + 30);
-        nextBillingPeriodEnd = end.toISOString();
+        if (referrerBusiness.billing_status === "active" && referrerBusiness.billing_current_period_ends_at) {
+          const end = new Date(referrerBusiness.billing_current_period_ends_at);
+          end.setUTCDate(end.getUTCDate() + 30);
+          nextBillingPeriodEnd = end.toISOString();
+        }
+
+        const referrerUpdate = await adminClient
+          .from("businesses")
+          .update({
+            referral_credit_days: nextCreditDays,
+            billing_current_period_ends_at: nextBillingPeriodEnd,
+          })
+          .eq("id", referrerBusiness.id);
+
+        if (!referrerUpdate.error || !matchesMissingSchemaError(referrerUpdate.error?.message)) {
+          await adminClient
+            .from("businesses")
+            .update({
+              referred_by_business_id: referrerBusiness.id,
+            })
+            .eq("id", business.id);
+        }
       }
-
-      await adminClient
-        .from("businesses")
-        .update({
-          referral_credit_days: nextCreditDays,
-          billing_current_period_ends_at: nextBillingPeriodEnd,
-        })
-        .eq("id", referrerBusiness.id);
-
-      await adminClient
-        .from("businesses")
-        .update({
-          referred_by_business_id: referrerBusiness.id,
-        })
-        .eq("id", business.id);
     }
   }
 

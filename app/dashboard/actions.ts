@@ -386,22 +386,6 @@ export async function updateFollowUpAction(
   return { success: true, error: null };
 }
 
-export async function ensureReferralCodeAction() {
-  const { supabase, businessId, business } = await getViewerContext();
-
-  if (!businessId || !business?.name) return;
-  if ((business as any).referral_code) return;
-
-  await supabase
-    .from("businesses")
-    .update({
-      referral_code: generateReferralCode(business.name, businessId),
-    })
-    .eq("id", businessId);
-
-  revalidatePath("/dashboard/referrals");
-}
-
 export async function createCatalogProductAction(
   _prevState: ActionState,
   formData: FormData
@@ -413,6 +397,7 @@ export async function createCatalogProductAction(
   const name = String(formData.get("name") || "").trim();
   const description = String(formData.get("description") || "").trim();
   const imageUrl = String(formData.get("imageUrl") || "").trim();
+  const uploadedImageUrl = String(formData.get("uploadedImageUrl") || "").trim();
   const price = Number(formData.get("price") || 0);
   const stockCount = Number(formData.get("stockCount") || 0);
 
@@ -424,13 +409,23 @@ export async function createCatalogProductAction(
     business_id: businessId,
     name,
     description: description || null,
-    image_url: imageUrl || null,
+    image_url: uploadedImageUrl || imageUrl || null,
     price,
     stock_count: stockCount,
     is_active: true,
   });
 
-  if (error) return { success: false, error: error.message };
+  if (error) {
+    const message = error.message.toLowerCase();
+    if (message.includes("schema cache") || message.includes("could not find the table")) {
+      return {
+        success: false,
+        error: "Catalog database setup is not applied yet. Run the latest Supabase migration, then try again.",
+      };
+    }
+
+    return { success: false, error: error.message };
+  }
 
   revalidatePath("/dashboard/catalog");
   revalidatePath("/dashboard");
