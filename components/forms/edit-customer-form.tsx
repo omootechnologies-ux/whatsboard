@@ -32,9 +32,9 @@ export default function EditCustomerForm({
   const [state, formAction, isPending] = useFormState(action, initialState);
 
   return (
-    <form action={formAction} className="grid gap-4 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+    <form action={formAction} className="form-surface grid gap-4">
       {!canManageRecords ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="form-note form-note-warning">
           Free plan is view-only. Upgrade to Starter or above to edit customers.
           <Link href="/pricing" className="ml-2 font-semibold underline">
             Upgrade now
@@ -43,33 +43,33 @@ export default function EditCustomerForm({
       ) : null}
 
       <fieldset disabled={!canManageRecords} className="contents disabled:opacity-70">
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="grid gap-2">
-          <span className="text-sm font-semibold text-slate-700">Name</span>
-          <input name="name" defaultValue={customer.name ?? ""} className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
+      <div className="form-grid">
+        <label className="form-field">
+          <span className="form-label">Name</span>
+          <input name="name" defaultValue={customer.name ?? ""} className="form-input" />
         </label>
 
-        <label className="grid gap-2">
-          <span className="text-sm font-semibold text-slate-700">Phone</span>
-          <input name="phone" defaultValue={customer.phone ?? ""} className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
+        <label className="form-field">
+          <span className="form-label">Phone</span>
+          <input name="phone" defaultValue={customer.phone ?? ""} className="form-input" />
         </label>
 
-        <label className="grid gap-2">
-          <span className="text-sm font-semibold text-slate-700">Area</span>
-          <input name="area" defaultValue={customer.area ?? ""} className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
+        <label className="form-field">
+          <span className="form-label">Area</span>
+          <input name="area" defaultValue={customer.area ?? ""} className="form-input" />
         </label>
 
       </div>
 
-      <label className="grid gap-2">
-        <span className="text-sm font-semibold text-slate-700">Notes</span>
-        <textarea name="notes" defaultValue={customer.notes ?? ""} className="min-h-[120px] w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900" />
+      <label className="form-field">
+        <span className="form-label">Notes</span>
+        <textarea name="notes" defaultValue={customer.notes ?? ""} className="form-textarea" />
       </label>
 
-      {state.error ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{state.error}</div> : null}
-      {state.success ? <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">Customer updated successfully.</div> : null}
+      {state.error ? <div className="form-note form-note-error">{state.error}</div> : null}
+      {state.success ? <div className="form-note form-note-success">Customer updated successfully.</div> : null}
 
-      <button type="submit" disabled={isPending} className="inline-flex items-center justify-center rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">
+      <button type="submit" disabled={isPending} className="form-submit">
         {isPending ? "Saving..." : "Save changes"}
       </button>
       </fieldset>

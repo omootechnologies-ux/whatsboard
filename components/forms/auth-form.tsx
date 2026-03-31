@@ -12,7 +12,7 @@ function SubmitButton({ label }: { label: string }) {
   return (
     <button
       disabled={pending}
-      className="w-full rounded-2xl border border-[#0f5d46] bg-[#0f5d46] px-4 py-3 font-medium text-white transition hover:bg-[#0a3d2e] disabled:opacity-60"
+      className="form-submit w-full"
     >
       {pending ? "Please wait..." : label}
     </button>
@@ -34,7 +34,7 @@ export function AuthForm({
     <form action={formAction} className="mt-6 space-y-4">
       {fields.map((field) => (
         <div key={field.name} className="space-y-2">
-          <label className="text-sm text-[#5e6461]" htmlFor={field.name}>
+          <label className="form-label" htmlFor={field.name}>
             {field.label}
           </label>
           <input
@@ -43,11 +43,11 @@ export function AuthForm({
             type={field.type ?? "text"}
             placeholder={field.placeholder}
             defaultValue={field.defaultValue}
-            className="w-full rounded-2xl border border-[#e8e8e2] bg-[#fcfcfa] px-4 py-3 text-[#111111] placeholder:text-[#5e6461]/70"
+            className="form-input"
           />
         </div>
       ))}
-      {state.error ? <p className="text-sm text-[#c7675d]">{state.error}</p> : null}
+      {state.error ? <p className="form-note form-note-error">{state.error}</p> : null}
       <SubmitButton label={submitLabel} />
     </form>
   );

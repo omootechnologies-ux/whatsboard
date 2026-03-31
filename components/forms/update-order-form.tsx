@@ -70,16 +70,16 @@ export default function UpdateOrderForm({
   const visibleStages = ORDER_STAGES.filter((stage) => allowedStages.includes(stage.key));
 
   return (
-    <form action={formAction} className="grid gap-4 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
+    <form action={formAction} className="form-surface grid gap-4">
       {monthlyOrderLimit !== null ? (
-        <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
+        <div className="form-note form-note-info">
           Free includes {monthlyOrderLimit} orders per month. You have used {orderCountThisMonth} this month
           {remainingMonthlyOrders !== null ? ` and have ${remainingMonthlyOrders} left.` : "."}
         </div>
       ) : null}
 
       {!canManageRecords ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+        <div className="form-note form-note-warning">
           You have reached this month&apos;s Free order limit. Upgrade to Starter or above for unlimited orders.
           <Link href="/pricing" className="ml-2 font-semibold underline">
             Upgrade now
@@ -88,24 +88,24 @@ export default function UpdateOrderForm({
       ) : null}
 
       <fieldset disabled={!canManageRecords} className="contents disabled:opacity-70">
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="grid gap-2">
-          <span className="text-sm font-semibold text-slate-700">Customer name</span>
-          <input name="customerName" defaultValue={order.customer_name ?? ""} className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
+      <div className="form-grid">
+        <label className="form-field">
+          <span className="form-label">Customer name</span>
+          <input name="customerName" defaultValue={order.customer_name ?? ""} className="form-input" />
         </label>
 
-        <label className="grid gap-2">
-          <span className="text-sm font-semibold text-slate-700">Phone</span>
-          <input name="phone" defaultValue={order.phone ?? ""} className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
+        <label className="form-field">
+          <span className="form-label">Phone</span>
+          <input name="phone" defaultValue={order.phone ?? ""} className="form-input" />
         </label>
 
-        <label className="grid gap-2">
-          <span className="text-sm font-semibold text-slate-700">Catalog product</span>
+        <label className="form-field">
+          <span className="form-label">Catalog product</span>
           <select
             name="catalogProductId"
             value={catalogProductId}
             onChange={(event) => setCatalogProductId(event.target.value)}
-            className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900"
+            className="form-select"
           >
             <option value="">Custom product</option>
             {catalogProducts
@@ -118,19 +118,19 @@ export default function UpdateOrderForm({
           </select>
         </label>
 
-        <label className="grid gap-2">
-          <span className="text-sm font-semibold text-slate-700">Product</span>
+        <label className="form-field">
+          <span className="form-label">Product</span>
           <input
             name="product"
             value={selectedCatalogProduct ? selectedCatalogProduct.name : customProduct}
             onChange={(event) => setCustomProduct(event.target.value)}
             readOnly={Boolean(selectedCatalogProduct)}
-            className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900 read-only:text-slate-500"
+            className="form-input read-only:text-muted-foreground"
           />
         </label>
 
-        <label className="grid gap-2">
-          <span className="text-sm font-semibold text-slate-700">Amount</span>
+        <label className="form-field">
+          <span className="form-label">Amount</span>
           <input
             name="amount"
             type="number"
@@ -138,21 +138,21 @@ export default function UpdateOrderForm({
             value={selectedCatalogProduct ? String(selectedCatalogProduct.price) : customAmount}
             onChange={(event) => setCustomAmount(event.target.value)}
             readOnly={Boolean(selectedCatalogProduct)}
-            className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900 read-only:text-slate-500"
+            className="form-input read-only:text-muted-foreground"
           />
         </label>
 
-        <label className="grid gap-2">
-          <span className="text-sm font-semibold text-slate-700">Area</span>
-          <input name="area" defaultValue={order.delivery_area ?? ""} className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
+        <label className="form-field">
+          <span className="form-label">Area</span>
+          <input name="area" defaultValue={order.delivery_area ?? ""} className="form-input" />
         </label>
 
-        <label className="grid gap-2">
-          <span className="text-sm font-semibold text-slate-700">Stage</span>
+        <label className="form-field">
+          <span className="form-label">Stage</span>
           <select
             name="stage"
             defaultValue={allowedStages.includes((order.stage as OrderStage) ?? "new_order") ? order.stage ?? "new_order" : allowedStages[0] ?? "new_order"}
-            className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900"
+            className="form-select"
           >
             {visibleStages.map((stage) => (
               <option key={stage.key} value={stage.key}>
@@ -162,8 +162,8 @@ export default function UpdateOrderForm({
           </select>
         </label>
 
-        <label className="grid gap-2">
-          <span className="text-sm font-semibold text-slate-700">Payment status</span>
+        <label className="form-field">
+          <span className="form-label">Payment status</span>
           <select
             name="paymentStatus"
             defaultValue={
@@ -171,7 +171,7 @@ export default function UpdateOrderForm({
                 ? order.payment_status ?? "unpaid"
                 : allowedPaymentStatuses[0] ?? "unpaid"
             }
-            className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900"
+            className="form-select"
           >
             {allowedPaymentStatuses.map((item) => (
               <option key={item} value={item}>
@@ -182,12 +182,12 @@ export default function UpdateOrderForm({
         </label>
 
         {canUsePaymentTracking ? null : (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 md:col-span-2">
+          <div className="form-note form-note-muted md:col-span-2">
             Payment tracking starts on Starter. Free orders stay in basic tracking mode.
           </div>
         )}
 
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 md:col-span-2">
+        <div className="form-note form-note-muted md:col-span-2">
           {selectedCatalogProduct
             ? `${selectedCatalogProduct.stockCount} units left in catalog. Changing this order to a different catalog product will restore stock on the previous one and reduce the new one by 1.`
             : "Leave catalog product empty to keep this order as a custom line item."}
@@ -195,37 +195,37 @@ export default function UpdateOrderForm({
 
         {canUseFollowUps ? (
           <>
-            <label className="flex items-center gap-3 rounded-2xl border border-slate-300 bg-white px-4 py-3 md:col-span-2">
+            <label className="form-check-row md:col-span-2">
               <input type="checkbox" name="addFollowUp" className="h-4 w-4" />
-              <span className="text-sm font-semibold text-slate-700">Add or update follow-up</span>
+              <span className="text-sm font-semibold text-foreground">Add or update follow-up</span>
             </label>
 
-            <label className="grid gap-2">
-              <span className="text-sm font-semibold text-slate-700">Follow-up date</span>
-              <input name="followUpDate" type="datetime-local" className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
+            <label className="form-field">
+              <span className="form-label">Follow-up date</span>
+              <input name="followUpDate" type="datetime-local" className="form-input" />
             </label>
 
-            <label className="grid gap-2">
-              <span className="text-sm font-semibold text-slate-700">Follow-up note</span>
-              <input name="followUpNote" className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900" />
+            <label className="form-field">
+              <span className="form-label">Follow-up note</span>
+              <input name="followUpNote" className="form-input" />
             </label>
           </>
         ) : (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 md:col-span-2">
+          <div className="form-note form-note-muted md:col-span-2">
             Follow-up reminders start on Starter.
           </div>
         )}
       </div>
 
-      <label className="grid gap-2">
-        <span className="text-sm font-semibold text-slate-700">Notes</span>
-        <textarea name="notes" defaultValue={order.notes ?? ""} className="min-h-[130px] w-full rounded-2xl border border-slate-300 px-4 py-3 text-slate-900" />
+      <label className="form-field">
+        <span className="form-label">Notes</span>
+        <textarea name="notes" defaultValue={order.notes ?? ""} className="form-textarea min-h-[130px]" />
       </label>
 
-      {state.error ? <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{state.error}</div> : null}
-      {state.success ? <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">Order updated successfully.</div> : null}
+      {state.error ? <div className="form-note form-note-error">{state.error}</div> : null}
+      {state.success ? <div className="form-note form-note-success">Order updated successfully.</div> : null}
 
-      <button type="submit" disabled={isPending} className="inline-flex items-center justify-center rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50">
+      <button type="submit" disabled={isPending} className="form-submit">
         {isPending ? "Saving..." : "Save changes"}
       </button>
       </fieldset>

@@ -27,14 +27,14 @@ export default function CustomerForm({ customer }: { customer: CustomerRecord })
   const [state, formAction, isPending] = useFormState(action, initialState);
 
   return (
-    <form action={formAction} className="grid gap-4 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="grid gap-4 md:grid-cols-2">
+    <form action={formAction} className="form-surface grid gap-4">
+      <div className="form-grid">
         <Field label="Customer name">
           <input
             name="name"
             defaultValue={customer.name ?? ""}
             placeholder="Customer name"
-            className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
+            className="form-input"
           />
         </Field>
 
@@ -43,7 +43,7 @@ export default function CustomerForm({ customer }: { customer: CustomerRecord })
             name="phone"
             defaultValue={customer.phone ?? ""}
             placeholder="Phone"
-            className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
+            className="form-input"
           />
         </Field>
 
@@ -52,7 +52,7 @@ export default function CustomerForm({ customer }: { customer: CustomerRecord })
             name="area"
             defaultValue={customer.area ?? ""}
             placeholder="Area"
-            className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
+            className="form-input"
           />
         </Field>
 
@@ -60,7 +60,7 @@ export default function CustomerForm({ customer }: { customer: CustomerRecord })
           <select
             name="channel"
             defaultValue={customer.channel ?? ""}
-            className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
+            className="form-select"
           >
             <option value="">Select channel</option>
             <option value="whatsapp">WhatsApp</option>
@@ -77,18 +77,18 @@ export default function CustomerForm({ customer }: { customer: CustomerRecord })
           name="notes"
           defaultValue={customer.notes ?? ""}
           placeholder="Notes"
-          className="min-h-[130px] w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400"
+          className="form-textarea min-h-[130px]"
         />
       </Field>
 
       {state.error && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+        <div className="form-note form-note-error">
           {state.error}
         </div>
       )}
 
       {state.success && (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+        <div className="form-note form-note-success">
           Customer updated successfully.
         </div>
       )}
@@ -96,7 +96,7 @@ export default function CustomerForm({ customer }: { customer: CustomerRecord })
       <button
         type="submit"
         disabled={isPending}
-        className="inline-flex items-center justify-center rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
+        className="form-submit"
       >
         {isPending ? "Saving..." : "Save changes"}
       </button>
@@ -112,8 +112,8 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="grid gap-2">
-      <span className="text-sm font-semibold text-slate-700">{label}</span>
+    <label className="form-field">
+      <span className="form-label">{label}</span>
       {children}
     </label>
   );
