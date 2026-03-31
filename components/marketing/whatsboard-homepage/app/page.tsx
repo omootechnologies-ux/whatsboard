@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
 
 type OrderStatus =
   | "new"
@@ -11,22 +10,13 @@ type OrderStatus =
   | "packing"
   | "dispatch"
   | "delivered";
-
 type PaymentStatus = "unpaid" | "partial" | "paid" | "confirmed";
 type FollowUpStatus = "overdue" | "today" | "upcoming";
 type DeliveryStatus = "ready_to_pack" | "packed" | "sent_out" | "delivered";
 
-type DashboardStats = {
-  totalOrders: number;
-  pendingPayments: number;
-  delivered: number;
-  repeatCustomers: number;
-  followUpsDue: number;
-};
-
 type OrderRecord = {
   id: string;
-  customerName: string;
+  customer: string;
   source: "WhatsApp" | "Instagram" | "TikTok" | "Facebook";
   total: string;
   status: OrderStatus;
@@ -39,427 +29,264 @@ type CustomerRecord = {
   name: string;
   phone: string;
   lastOrder: string;
-  followUpDate: string;
-  purchaseHistory: string;
-  state: "active" | "waiting" | "repeat";
+  history: string;
+  followUp: string;
 };
 
 type FollowUpRecord = {
   id: string;
-  customerName: string;
+  customer: string;
   action: string;
-  dueLabel: string;
   status: FollowUpStatus;
+  due: string;
 };
 
 type DeliveryRecord = {
   id: string;
   orderId: string;
-  customerName: string;
   area: string;
+  customer: string;
   status: DeliveryStatus;
 };
 
-type BoardData = {
-  stats: DashboardStats;
-  orders: OrderRecord[];
-  customers: CustomerRecord[];
-  followUps: FollowUpRecord[];
-  deliveries: DeliveryRecord[];
+type DashboardStats = {
+  totalOrders: string;
+  pendingPayments: string;
+  repeatCustomers: string;
+  followUpsDue: string;
 };
 
-type Stage =
-  | "hero"
-  | "problem"
-  | "shift"
-  | "orders"
-  | "payments"
-  | "customers"
-  | "followups"
-  | "dispatch"
-  | "visibility"
-  | "trust"
-  | "pricing"
-  | "cta";
+const orders: OrderRecord[] = [
+  {
+    id: "#WB-1092",
+    customer: "Asha Mushi",
+    source: "WhatsApp",
+    total: "TZS 95,000",
+    status: "awaiting_payment",
+    createdAt: "Today, 09:12",
+    paymentStatus: "unpaid",
+  },
+  {
+    id: "#WB-1091",
+    customer: "Kevin Otieno",
+    source: "Instagram",
+    total: "TZS 64,000",
+    status: "paid",
+    createdAt: "Today, 08:42",
+    paymentStatus: "confirmed",
+  },
+  {
+    id: "#WB-1089",
+    customer: "Neema Said",
+    source: "TikTok",
+    total: "TZS 120,000",
+    status: "dispatch",
+    createdAt: "Yesterday",
+    paymentStatus: "paid",
+  },
+];
 
-type StorySection = {
-  id: Stage;
-  navLabel?: string;
-  eyebrow: string;
-  title: string;
-  body: string;
-  bullets: string[];
+const customers: CustomerRecord[] = [
+  {
+    id: "cus_01",
+    name: "Grace Mollel",
+    phone: "+255 718 400 213",
+    lastOrder: "#WB-1084",
+    history: "4 orders",
+    followUp: "Today",
+  },
+  {
+    id: "cus_02",
+    name: "Amina Yusuf",
+    phone: "+254 701 882 114",
+    lastOrder: "#WB-1079",
+    history: "7 orders",
+    followUp: "Apr 2",
+  },
+  {
+    id: "cus_03",
+    name: "Brian Kato",
+    phone: "+256 779 230 812",
+    lastOrder: "#WB-1090",
+    history: "2 orders",
+    followUp: "Apr 4",
+  },
+];
+
+const followUps: FollowUpRecord[] = [
+  {
+    id: "fu_01",
+    customer: "Grace Mollel",
+    action: "Check if payment proof is ready",
+    status: "overdue",
+    due: "Overdue by 1 day",
+  },
+  {
+    id: "fu_02",
+    customer: "Asha Mushi",
+    action: "Confirm size before packing",
+    status: "today",
+    due: "Today at 14:00",
+  },
+  {
+    id: "fu_03",
+    customer: "Amina Yusuf",
+    action: "Follow up on repeat order",
+    status: "upcoming",
+    due: "Tomorrow",
+  },
+];
+
+const deliveries: DeliveryRecord[] = [
+  {
+    id: "dl_01",
+    orderId: "#WB-1091",
+    area: "Kariakoo",
+    customer: "Kevin Otieno",
+    status: "ready_to_pack",
+  },
+  {
+    id: "dl_02",
+    orderId: "#WB-1087",
+    area: "Mikocheni",
+    customer: "Neema Said",
+    status: "packed",
+  },
+  {
+    id: "dl_03",
+    orderId: "#WB-1083",
+    area: "Kinondoni",
+    customer: "Zawadi John",
+    status: "sent_out",
+  },
+];
+
+const stats: DashboardStats = {
+  totalOrders: "124",
+  pendingPayments: "6",
+  repeatCustomers: "17",
+  followUpsDue: "8",
 };
 
-const boardData: BoardData = {
-  stats: {
-    totalOrders: 124,
-    pendingPayments: 6,
-    delivered: 38,
-    repeatCustomers: 17,
-    followUpsDue: 8,
-  },
-  orders: [
-    {
-      id: "#WB-1092",
-      customerName: "Asha Mushi",
-      source: "WhatsApp",
-      total: "TZS 95,000",
-      status: "awaiting_payment",
-      createdAt: "Today, 09:12",
-      paymentStatus: "unpaid",
-    },
-    {
-      id: "#WB-1091",
-      customerName: "Kevin Otieno",
-      source: "Instagram",
-      total: "TZS 64,000",
-      status: "paid",
-      createdAt: "Today, 08:42",
-      paymentStatus: "confirmed",
-    },
-    {
-      id: "#WB-1089",
-      customerName: "Neema Said",
-      source: "TikTok",
-      total: "TZS 120,000",
-      status: "dispatch",
-      createdAt: "Yesterday",
-      paymentStatus: "paid",
-    },
-  ],
-  customers: [
-    {
-      id: "cus_01",
-      name: "Grace Mollel",
-      phone: "+255 718 400 213",
-      lastOrder: "#WB-1084",
-      followUpDate: "Today",
-      purchaseHistory: "4 orders",
-      state: "waiting",
-    },
-    {
-      id: "cus_02",
-      name: "Amina Yusuf",
-      phone: "+254 701 882 114",
-      lastOrder: "#WB-1079",
-      followUpDate: "Apr 2",
-      purchaseHistory: "7 orders",
-      state: "repeat",
-    },
-    {
-      id: "cus_03",
-      name: "Brian Kato",
-      phone: "+256 779 230 812",
-      lastOrder: "#WB-1090",
-      followUpDate: "Apr 4",
-      purchaseHistory: "2 orders",
-      state: "active",
-    },
-  ],
-  followUps: [
-    {
-      id: "f_01",
-      customerName: "Grace Mollel",
-      action: "Check if payment proof is ready",
-      dueLabel: "Overdue by 1 day",
-      status: "overdue",
-    },
-    {
-      id: "f_02",
-      customerName: "Asha Mushi",
-      action: "Send size confirmation",
-      dueLabel: "Today at 14:00",
-      status: "today",
-    },
-    {
-      id: "f_03",
-      customerName: "Amina Yusuf",
-      action: "Follow up on repeat order",
-      dueLabel: "Tomorrow",
-      status: "upcoming",
-    },
-  ],
-  deliveries: [
-    {
-      id: "d_01",
-      orderId: "#WB-1091",
-      customerName: "Kevin Otieno",
-      area: "Kariakoo",
-      status: "ready_to_pack",
-    },
-    {
-      id: "d_02",
-      orderId: "#WB-1087",
-      customerName: "Neema Said",
-      area: "Mikocheni",
-      status: "packed",
-    },
-    {
-      id: "d_03",
-      orderId: "#WB-1083",
-      customerName: "Zawadi John",
-      area: "Kinondoni",
-      status: "sent_out",
-    },
-    {
-      id: "d_04",
-      orderId: "#WB-1078",
-      customerName: "Amina Yusuf",
-      area: "Arusha CBD",
-      status: "delivered",
-    },
-  ],
-};
-
-const storySections: StorySection[] = [
+const features = [
   {
-    id: "hero",
-    navLabel: "Features",
-    eyebrow: "Commerce operating layer",
-    title: "Turn chat chaos into sales control",
-    body:
-      "WhatsBoard helps online sellers track orders, payments, customers, follow-ups, and deliveries from WhatsApp and social media in one clean system.",
-    bullets: ["One board for orders after chat", "Built for modern African online sellers", "Structured enough to run the day"],
+    title: "Order Tracking",
+    description: "Every order gets an ID, status, source, amount, and clear next step.",
+    accent: "Pipeline with real stages",
   },
   {
-    id: "problem",
-    eyebrow: "The problem",
-    title: "Your business is selling. But your system is guessing.",
-    body:
-      "Orders are buried in chat threads, payment proof gets lost in screenshots, customers wait too long, and delivery status depends on memory.",
-    bullets: ["Buried orders", "Missed payments", "Forgotten follow-ups"],
+    title: "Payment Visibility",
+    description: "Stop guessing who has paid, who sent proof, and what still needs action.",
+    accent: "Unpaid, partial, paid, confirmed",
   },
   {
-    id: "shift",
-    navLabel: "How It Works",
-    eyebrow: "The shift",
-    title: "WhatsBoard turns conversations into a trackable workflow.",
-    body:
-      "The same order that starts in a message becomes a visible record with status, payment state, customer context, and the next operational action.",
-    bullets: ["New order", "Awaiting payment", "Paid", "Packing → Dispatch → Delivered"],
+    title: "Customer Records",
+    description: "Keep phone numbers, last orders, history, and next follow-up in one place.",
+    accent: "Searchable customer context",
   },
   {
-    id: "orders",
-    eyebrow: "Orders",
-    title: "Every order gets a home.",
-    body:
-      "The board shows order ID, customer, source, total, current stage, and when it entered the system. No more hunting through threads to reconstruct one sale.",
-    bullets: ["Order ID", "Source", "Total", "Status"],
+    title: "Smart Follow-ups",
+    description: "Turn forgotten messages into a visible queue of overdue and due-today actions.",
+    accent: "Overdue, today, upcoming",
   },
   {
-    id: "payments",
-    eyebrow: "Payments",
-    title: "Stop guessing who has paid.",
-    body:
-      "Payment badges, timestamps, and confirmation states keep collection work visible before dispatch starts moving.",
-    bullets: ["Unpaid", "Partial", "Paid", "Confirmed"],
+    title: "Dispatch Workflow",
+    description: "Move from ready to pack to delivered with visible operational stages.",
+    accent: "Delivery stages that make sense",
   },
   {
-    id: "customers",
-    eyebrow: "Customers",
-    title: "Every customer becomes searchable and trackable.",
-    body:
-      "Customer records keep phone, last order, next follow-up, and purchase history tied to the business instead of disappearing inside a chat archive.",
-    bullets: ["Searchable records", "Last order context", "Purchase history"],
-  },
-  {
-    id: "followups",
-    eyebrow: "Follow-ups",
-    title: "No more ‘I forgot to text them back.’",
-    body:
-      "Reminder cards turn follow-up work into a visible queue with overdue, today, and upcoming tasks.",
-    bullets: ["Overdue", "Today", "Upcoming"],
-  },
-  {
-    id: "dispatch",
-    eyebrow: "Delivery",
-    title: "From payment to doorstep, everything has a stage.",
-    body:
-      "After payment, the workflow keeps moving through ready to pack, packed, sent out, and delivered without becoming a guessing game.",
-    bullets: ["Ready to pack", "Packed", "Sent out", "Delivered"],
-  },
-  {
-    id: "visibility",
-    eyebrow: "Visibility",
-    title: "Now the seller can see the business, not just reply to it.",
-    body:
-      "The board surfaces total orders, pending payments, delivered orders, repeat customers, and follow-ups due in one calm view.",
-    bullets: ["Total orders", "Pending payments", "Repeat customers"],
-  },
-  {
-    id: "trust",
-    navLabel: "Testimonials",
-    eyebrow: "Trust",
-    title: "Practical control sellers can feel immediately.",
-    body:
-      "The outcome is not abstract. Fewer missed orders, faster follow-ups, clearer payment status, and a more professional business day.",
-    bullets: ["Fewer missed orders", "Faster follow-ups", "Better delivery control"],
-  },
-  {
-    id: "pricing",
-    navLabel: "Pricing",
-    eyebrow: "Pricing",
-    title: "Simple plans. Clear upgrade path.",
-    body:
-      "Start free, prove the system inside the business, then move up when order volume and operational pressure grow.",
-    bullets: ["Free to start", "Starter for active sellers", "Growth for scaling teams"],
-  },
-  {
-    id: "cta",
-    eyebrow: "Start now",
-    title: "Your chats can bring the orders. WhatsBoard should run the business.",
-    body:
-      "Staying inside messy chats is expensive. The next step is structure, visibility, and a board the seller can trust every day.",
-    bullets: ["Start free", "See pricing", "Get control now"],
+    title: "Sales Overview",
+    description: "See order load, pending payments, repeat customers, and follow-up pressure fast.",
+    accent: "A calm daily control layer",
   },
 ];
 
 const testimonials = [
   {
     quote:
-      "Before WhatsBoard, I was checking screenshots to confirm payments. Now I know what is paid and what still needs action in one view.",
+      "Before WhatsBoard, I was checking screenshots to confirm payments. Now I know what is pending and what should move next.",
     name: "Amina",
     role: "Fashion seller, Dar es Salaam",
   },
   {
     quote:
-      "Follow-ups stopped living in my head. The business now feels cleaner and faster, especially on the days with many WhatsApp orders.",
+      "The biggest shift is follow-up speed. Orders stopped disappearing inside chats and the business feels more serious.",
     name: "Brian",
     role: "Accessories seller, Nairobi",
   },
   {
     quote:
-      "It made delivery and customer replies more professional without adding a heavy system. I can run it from my phone.",
+      "It made delivery and customer replies feel more professional without making the workflow heavy.",
     name: "Neema",
     role: "Beauty seller, Arusha",
   },
 ];
 
-const pricingTiers = [
+const pricing = [
   {
     name: "Free",
     price: "TZS 0",
-    note: "Your first 30 orders every month, with the basic board and order tracking.",
-    cta: "Start free",
+    note: "For sellers getting out of chat chaos and starting with real order structure.",
   },
   {
     name: "Starter",
     price: "TZS 15K / mo",
-    note: "Payment tracking, customer records, follow-ups, and the day-to-day control most active sellers need.",
-    cta: "Choose Starter",
+    note: "For active sellers who need payments, follow-ups, customer tracking, and control.",
     highlight: true,
   },
   {
     name: "Growth",
     price: "TZS 35K / mo",
-    note: "Dispatch workflow, sales visibility, and deeper operational support for bigger volume.",
-    cta: "Choose Growth",
+    note: "For higher-volume sellers managing dispatch workflow and broader visibility.",
   },
 ] as const;
 
 export default function WhatsBoardHomepage() {
-  const [active, setActive] = useState<Stage>("hero");
-
-  useEffect(() => {
-    const nodes = Array.from(document.querySelectorAll<HTMLElement>("[data-stage]"));
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const current = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-
-        if (!current) return;
-        const next = current.target.dataset.stage as Stage | undefined;
-        if (next) setActive(next);
-      },
-      { rootMargin: "-16% 0px -52% 0px", threshold: [0.2, 0.45, 0.7] }
-    );
-
-    nodes.forEach((node) => observer.observe(node));
-    return () => observer.disconnect();
-  }, []);
-
-  const navItems = useMemo(
-    () =>
-      storySections
-        .filter((section) => section.navLabel)
-        .map((section) => ({
-          href:
-            section.id === "hero"
-              ? "#features"
-              : section.id === "shift"
-                ? "#how-it-works"
-                : section.id === "trust"
-                  ? "#testimonials"
-                  : section.id === "pricing"
-                    ? "#pricing"
-                    : "#features",
-          label: section.navLabel!,
-        })),
-    []
-  );
-
   return (
     <main className="min-h-screen bg-[#FAFAF7] text-[#111111]">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,rgba(15,93,70,0.08),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0),rgba(15,93,70,0.025))]" />
-
-      <PremiumNavbar items={navItems} />
-
-      <section className="relative">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:py-10">
-          <div className="grid gap-10 lg:grid-cols-[0.84fr_1.16fr] lg:gap-16">
-            <div className="space-y-24 lg:space-y-32">
-              {storySections.map((section, index) => (
-                <ScrollStorySection
-                  key={section.id}
-                  section={section}
-                  index={index}
-                  active={active === section.id}
-                />
-              ))}
-            </div>
-
-            <div className="space-y-4">
-              <div className="sticky top-18 z-20 lg:hidden">
-                <StickyBoardLayout active={active} data={boardData} compact />
-              </div>
-              <div className="hidden lg:block lg:sticky lg:top-24 lg:h-[calc(100svh-7rem)]">
-                <div className="flex h-full items-start">
-                  <StickyBoardLayout active={active} data={boardData} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <MobileCtaBar />
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_right,rgba(15,93,70,0.07),transparent_28%),radial-gradient(circle_at_20%_15%,rgba(15,93,70,0.04),transparent_22%)]" />
+      <Navbar />
+      <Hero />
+      <ChaosSection />
+      <TransformationSection />
+      <ProductShowcase />
+      <FeatureGrid />
+      <ComparisonSection />
+      <TestimonialsSection />
+      <PricingSection />
+      <FinalCTA />
       <Footer />
     </main>
   );
 }
 
-function PremiumNavbar({ items }: { items: { href: string; label: string }[] }) {
+function Navbar() {
   return (
-    <header className="sticky top-0 z-50 border-b border-[#E7E7E2] bg-[#FAFAF7]/86 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-[#E8E8E2]/80 bg-[#FAFAF7]/88 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <Link href="/" className="text-sm font-semibold uppercase tracking-[0.28em] text-[#111111]">
           WhatsBoard
         </Link>
 
-        <nav className="hidden items-center gap-7 text-sm text-[#5F6368] md:flex">
-          {items.map((item) => (
-            <a key={item.label} href={item.href} className="transition hover:text-[#111111]">
-              {item.label}
-            </a>
-          ))}
+        <nav className="hidden items-center gap-7 text-sm text-[#5E6461] md:flex">
+          <a href="#product" className="transition hover:text-[#111111]">
+            Product
+          </a>
+          <a href="#features" className="transition hover:text-[#111111]">
+            Features
+          </a>
+          <a href="#pricing" className="transition hover:text-[#111111]">
+            Pricing
+          </a>
+          <a href="#testimonials" className="transition hover:text-[#111111]">
+            Testimonials
+          </a>
         </nav>
 
         <div className="flex items-center gap-2">
           <Link
             href="/login"
-            className="rounded-full border border-[#E7E7E2] bg-white px-4 py-2 text-sm text-[#0A3D2E] transition hover:border-[#0F5D46]/25 hover:bg-[#F4F5F0]"
+            className="rounded-full border border-[#E8E8E2] bg-white px-4 py-2 text-sm text-[#0A3D2E] transition hover:bg-[#F2F3EE]"
           >
             Log in
           </Link>
@@ -475,593 +302,788 @@ function PremiumNavbar({ items }: { items: { href: string; label: string }[] }) 
   );
 }
 
-function ScrollStorySection({
-  section,
-  index,
-  active,
-}: {
-  section: StorySection;
-  index: number;
-  active: boolean;
-}) {
-  const id =
-    section.id === "hero"
-      ? "features"
-      : section.id === "shift"
-        ? "how-it-works"
-        : section.id === "trust"
-          ? "testimonials"
-          : section.id === "pricing"
-            ? "pricing"
-            : undefined;
+function Hero() {
+  return (
+    <section className="relative overflow-hidden">
+      <div className="mx-auto grid max-w-7xl gap-14 px-4 py-18 sm:px-6 lg:grid-cols-[0.92fr_1.08fr] lg:items-center lg:py-24">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.4 }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="max-w-2xl"
+        >
+          <p className="text-[11px] font-medium uppercase tracking-[0.32em] text-[#5E6461]">
+            Commerce operating system
+          </p>
+          <h1 className="mt-5 text-5xl leading-[0.94] font-semibold tracking-[-0.08em] text-[#111111] sm:text-7xl">
+            WhatsBoard turns sales from messy chats into a clear business system.
+          </h1>
+          <p className="mt-6 max-w-xl text-base leading-8 text-[#5E6461]">
+            Track orders, payments, customers, follow-ups, and delivery workflow from WhatsApp
+            and social media in one product that feels ready for real business.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <PrimaryLink href="/register">Start Free</PrimaryLink>
+            <SecondaryLink href="/pricing">Book Demo</SecondaryLink>
+          </div>
+          <div className="mt-6 flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.22em] text-[#5E6461]">
+            <span className="rounded-full border border-[#E8E8E2] bg-white px-3 py-2">
+              Built for African online sellers
+            </span>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.55, ease: "easeOut", delay: 0.05 }}
+          className="relative min-h-[32rem]"
+        >
+          <div className="absolute inset-0 rounded-[2.6rem] bg-[radial-gradient(circle_at_top_right,rgba(15,93,70,0.16),transparent_32%),linear-gradient(180deg,#ffffff,#f4f5ef)]" />
+          <FloatingPanel className="left-0 top-6 w-[56%]">
+            <OrderPreviewCard order={orders[0]} />
+          </FloatingPanel>
+          <FloatingPanel className="right-0 top-0 w-[48%] delay-100">
+            <PaymentPreviewCard order={orders[1]} />
+          </FloatingPanel>
+          <FloatingPanel className="left-[8%] top-[41%] w-[52%] delay-150">
+            <CustomerPreviewCard customer={customers[0]} />
+          </FloatingPanel>
+          <FloatingPanel className="right-[4%] top-[38%] w-[42%] delay-200">
+            <FollowUpPreviewCard item={followUps[0]} />
+          </FloatingPanel>
+          <FloatingPanel className="left-[18%] bottom-0 w-[60%] delay-300">
+            <DispatchPreviewCard delivery={deliveries[1]} />
+          </FloatingPanel>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function ChaosSection() {
+  return (
+    <section className="relative py-18 lg:py-24">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.35 }}
+          transition={{ duration: 0.45 }}
+          className="max-w-xl"
+        >
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5E6461]">
+            Social commerce chaos
+          </p>
+          <h2 className="mt-4 text-4xl leading-[0.98] font-semibold tracking-[-0.07em] text-[#111111] sm:text-6xl">
+            Your business is growing. Your system is not.
+          </h2>
+          <p className="mt-5 text-base leading-8 text-[#5E6461]">
+            Orders are real. But the workflow around them is scattered across threads, screenshots,
+            notes, and memory. That is where money and momentum start leaking.
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.45, delay: 0.05 }}
+          className="grid gap-4 sm:grid-cols-2"
+        >
+          <ChaosTile
+            title="Payment proof buried"
+            detail="A paid customer still looks unpaid because the screenshot is lost."
+            tone="red"
+          />
+          <ChaosTile
+            title="Customer waiting"
+            detail="The same buyer follows up twice because the context is split across apps."
+          />
+          <ChaosTile
+            title="Delivery note missing"
+            detail="The order moves, but nobody can see the real dispatch stage."
+          />
+          <ChaosTile
+            title="Forgotten follow-up"
+            detail="A warm lead goes cold because the seller forgot to text back."
+            tone="red"
+          />
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function TransformationSection() {
+  const steps = [
+    "Orders",
+    "Payments",
+    "Customers",
+    "Follow-ups",
+    "Dispatch",
+  ];
 
   return (
-    <article
-      id={id}
-      data-stage={section.id}
-      className={`scroll-mt-28 ${index === 0 ? "min-h-[88svh] lg:py-16" : "min-h-[72svh]"}`}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, amount: 0.35 }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-        className="max-w-3xl"
-      >
-        <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5F6368]">
-          {section.eyebrow}
-        </p>
-        <h1
-          className={`mt-4 font-semibold tracking-[-0.08em] text-[#111111] ${
-            index === 0 ? "text-5xl leading-[0.94] sm:text-7xl" : "text-4xl leading-[0.98] sm:text-6xl"
-          }`}
+    <section id="product" className="py-18 lg:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.4 }}
+          transition={{ duration: 0.45 }}
+          className="mx-auto max-w-3xl text-center"
         >
-          {section.title}
-        </h1>
-        <p className="mt-5 max-w-2xl text-sm leading-7 text-[#5F6368] sm:text-base">{section.body}</p>
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5E6461]">
+            Product transformation
+          </p>
+          <h2 className="mt-4 text-4xl leading-[0.98] font-semibold tracking-[-0.07em] text-[#111111] sm:text-6xl">
+            WhatsBoard organizes the business into one clean operational flow.
+          </h2>
+          <p className="mt-5 text-base leading-8 text-[#5E6461]">
+            It turns reactive selling into a system that can actually run the day.
+          </p>
+        </motion.div>
 
-        {index === 0 ? (
-          <>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <PrimaryLink href="/register">Start Free</PrimaryLink>
-              <SecondaryLink href="#how-it-works">See How It Works</SecondaryLink>
-            </div>
-            <div className="mt-6 flex flex-wrap items-center gap-3 text-xs uppercase tracking-[0.22em] text-[#5F6368]">
-              <span className="rounded-full border border-[#E7E7E2] bg-white px-3 py-2">
-                Built for modern African online sellers
-              </span>
-            </div>
-          </>
-        ) : null}
-
-        <div className="mt-8 grid gap-3 sm:grid-cols-3">
-          {section.bullets.map((point) => (
+        <div className="mt-12 grid gap-4 lg:grid-cols-5">
+          {steps.map((step, index) => (
             <motion.div
-              key={point}
-              initial={{ opacity: 0, y: 10 }}
+              key={step}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.5 }}
-              transition={{ duration: 0.35, ease: "easeOut" }}
-              className={`rounded-[1.35rem] border bg-white px-4 py-4 text-sm shadow-[0_18px_40px_rgba(17,17,17,0.04)] transition ${
-                active ? "border-[#0F5D46]/20" : "border-[#E7E7E2]"
-              }`}
+              viewport={{ once: true, amount: 0.45 }}
+              transition={{ duration: 0.35, delay: index * 0.05 }}
+              className="rounded-[1.6rem] border border-[#E8E8E2] bg-white p-5 shadow-[0_18px_40px_rgba(17,17,17,0.04)]"
             >
-              {point}
+              <p className="text-[11px] uppercase tracking-[0.2em] text-[#5E6461]">Step {index + 1}</p>
+              <p className="mt-6 text-2xl font-semibold tracking-[-0.05em] text-[#111111]">{step}</p>
             </motion.div>
           ))}
         </div>
-
-        {section.id === "trust" ? <TestimonialsSection /> : null}
-        {section.id === "pricing" ? <PricingSection /> : null}
-        {section.id === "cta" ? <FinalCtaActions /> : null}
-      </motion.div>
-    </article>
+      </div>
+    </section>
   );
 }
 
-function StickyBoardLayout({
-  active,
-  data,
-  compact = false,
-}: {
-  active: Stage;
-  data: BoardData;
-  compact?: boolean;
-}) {
-  const highlighted = {
-    hero: ["summary", "pipeline", "orders"],
-    problem: ["alerts", "payments", "followups", "dispatch"],
-    shift: ["pipeline", "summary"],
-    orders: ["orders", "pipeline"],
-    payments: ["payments"],
-    customers: ["customers"],
-    followups: ["followups"],
-    dispatch: ["dispatch"],
-    visibility: ["summary", "insights"],
-    trust: ["summary", "customers", "payments"],
-    pricing: ["summary"],
-    cta: ["summary", "pipeline", "dispatch"],
-  } as const;
-
-  const isOn = (key: string) => highlighted[active].includes(key as never);
-
+function ProductShowcase() {
   return (
-    <div className="w-full">
-      <BoardFrame title="WhatsBoard board" active={active} compact={compact}>
-        <div className="grid gap-4">
-          <div className="grid gap-3 sm:grid-cols-5">
-            <StatCard label="Total orders" value={String(data.stats.totalOrders)} accent={isOn("summary")} />
-            <StatCard label="Pending" value={String(data.stats.pendingPayments)} accent={isOn("payments")} />
-            <StatCard label="Delivered" value={String(data.stats.delivered)} accent={isOn("dispatch")} />
-            <StatCard label="Repeat" value={String(data.stats.repeatCustomers)} accent={isOn("customers")} />
-            <StatCard label="Due follow-ups" value={String(data.stats.followUpsDue)} accent={isOn("followups")} />
-          </div>
+    <section className="py-18 lg:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.4 }}
+          transition={{ duration: 0.45 }}
+          className="max-w-3xl"
+        >
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5E6461]">
+            Product showcase
+          </p>
+          <h2 className="mt-4 text-4xl leading-[0.98] font-semibold tracking-[-0.07em] text-[#111111] sm:text-6xl">
+            Real product surfaces, not decorative screenshots.
+          </h2>
+          <p className="mt-5 text-base leading-8 text-[#5E6461]">
+            Orders, customers, payments, reminders, and delivery stages are shown as connected
+            modules that can map to real backend data later.
+          </p>
+        </motion.div>
 
-          <div className={`grid gap-4 ${compact ? "" : "xl:grid-cols-[1.05fr_0.95fr]"}`}>
-            <BoardPanel title="Order pipeline" meta="Live workflow" accent={isOn("pipeline")}>
-              <Pipeline data={data.orders} />
-            </BoardPanel>
-
-            <BoardPanel title="Recent orders" meta="Backend-ready records" accent={isOn("orders")}>
-              <OrdersTable orders={data.orders} compact={compact} />
-            </BoardPanel>
-          </div>
-
-          <div className={`grid gap-4 ${compact ? "" : "xl:grid-cols-[0.92fr_1.08fr]"}`}>
-            <BoardPanel title="Payment visibility" meta="Collection pressure" accent={isOn("payments")}>
-              <PaymentsList orders={data.orders} />
-            </BoardPanel>
-
-            <BoardPanel title="Customer records" meta="Searchable profiles" accent={isOn("customers")}>
-              <CustomerList customers={data.customers} />
-            </BoardPanel>
-          </div>
-
-          <div className={`grid gap-4 ${compact ? "" : "xl:grid-cols-[1fr_1fr_0.94fr]"}`}>
-            <BoardPanel title="Follow-up queue" meta="Keep momentum" accent={isOn("followups")}>
-              <FollowUpList items={data.followUps} />
-            </BoardPanel>
-
-            <BoardPanel title="Dispatch tracker" meta="Operational flow" accent={isOn("dispatch")}>
-              <DeliveryList items={data.deliveries} />
-            </BoardPanel>
-
-            <BoardPanel title="Business visibility" meta="Today" accent={isOn("insights") || isOn("summary")}>
-              <InsightsList stats={data.stats} />
-            </BoardPanel>
-          </div>
-
-          <AlertStrip active={isOn("alerts")} />
-        </div>
-      </BoardFrame>
-    </div>
-  );
-}
-
-function BoardFrame({
-  title,
-  active,
-  compact,
-  children,
-}: {
-  title: string;
-  active: Stage;
-  compact: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <motion.div
-      layout
-      transition={{ duration: 0.35, ease: "easeOut" }}
-      className={`overflow-hidden rounded-[2rem] border border-[#E7E7E2] bg-white shadow-[0_36px_120px_rgba(17,17,17,0.08)] ${
-        compact ? "rounded-[1.5rem]" : ""
-      }`}
-    >
-      <div className="border-b border-[#E7E7E2] px-4 py-4 sm:px-5">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.24em] text-[#5F6368]">{title}</p>
-            <h3 className="mt-2 text-xl font-semibold tracking-[-0.04em] text-[#111111] sm:text-2xl">
-              Orders, payments, customers, follow-ups, dispatch
-            </h3>
-          </div>
-          <span className="rounded-full border border-[#E7E7E2] bg-[#F8F8F4] px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[#0F5D46]">
-            {active}
-          </span>
+        <div className="mt-12 grid gap-5 lg:grid-cols-[1.12fr_0.88fr]">
+          <ShowcasePanel title="Order pipeline" meta="Structured flow">
+            <PipelinePreview />
+          </ShowcasePanel>
+          <ShowcasePanel title="Customer records" meta="Context that stays">
+            <CustomerTablePreview />
+          </ShowcasePanel>
+          <ShowcasePanel title="Payment tracking" meta="Collection visibility">
+            <PaymentListPreview />
+          </ShowcasePanel>
+          <ShowcasePanel title="Dispatch workflow" meta="Operational movement">
+            <DispatchListPreview />
+          </ShowcasePanel>
         </div>
       </div>
-
-      <div className="p-4 sm:p-5">{children}</div>
-    </motion.div>
+    </section>
   );
 }
 
-function BoardPanel({
-  title,
-  meta,
-  accent,
-  children,
-}: {
-  title: string;
-  meta: string;
-  accent: boolean;
-  children: React.ReactNode;
-}) {
+function FeatureGrid() {
   return (
-    <motion.div
-      layout
-      transition={{ duration: 0.35, ease: "easeOut" }}
-      className={`rounded-[1.4rem] border p-4 transition ${
-        accent
-          ? "border-[#0F5D46]/25 bg-[#FBFCF8] shadow-[0_20px_50px_rgba(15,93,70,0.08)]"
-          : "border-[#E7E7E2] bg-[#FCFCFA]"
-      }`}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-[11px] uppercase tracking-[0.22em] text-[#5F6368]">{title}</p>
-        <p className="text-[11px] uppercase tracking-[0.22em] text-[#5F6368]/80">{meta}</p>
+    <section id="features" className="py-18 lg:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.35 }}
+          transition={{ duration: 0.45 }}
+          className="max-w-3xl"
+        >
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5E6461]">
+            Feature grid
+          </p>
+          <h2 className="mt-4 text-4xl leading-[0.98] font-semibold tracking-[-0.07em] text-[#111111] sm:text-6xl">
+            Built for the real pain of chat-first selling.
+          </h2>
+        </motion.div>
+
+        <div className="mt-12 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.title}
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.35, delay: index * 0.04 }}
+              className="rounded-[1.6rem] border border-[#E8E8E2] bg-white p-5 shadow-[0_18px_40px_rgba(17,17,17,0.04)]"
+            >
+              <div className="rounded-[1rem] border border-[#E8E8E2] bg-[#F7F7F2] px-3 py-3 text-[11px] uppercase tracking-[0.18em] text-[#5E6461]">
+                {feature.accent}
+              </div>
+              <h3 className="mt-5 text-2xl font-semibold tracking-[-0.05em] text-[#111111]">
+                {feature.title}
+              </h3>
+              <p className="mt-3 text-sm leading-7 text-[#5E6461]">{feature.description}</p>
+            </motion.div>
+          ))}
+        </div>
       </div>
-      <div className="mt-4">{children}</div>
-    </motion.div>
+    </section>
   );
 }
 
-function Pipeline({ data }: { data: OrderRecord[] }) {
-  const counts = {
-    new: data.filter((item) => item.status === "new").length + 4,
-    awaiting_payment: data.filter((item) => item.status === "awaiting_payment").length + 5,
-    paid: data.filter((item) => item.status === "paid").length + 3,
-    packing: data.filter((item) => item.status === "packing").length + 2,
-    dispatch: data.filter((item) => item.status === "dispatch").length + 2,
-    delivered: data.filter((item) => item.status === "delivered").length + 9,
-  };
-
-  const labels: Array<{ key: OrderStatus; label: string }> = [
-    { key: "new", label: "New" },
-    { key: "awaiting_payment", label: "Awaiting payment" },
-    { key: "paid", label: "Paid" },
-    { key: "packing", label: "Packing" },
-    { key: "dispatch", label: "Dispatch" },
-    { key: "delivered", label: "Delivered" },
+function ComparisonSection() {
+  const withoutItems = [
+    "Lost context inside chats",
+    "Slow payment follow-up",
+    "No clean customer history",
+    "Delivery updates depend on memory",
+  ];
+  const withItems = [
+    "Everything visible in one place",
+    "Fewer missed orders",
+    "Cleaner workflow every day",
+    "More confidence in the business",
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-      {labels.map((item) => (
-        <div key={item.key} className="rounded-[1.05rem] border border-[#E7E7E2] bg-white px-3 py-4">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-[#5F6368]">{item.label}</p>
-          <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[#111111]">
-            {counts[item.key]}
-          </p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function OrdersTable({ orders, compact }: { orders: OrderRecord[]; compact: boolean }) {
-  return (
-    <div className="space-y-3">
-      {orders.map((order) => (
-        <div
-          key={order.id}
-          className="grid gap-2 rounded-[1rem] border border-[#E7E7E2] bg-white px-3 py-3 text-sm sm:grid-cols-[0.9fr_1.05fr_0.8fr_0.8fr] sm:items-center"
-        >
-          <div>
-            <p className="font-medium text-[#111111]">{order.id}</p>
-            <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#5F6368]">{order.createdAt}</p>
-          </div>
-          <div>
-            <p className="font-medium text-[#111111]">{order.customerName}</p>
-            <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#5F6368]">{order.source}</p>
-          </div>
-          <div className={!compact ? "" : "flex items-center justify-between"}>
-            <p className="font-medium text-[#111111]">{order.total}</p>
-            <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#5F6368]">
-              {order.status.replaceAll("_", " ")}
-            </p>
-          </div>
-          <div className="flex sm:justify-end">
-            <PaymentBadge status={order.paymentStatus} />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function PaymentsList({ orders }: { orders: OrderRecord[] }) {
-  return (
-    <div className="space-y-3">
-      {orders.map((order, index) => (
-        <div key={order.id} className="rounded-[1rem] border border-[#E7E7E2] bg-white px-3 py-3">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="font-medium text-[#111111]">{order.customerName}</p>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#5F6368]">
-                Ref {order.id.replace("#WB-", "TX-")} • {index === 0 ? "09:14" : index === 1 ? "08:49" : "Yesterday 16:22"}
-              </p>
-            </div>
-            <PaymentBadge status={order.paymentStatus} />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function CustomerList({ customers }: { customers: CustomerRecord[] }) {
-  return (
-    <div className="space-y-3">
-      {customers.map((customer) => (
-        <div key={customer.id} className="rounded-[1rem] border border-[#E7E7E2] bg-white px-3 py-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="font-medium text-[#111111]">{customer.name}</p>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#5F6368]">
-                {customer.phone} • {customer.purchaseHistory}
-              </p>
-              <p className="mt-2 text-xs text-[#5F6368]">
-                Last order {customer.lastOrder} • Follow-up {customer.followUpDate}
-              </p>
-            </div>
-            <span className="rounded-full border border-[#E7E7E2] bg-[#F8F8F4] px-2 py-1 text-[11px] uppercase tracking-[0.16em] text-[#0F5D46]">
-              {customer.state}
-            </span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function FollowUpList({ items }: { items: FollowUpRecord[] }) {
-  return (
-    <div className="space-y-3">
-      {items.map((item) => (
-        <div key={item.id} className="rounded-[1rem] border border-[#E7E7E2] bg-white px-3 py-3">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="font-medium text-[#111111]">{item.customerName}</p>
-              <p className="mt-1 text-xs text-[#5F6368]">{item.action}</p>
-            </div>
-            <FollowUpBadge status={item.status} />
-          </div>
-          <p className="mt-3 text-[11px] uppercase tracking-[0.16em] text-[#5F6368]">{item.dueLabel}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function DeliveryList({ items }: { items: DeliveryRecord[] }) {
-  return (
-    <div className="space-y-3">
-      {items.map((item) => (
-        <div key={item.id} className="rounded-[1rem] border border-[#E7E7E2] bg-white px-3 py-3">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="font-medium text-[#111111]">{item.orderId}</p>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#5F6368]">
-                {item.customerName} • {item.area}
-              </p>
-            </div>
-            <DeliveryBadge status={item.status} />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function InsightsList({ stats }: { stats: DashboardStats }) {
-  const items = [
-    { label: "Pending payments", value: `${stats.pendingPayments} orders` },
-    { label: "Delivered", value: `${stats.delivered} this month` },
-    { label: "Repeat customers", value: `${stats.repeatCustomers} active` },
-    { label: "Follow-ups due", value: `${stats.followUpsDue} today` },
-  ];
-
-  return (
-    <div className="space-y-3">
-      {items.map((item) => (
-        <div key={item.label} className="rounded-[1rem] border border-[#E7E7E2] bg-white px-3 py-3">
-          <p className="text-[11px] uppercase tracking-[0.16em] text-[#5F6368]">{item.label}</p>
-          <p className="mt-2 text-lg font-semibold tracking-[-0.03em] text-[#111111]">{item.value}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function AlertStrip({ active }: { active: boolean }) {
-  return (
-    <motion.div
-      layout
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      className={`rounded-[1.3rem] border px-4 py-4 text-sm ${
-        active
-          ? "border-[#C95C54]/24 bg-[#FFF7F6] text-[#7C2D2A]"
-          : "border-[#E7E7E2] bg-[#F8F8F4] text-[#5F6368]"
-      }`}
-    >
-      <div className="flex items-start gap-3">
-        <span
-          className={`mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${
-            active ? "bg-[#C95C54] text-white" : "bg-[#E7E7E2] text-[#0F5D46]"
-          }`}
-        >
-          !
-        </span>
-        <div>
-          <p className="font-medium">
-            {active
-              ? "3 orders have no confirmed payment, 1 customer is waiting, and 2 follow-ups are overdue."
-              : "The board makes pressure visible before it turns into missed sales."}
-          </p>
-          <p className="mt-1 text-[11px] uppercase tracking-[0.18em] opacity-75">Operational risk</p>
+    <section className="py-18 lg:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <ComparisonCard
+            label="Without WhatsBoard"
+            title="The business keeps moving, but nobody can see it clearly."
+            items={withoutItems}
+            tone="muted"
+          />
+          <ComparisonCard
+            label="With WhatsBoard"
+            title="The business feels calmer because the workflow is finally visible."
+            items={withItems}
+            tone="positive"
+          />
         </div>
       </div>
-    </motion.div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: string;
-  accent: boolean;
-}) {
-  return (
-    <motion.div
-      layout
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      className={`rounded-[1.2rem] border px-4 py-4 ${
-        accent
-          ? "border-[#0F5D46]/22 bg-[#FBFCF8] shadow-[0_14px_40px_rgba(15,93,70,0.07)]"
-          : "border-[#E7E7E2] bg-white"
-      }`}
-    >
-      <p className="text-[11px] uppercase tracking-[0.18em] text-[#5F6368]">{label}</p>
-      <p className="mt-3 text-3xl font-semibold tracking-[-0.05em] text-[#111111]">{value}</p>
-    </motion.div>
-  );
-}
-
-function PaymentBadge({ status }: { status: PaymentStatus }) {
-  const styles =
-    status === "unpaid"
-      ? "border-[#C95C54]/22 bg-[#FFF7F6] text-[#A9473F]"
-      : status === "partial"
-        ? "border-[#E7E7E2] bg-[#F8F8F4] text-[#5F6368]"
-        : status === "paid"
-          ? "border-[#0F5D46]/18 bg-[#F3FBF7] text-[#0F5D46]"
-          : "border-[#0A3D2E]/16 bg-[#0A3D2E] text-white";
-
-  return (
-    <span className={`rounded-full border px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] ${styles}`}>
-      {status.replaceAll("_", " ")}
-    </span>
-  );
-}
-
-function FollowUpBadge({ status }: { status: FollowUpStatus }) {
-  const styles =
-    status === "overdue"
-      ? "border-[#C95C54]/22 bg-[#FFF7F6] text-[#A9473F]"
-      : status === "today"
-        ? "border-[#0F5D46]/18 bg-[#F3FBF7] text-[#0F5D46]"
-        : "border-[#E7E7E2] bg-[#F8F8F4] text-[#5F6368]";
-
-  return (
-    <span className={`rounded-full border px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] ${styles}`}>
-      {status}
-    </span>
-  );
-}
-
-function DeliveryBadge({ status }: { status: DeliveryStatus }) {
-  const label =
-    status === "ready_to_pack"
-      ? "ready to pack"
-      : status === "sent_out"
-        ? "sent out"
-        : status;
-
-  const styles =
-    status === "delivered"
-      ? "border-[#0A3D2E]/16 bg-[#0A3D2E] text-white"
-      : status === "sent_out"
-        ? "border-[#0F5D46]/18 bg-[#F3FBF7] text-[#0F5D46]"
-        : "border-[#E7E7E2] bg-[#F8F8F4] text-[#5F6368]";
-
-  return (
-    <span className={`rounded-full border px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] ${styles}`}>
-      {label}
-    </span>
+    </section>
   );
 }
 
 function TestimonialsSection() {
+  const statsRow = [
+    "Fewer missed orders",
+    "Faster payment follow-up",
+    "Better customer tracking",
+    "More delivery control",
+  ];
+
   return (
-    <div className="mt-8 grid gap-4">
-      {testimonials.map((item) => (
+    <section id="testimonials" className="py-18 lg:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <motion.div
-          key={item.name}
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.45 }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
-          className="rounded-[1.5rem] border border-[#E7E7E2] bg-white p-5 shadow-[0_18px_50px_rgba(17,17,17,0.04)]"
+          viewport={{ once: true, amount: 0.35 }}
+          transition={{ duration: 0.45 }}
+          className="max-w-3xl"
         >
-          <p className="text-sm leading-7 text-[#5F6368]">&ldquo;{item.quote}&rdquo;</p>
-          <div className="mt-5 flex items-center justify-between gap-4 border-t border-[#E7E7E2] pt-4">
-            <div>
-              <p className="text-sm font-semibold text-[#111111]">{item.name}</p>
-              <p className="mt-1 text-[11px] uppercase tracking-[0.22em] text-[#5F6368]">{item.role}</p>
-            </div>
-            <span className="rounded-full border border-[#E7E7E2] bg-[#F8F8F4] px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-[#0F5D46]">
-              Verified seller
-            </span>
-          </div>
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5E6461]">
+            Testimonials
+          </p>
+          <h2 className="mt-4 text-4xl leading-[0.98] font-semibold tracking-[-0.07em] text-[#111111] sm:text-6xl">
+            Practical outcomes sellers can feel quickly.
+          </h2>
         </motion.div>
-      ))}
-    </div>
+
+        <div className="mt-12 grid gap-4 lg:grid-cols-3">
+          {testimonials.map((item, index) => (
+            <motion.div
+              key={item.name}
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.35 }}
+              transition={{ duration: 0.35, delay: index * 0.04 }}
+              className="rounded-[1.6rem] border border-[#E8E8E2] bg-white p-5 shadow-[0_18px_40px_rgba(17,17,17,0.04)]"
+            >
+              <p className="text-sm leading-7 text-[#5E6461]">&ldquo;{item.quote}&rdquo;</p>
+              <div className="mt-5 border-t border-[#E8E8E2] pt-4">
+                <p className="text-sm font-semibold text-[#111111]">{item.name}</p>
+                <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-[#5E6461]">
+                  {item.role}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {statsRow.map((item) => (
+            <div
+              key={item}
+              className="rounded-[1.25rem] border border-[#E8E8E2] bg-white px-4 py-4 text-sm text-[#111111]"
+            >
+              {item}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
 function PricingSection() {
   return (
-    <div className="mt-8 grid gap-4">
-      {pricingTiers.map((tier) => (
+    <section id="pricing" className="py-18 lg:py-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <motion.div
-          key={tier.name}
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.4 }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
-          className={`rounded-[1.6rem] border bg-white p-5 shadow-[0_18px_50px_rgba(17,17,17,0.04)] ${
-            tier.highlight ? "border-[#0F5D46]/26 shadow-[0_24px_80px_rgba(15,93,70,0.08)]" : "border-[#E7E7E2]"
-          }`}
+          viewport={{ once: true, amount: 0.35 }}
+          transition={{ duration: 0.45 }}
+          className="mx-auto max-w-3xl text-center"
         >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="text-xs uppercase tracking-[0.22em] text-[#5F6368]">{tier.name}</p>
-              <h3 className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-[#111111]">{tier.price}</h3>
-            </div>
-            {tier.highlight ? (
-              <span className="rounded-full bg-[#0F5D46] px-3 py-1 text-[11px] uppercase tracking-[0.22em] text-white">
-                Best plan
-              </span>
-            ) : null}
-          </div>
-          <p className="mt-4 text-sm leading-7 text-[#5F6368]">{tier.note}</p>
-          <Link
-            href="/pricing"
-            className={`mt-6 inline-flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-medium transition ${
-              tier.highlight
-                ? "bg-[#0F5D46] text-white hover:bg-[#0A3D2E]"
-                : "border border-[#E7E7E2] text-[#0F5D46] hover:bg-[#F4F5F0]"
-            }`}
-          >
-            {tier.cta}
-          </Link>
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5E6461]">
+            Pricing
+          </p>
+          <h2 className="mt-4 text-4xl leading-[0.98] font-semibold tracking-[-0.07em] text-[#111111] sm:text-6xl">
+            Simple plans for sellers who want more control.
+          </h2>
         </motion.div>
+
+        <div className="mt-12 grid gap-4 lg:grid-cols-3">
+          {pricing.map((tier, index) => (
+            <motion.div
+              key={tier.name}
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.35 }}
+              transition={{ duration: 0.35, delay: index * 0.04 }}
+              className={`rounded-[1.8rem] border bg-white p-6 shadow-[0_18px_40px_rgba(17,17,17,0.04)] ${
+                tier.highlight ? "border-[#0F5D46]/26 shadow-[0_24px_70px_rgba(15,93,70,0.08)]" : "border-[#E8E8E2]"
+              }`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.22em] text-[#5E6461]">{tier.name}</p>
+                  <h3 className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-[#111111]">
+                    {tier.price}
+                  </h3>
+                </div>
+                {tier.highlight ? (
+                  <span className="rounded-full bg-[#0F5D46] px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-white">
+                    Best value
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-4 text-sm leading-7 text-[#5E6461]">{tier.note}</p>
+              <Link
+                href="/pricing"
+                className={`mt-6 inline-flex w-full items-center justify-center rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                  tier.highlight
+                    ? "bg-[#0F5D46] text-white hover:bg-[#0A3D2E]"
+                    : "border border-[#E8E8E2] text-[#0A3D2E] hover:bg-[#F2F3EE]"
+                }`}
+              >
+                View pricing
+              </Link>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FinalCTA() {
+  return (
+    <section className="py-18 lg:py-24">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.35 }}
+          transition={{ duration: 0.45 }}
+          className="rounded-[2rem] border border-[#E8E8E2] bg-[linear-gradient(180deg,#ffffff,#f5f6f0)] px-6 py-12 text-center shadow-[0_20px_60px_rgba(17,17,17,0.05)] sm:px-10"
+        >
+          <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5E6461]">
+            Final call
+          </p>
+          <h2 className="mt-4 text-4xl leading-[0.98] font-semibold tracking-[-0.07em] text-[#111111] sm:text-6xl">
+            Chats help you sell. WhatsBoard helps you scale.
+          </h2>
+          <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-[#5E6461]">
+            Stop relying on screenshots, memory, and scattered threads. Put the business inside a
+            system that feels built for growth.
+          </p>
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <PrimaryLink href="/register">Start Free</PrimaryLink>
+            <SecondaryLink href="/pricing">See Pricing</SecondaryLink>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="border-t border-[#E8E8E2] bg-[#FAFAF7]">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 md:grid-cols-[1.2fr_1fr_1fr_1fr]">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#111111]">
+            WhatsBoard
+          </p>
+          <p className="mt-4 max-w-xs text-sm leading-7 text-[#5E6461]">
+            A cleaner operating layer for online sellers running business after chat.
+          </p>
+        </div>
+        <FooterColumn
+          title="Product"
+          links={[
+            { href: "/pricing", label: "Pricing" },
+            { href: "/register", label: "Start free" },
+            { href: "/login", label: "Log in" },
+          ]}
+        />
+        <FooterColumn
+          title="Company"
+          links={[
+            { href: "/pricing", label: "Plans" },
+            { href: "/register", label: "Get started" },
+            { href: "/", label: "Homepage" },
+          ]}
+        />
+        <FooterColumn
+          title="Support"
+          links={[
+            { href: "/login", label: "Account" },
+            { href: "/pricing", label: "Billing" },
+            { href: "/register", label: "Contact" },
+          ]}
+        />
+      </div>
+    </footer>
+  );
+}
+
+function FloatingPanel({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className: string;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.45, ease: "easeOut" }}
+      className={`absolute rounded-[1.7rem] border border-[#E8E8E2] bg-white p-4 shadow-[0_28px_70px_rgba(17,17,17,0.08)] ${className}`}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function OrderPreviewCard({ order }: { order: OrderRecord }) {
+  return (
+    <div className="space-y-4">
+      <PanelHeader title="New order" badge={order.source} />
+      <p className="text-2xl font-semibold tracking-[-0.05em] text-[#111111]">{order.customer}</p>
+      <div className="grid gap-2 text-sm text-[#5E6461]">
+        <MetaRow label="Order ID" value={order.id} />
+        <MetaRow label="Total" value={order.total} />
+        <MetaRow label="Created" value={order.createdAt} />
+      </div>
+      <StatusPill label={order.status.replaceAll("_", " ")} tone="green" />
+    </div>
+  );
+}
+
+function PaymentPreviewCard({ order }: { order: OrderRecord }) {
+  return (
+    <div className="space-y-4">
+      <PanelHeader title="Payment" badge="Confirmed" />
+      <p className="text-sm text-[#5E6461]">Customer payment received and matched to order.</p>
+      <div className="rounded-[1rem] border border-[#E8E8E2] bg-[#F7F7F2] px-3 py-3">
+        <MetaRow label="Reference" value="TX-48291" />
+        <MetaRow label="Time" value="09:18 AM" />
+      </div>
+      <PaymentPill status={order.paymentStatus} />
+    </div>
+  );
+}
+
+function CustomerPreviewCard({ customer }: { customer: CustomerRecord }) {
+  return (
+    <div className="space-y-4">
+      <PanelHeader title="Customer record" badge={customer.history} />
+      <p className="text-lg font-semibold tracking-[-0.04em] text-[#111111]">{customer.name}</p>
+      <div className="grid gap-2 text-sm text-[#5E6461]">
+        <MetaRow label="Phone" value={customer.phone} />
+        <MetaRow label="Last order" value={customer.lastOrder} />
+        <MetaRow label="Next follow-up" value={customer.followUp} />
+      </div>
+    </div>
+  );
+}
+
+function FollowUpPreviewCard({ item }: { item: FollowUpRecord }) {
+  return (
+    <div className="space-y-4">
+      <PanelHeader title="Reminder" badge="Due" />
+      <p className="text-sm font-medium text-[#111111]">{item.action}</p>
+      <p className="text-sm text-[#5E6461]">{item.customer}</p>
+      <StatusPill label={item.due} tone={item.status === "overdue" ? "red" : "gray"} />
+    </div>
+  );
+}
+
+function DispatchPreviewCard({ delivery }: { delivery: DeliveryRecord }) {
+  return (
+    <div className="space-y-4">
+      <PanelHeader title="Dispatch" badge="Operational" />
+      <p className="text-lg font-semibold tracking-[-0.04em] text-[#111111]">{delivery.orderId}</p>
+      <div className="grid gap-2 text-sm text-[#5E6461]">
+        <MetaRow label="Customer" value={delivery.customer} />
+        <MetaRow label="Area" value={delivery.area} />
+      </div>
+      <StatusPill label={delivery.status.replaceAll("_", " ")} tone="green" />
+    </div>
+  );
+}
+
+function ShowcasePanel({
+  title,
+  meta,
+  children,
+}: {
+  title: string;
+  meta: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.45 }}
+      className="rounded-[1.8rem] border border-[#E8E8E2] bg-white p-5 shadow-[0_20px_50px_rgba(17,17,17,0.04)]"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[11px] uppercase tracking-[0.22em] text-[#5E6461]">{title}</p>
+        <p className="text-[11px] uppercase tracking-[0.22em] text-[#5E6461]">{meta}</p>
+      </div>
+      <div className="mt-5">{children}</div>
+    </motion.div>
+  );
+}
+
+function PipelinePreview() {
+  const items = [
+    ["New", "12"],
+    ["Awaiting payment", "6"],
+    ["Paid", "9"],
+    ["Packing", "5"],
+    ["Dispatch", "4"],
+    ["Delivered", "18"],
+  ];
+
+  return (
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+      {items.map(([label, value]) => (
+        <div key={label} className="rounded-[1rem] border border-[#E8E8E2] bg-[#F9F9F5] px-3 py-4">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-[#5E6461]">{label}</p>
+          <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-[#111111]">{value}</p>
+        </div>
       ))}
     </div>
   );
 }
 
-function FinalCtaActions() {
+function CustomerTablePreview() {
   return (
-    <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-      <PrimaryLink href="/register">Start Free</PrimaryLink>
-      <SecondaryLink href="/pricing">See Pricing</SecondaryLink>
+    <div className="space-y-3">
+      {customers.map((customer) => (
+        <div key={customer.id} className="rounded-[1rem] border border-[#E8E8E2] bg-[#F9F9F5] px-3 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="font-medium text-[#111111]">{customer.name}</p>
+              <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#5E6461]">
+                {customer.phone}
+              </p>
+            </div>
+            <span className="rounded-full border border-[#E8E8E2] bg-white px-2 py-1 text-[11px] uppercase tracking-[0.16em] text-[#0F5D46]">
+              {customer.history}
+            </span>
+          </div>
+        </div>
+      ))}
     </div>
   );
+}
+
+function PaymentListPreview() {
+  return (
+    <div className="space-y-3">
+      {orders.map((order) => (
+        <div key={order.id} className="rounded-[1rem] border border-[#E8E8E2] bg-[#F9F9F5] px-3 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="font-medium text-[#111111]">{order.customer}</p>
+              <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#5E6461]">{order.total}</p>
+            </div>
+            <PaymentPill status={order.paymentStatus} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DispatchListPreview() {
+  return (
+    <div className="space-y-3">
+      {deliveries.map((delivery) => (
+        <div key={delivery.id} className="rounded-[1rem] border border-[#E8E8E2] bg-[#F9F9F5] px-3 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="font-medium text-[#111111]">{delivery.orderId}</p>
+              <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-[#5E6461]">
+                {delivery.customer} • {delivery.area}
+              </p>
+            </div>
+            <StatusPill label={delivery.status.replaceAll("_", " ")} tone="gray" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ComparisonCard({
+  label,
+  title,
+  items,
+  tone,
+}: {
+  label: string;
+  title: string;
+  items: string[];
+  tone: "muted" | "positive";
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.4 }}
+      className={`rounded-[1.8rem] border p-6 shadow-[0_18px_40px_rgba(17,17,17,0.04)] ${
+        tone === "positive"
+          ? "border-[#0F5D46]/18 bg-[linear-gradient(180deg,#ffffff,#f4f7f3)]"
+          : "border-[#E8E8E2] bg-white"
+      }`}
+    >
+      <p className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#5E6461]">{label}</p>
+      <h3 className="mt-4 text-3xl leading-tight font-semibold tracking-[-0.06em] text-[#111111]">
+        {title}
+      </h3>
+      <div className="mt-6 grid gap-3">
+        {items.map((item) => (
+          <div
+            key={item}
+            className="rounded-[1rem] border border-[#E8E8E2] bg-[#F9F9F5] px-4 py-4 text-sm text-[#111111]"
+          >
+            {item}
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
+function FooterColumn({
+  title,
+  links,
+}: {
+  title: string;
+  links: { href: string; label: string }[];
+}) {
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-[0.24em] text-[#5E6461]">{title}</p>
+      <div className="mt-4 grid gap-3 text-sm">
+        {links.map((link) => (
+          <Link key={link.label} href={link.href} className="text-[#111111] transition hover:text-[#0A3D2E]">
+            {link.label}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PanelHeader({ title, badge }: { title: string; badge: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <p className="text-[11px] uppercase tracking-[0.2em] text-[#5E6461]">{title}</p>
+      <span className="rounded-full border border-[#E8E8E2] bg-[#F7F7F2] px-2 py-1 text-[11px] uppercase tracking-[0.16em] text-[#0F5D46]">
+        {badge}
+      </span>
+    </div>
+  );
+}
+
+function MetaRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span>{label}</span>
+      <span className="font-medium text-[#111111]">{value}</span>
+    </div>
+  );
+}
+
+function StatusPill({ label, tone }: { label: string; tone: "green" | "red" | "gray" }) {
+  const styles =
+    tone === "green"
+      ? "border-[#0F5D46]/18 bg-[#F2FBF6] text-[#0F5D46]"
+      : tone === "red"
+        ? "border-[#C7675D]/18 bg-[#FFF5F3] text-[#A94B40]"
+        : "border-[#E8E8E2] bg-[#F7F7F2] text-[#5E6461]";
+
+  return (
+    <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] uppercase tracking-[0.16em] ${styles}`}>
+      {label}
+    </span>
+  );
+}
+
+function PaymentPill({ status }: { status: PaymentStatus }) {
+  if (status === "unpaid") return <StatusPill label="unpaid" tone="red" />;
+  if (status === "partial") return <StatusPill label="partial" tone="gray" />;
+  if (status === "paid") return <StatusPill label="paid" tone="green" />;
+  return <StatusPill label="confirmed" tone="green" />;
 }
 
 function PrimaryLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -1079,45 +1101,32 @@ function SecondaryLink({ href, children }: { href: string; children: React.React
   return (
     <Link
       href={href}
-      className="rounded-full border border-[#E7E7E2] bg-white px-5 py-3 text-center text-sm font-medium text-[#0A3D2E] transition hover:bg-[#F4F5F0]"
+      className="rounded-full border border-[#E8E8E2] bg-white px-5 py-3 text-center text-sm font-medium text-[#0A3D2E] transition hover:bg-[#F2F3EE]"
     >
       {children}
     </Link>
   );
 }
 
-function MobileCtaBar() {
+function ChaosTile({
+  title,
+  detail,
+  tone = "neutral",
+}: {
+  title: string;
+  detail: string;
+  tone?: "neutral" | "red";
+}) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[#E7E7E2] bg-[#FAFAF7]/94 p-3 backdrop-blur lg:hidden">
-      <div className="mx-auto flex max-w-md items-center gap-3">
-        <PrimaryLink href="/register">
-          <span className="block w-full">Start Free</span>
-        </PrimaryLink>
-        <SecondaryLink href="/pricing">
-          <span className="block w-full">Pricing</span>
-        </SecondaryLink>
-      </div>
+    <div
+      className={`rounded-[1.6rem] border p-5 shadow-[0_18px_40px_rgba(17,17,17,0.04)] ${
+        tone === "red"
+          ? "border-[#C7675D]/20 bg-[#FFF6F4]"
+          : "border-[#E8E8E2] bg-white"
+      }`}
+    >
+      <p className="text-2xl font-semibold tracking-[-0.05em] text-[#111111]">{title}</p>
+      <p className="mt-3 text-sm leading-7 text-[#5E6461]">{detail}</p>
     </div>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="border-t border-[#E7E7E2] bg-[#FAFAF7]">
-      <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-10 text-sm text-[#5F6368] sm:px-6 md:flex-row md:items-center md:justify-between">
-        <p>WhatsBoard. From chat chaos to sales control.</p>
-        <div className="flex items-center gap-5">
-          <Link href="/pricing" className="transition hover:text-[#111111]">
-            Pricing
-          </Link>
-          <Link href="/login" className="transition hover:text-[#111111]">
-            Log in
-          </Link>
-          <Link href="/register" className="transition hover:text-[#111111]">
-            Start free
-          </Link>
-        </div>
-      </div>
-    </footer>
   );
 }
