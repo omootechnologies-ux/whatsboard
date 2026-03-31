@@ -10,7 +10,7 @@ function badge(stage: string) {
   const map: Record<string, string> = {
     new_order: "bg-slate-100 text-slate-700",
     waiting_payment: "bg-amber-100 text-amber-700",
-    confirmed: "bg-sky-100 text-sky-700",
+    paid: "bg-sky-100 text-sky-700",
     packing: "bg-violet-100 text-violet-700",
     dispatched: "bg-cyan-100 text-cyan-700",
     delivered: "bg-emerald-100 text-emerald-700",

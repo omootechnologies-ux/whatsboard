@@ -115,7 +115,7 @@ export default function UpdateOrderForm({
           <select name="stage" defaultValue={order.stage ?? "new_order"} className="h-12 w-full rounded-2xl border border-slate-300 px-4 text-slate-900">
             <option value="new_order">New Order</option>
             <option value="waiting_payment">Waiting Payment</option>
-            <option value="confirmed">Confirmed</option>
+            <option value="paid">Paid</option>
             <option value="packing">Packing</option>
             <option value="dispatched">Dispatched</option>
             <option value="delivered">Delivered</option>

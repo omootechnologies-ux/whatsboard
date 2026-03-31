@@ -24,8 +24,8 @@ const STAGES = [
     dot: "bg-yellow-400",
   },
   {
-    key: "confirmed",
-    label: "Confirmed",
+    key: "paid",
+    label: "Paid",
     shell: "border-blue-200 bg-blue-50/60",
     pill: "bg-blue-100 text-blue-800",
     dot: "bg-blue-400",

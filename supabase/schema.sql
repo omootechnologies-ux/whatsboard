@@ -40,6 +40,15 @@ create table public.profiles (
   business_id uuid references public.businesses(id) on delete cascade,
   full_name text,
   email text,
+  business_name text,
+  phone text,
+  whatsapp_number text,
+  instagram_handle text,
+  tiktok_handle text,
+  default_currency text default 'TZS',
+  default_area text,
+  notes text,
+  is_admin boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

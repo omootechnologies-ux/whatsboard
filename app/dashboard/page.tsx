@@ -109,7 +109,7 @@ export default async function DashboardPage() {
   const stageCounts = {
     new_order: orders.filter((o) => o.stage === "new_order").length,
     waiting_payment: orders.filter((o) => o.stage === "waiting_payment").length,
-    confirmed: orders.filter((o) => o.stage === "confirmed").length,
+    paid: orders.filter((o) => o.stage === "paid").length,
     packing: orders.filter((o) => o.stage === "packing").length,
     dispatched: orders.filter((o) => o.stage === "dispatched").length,
     delivered: orders.filter((o) => o.stage === "delivered").length,
@@ -118,7 +118,7 @@ export default async function DashboardPage() {
   const stageRows = [
     { label: "New Orders", value: stageCounts.new_order, tone: "bg-slate-900" },
     { label: "Waiting Payment", value: stageCounts.waiting_payment, tone: "bg-amber-400" },
-    { label: "Confirmed", value: stageCounts.confirmed, tone: "bg-sky-500" },
+    { label: "Paid", value: stageCounts.paid, tone: "bg-sky-500" },
     { label: "Packing", value: stageCounts.packing, tone: "bg-violet-500" },
     { label: "Dispatched", value: stageCounts.dispatched, tone: "bg-cyan-500" },
     { label: "Delivered", value: stageCounts.delivered, tone: "bg-emerald-500" },

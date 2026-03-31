@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { Settings, Store, Phone, Globe2, MapPin, StickyNote, LogOut, Save } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { logoutAction } from "@/app/(auth)/actions";
 
 type SettingsProfile = {
   id: string;
@@ -131,13 +132,12 @@ export default async function SettingsPage({
             Keep this page updated so your dashboard reflects the real business behind the orders.
           </div>
 
-          <Link
-            href="/api/auth/signout"
-            className="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-red-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-600"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign out
-          </Link>
+          <form action={logoutAction} className="mt-6">
+            <button className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-600">
+              <LogOut className="h-4 w-4" />
+              Sign out
+            </button>
+          </form>
         </div>
       </section>
 
