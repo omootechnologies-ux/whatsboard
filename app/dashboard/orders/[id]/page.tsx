@@ -5,8 +5,9 @@ import { formatTZS } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function OrderDetailPage({ params }: { params: { id: string } }) {
+export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { supabase, businessId } = await getViewerContext();
+  const { id } = await params;
   if (!businessId) return notFound();
 
   const { data: order } = await supabase
@@ -14,7 +15,7 @@ export default async function OrderDetailPage({ params }: { params: { id: string
     .select(
       "id, product_name, amount, delivery_area, stage, payment_status, notes, created_at, updated_at, customers(name, phone), order_activity(action, metadata, created_at)"
     )
-    .eq("id", params.id)
+    .eq("id", id)
     .eq("business_id", businessId)
     .single();
 
