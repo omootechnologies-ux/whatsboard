@@ -10,9 +10,10 @@ export const revalidate = 0;
 export default async function EditCustomerPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const { supabase, businessId } = await getViewerContext();
+  const { id } = await params;
 
   if (!businessId) notFound();
 
@@ -20,7 +21,7 @@ export default async function EditCustomerPage({
     .from("customers")
     .select("id, name, phone, area, channel, notes, status")
     .eq("business_id", businessId)
-    .eq("id", params.id)
+    .eq("id", id)
     .maybeSingle();
 
   if (!customer) notFound();

@@ -9,9 +9,10 @@ export const revalidate = 0;
 export default async function EditOrderPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
   const { supabase, businessId } = await getViewerContext();
+  const { id } = await params;
 
   if (!businessId) notFound();
 
@@ -29,7 +30,7 @@ export default async function EditOrderPage({
       customers(id, name, phone)
     `)
     .eq("business_id", businessId)
-    .eq("id", params.id)
+    .eq("id", id)
     .maybeSingle();
 
   if (!order) notFound();
