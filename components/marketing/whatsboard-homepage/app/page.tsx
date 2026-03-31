@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { PLAN_CONFIG } from "@/lib/billing";
+import { PLAN_CONFIG } from "@/lib/plan-access";
 
 type OrderStatus =
   | "new"
