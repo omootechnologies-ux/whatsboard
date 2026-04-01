@@ -1,8 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { isMissingOptionalFieldError } from "@/lib/supabase-errors";
+import { adminClient } from "@/lib/supabase/admin";
 
 type ViewerBusiness = {
   id: string;
+  owner_id?: string;
   name: string | null;
   phone: string | null;
   brand_color: string | null;
@@ -44,6 +46,20 @@ export async function getViewerContext() {
     .eq("id", user.id)
     .single();
 
+  let membershipBusinessId: string | null = null;
+  let membershipRole: string | null = null;
+
+  const { data: membershipData, error: membershipError } = await supabase
+    .from("business_members")
+    .select("business_id, role")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!membershipError && membershipData) {
+    membershipBusinessId = membershipData.business_id ?? null;
+    membershipRole = membershipData.role ?? null;
+  }
+
   let isAdmin = false;
 
   if (user) {
@@ -60,11 +76,13 @@ export async function getViewerContext() {
 
   let business: ViewerBusiness | null = null;
 
-  if (profile?.business_id) {
+  const resolvedBusinessId = membershipBusinessId ?? profile?.business_id ?? null;
+
+  if (resolvedBusinessId) {
     const { data: baseBusinessData } = await supabase
       .from("businesses")
-      .select("id, name, phone, brand_color, currency, created_at")
-      .eq("id", profile.business_id)
+      .select("id, owner_id, name, phone, brand_color, currency, created_at")
+      .eq("id", resolvedBusinessId)
       .single();
 
     business = baseBusinessData ?? null;
@@ -72,7 +90,7 @@ export async function getViewerContext() {
     const { data: extendedBusinessData, error: extendedBusinessError } = await supabase
       .from("businesses")
       .select("referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at")
-      .eq("id", profile.business_id)
+      .eq("id", resolvedBusinessId)
       .maybeSingle();
 
     if (!extendedBusinessError && extendedBusinessData && business) {
@@ -85,11 +103,11 @@ export async function getViewerContext() {
 
   let billingTransaction = null;
 
-  if (profile?.business_id) {
+  if (resolvedBusinessId) {
     const { data: billingTransactionData, error: billingTransactionError } = await supabase
       .from("billing_transactions")
       .select("id, plan_key, status, amount, currency, checkout_url, session_reference, payment_reference, paid_at, period_starts_at, period_ends_at, created_at")
-      .eq("business_id", profile.business_id)
+      .eq("business_id", resolvedBusinessId)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -102,11 +120,13 @@ export async function getViewerContext() {
   return {
     supabase,
     user,
-    businessId: profile?.business_id ?? null,
+    businessId: resolvedBusinessId,
     profile,
     business,
     billingTransaction,
     isAdmin,
+    membershipRole,
+    isBusinessOwner: Boolean(business?.owner_id && business.owner_id === user.id),
   };
 }
 
@@ -277,14 +297,56 @@ export async function getFollowUpsData() {
 }
 
 export async function getAccountData() {
-  const { user, profile, business, billingTransaction, isAdmin } = await getViewerContext();
+  const { user, profile, business, billingTransaction, isAdmin, businessId, isBusinessOwner } = await getViewerContext();
+
+  let teamMembers: Array<{
+    userId: string;
+    fullName: string | null;
+    email: string | null;
+    role: string;
+    createdAt: string | null;
+  }> = [];
+
+  if (businessId) {
+    const { data: memberships, error: membershipsError } = await adminClient
+      .from("business_members")
+      .select("user_id, role, created_at")
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: true });
+
+    if (!membershipsError && memberships?.length) {
+      const memberIds = memberships.map((item) => item.user_id);
+      const { data: profiles } = await adminClient
+        .from("profiles")
+        .select("id, full_name, email")
+        .in("id", memberIds);
+
+      const profileMap = new Map(
+        (profiles ?? []).map((item) => [item.id, item] as const)
+      );
+
+      teamMembers = memberships.map((membership) => {
+        const memberProfile = profileMap.get(membership.user_id);
+
+        return {
+          userId: membership.user_id,
+          fullName: memberProfile?.full_name ?? null,
+          email: memberProfile?.email ?? null,
+          role: membership.role ?? "member",
+          createdAt: membership.created_at ?? null,
+        };
+      });
+    }
+  }
 
   return {
     user,
     profile,
     business,
     billingTransaction,
-    isAdmin
+    isAdmin,
+    isBusinessOwner,
+    teamMembers,
   };
 }
 

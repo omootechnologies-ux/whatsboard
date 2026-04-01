@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { adminClient } from "@/lib/supabase/admin";
 import { getViewerContext } from "@/lib/queries";
 import {
   canCreateOrders,
@@ -9,6 +11,7 @@ import {
   getAllowedOrderStages,
   getAllowedPaymentStatuses,
   getMonthlyOrderLimit,
+  getTeamMemberLimit,
 } from "@/lib/plan-access";
 
 type ActionState = {
@@ -158,6 +161,20 @@ function generateReferralCode(value: string, businessId: string) {
     .padEnd(4, "x");
 
   return `${slug}-${businessId.replace(/-/g, "").slice(0, 6)}`.toUpperCase();
+}
+
+async function getCurrentTeamMemberCount(businessId: string) {
+  const { count, error } = await adminClient
+    .from("business_members")
+    .select("id", { count: "exact", head: true })
+    .eq("business_id", businessId)
+    .eq("role", "member");
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return count ?? 0;
 }
 
 async function getCatalogProductById(
@@ -870,4 +887,172 @@ export async function saveAiOrderCaptureAction(
     followUpNote: addFollowUp ? `Follow up with ${customerName} from AI chat capture` : "",
     tags: ["ai_chat_capture"],
   });
+}
+
+export async function addTeamMemberAction(formData: FormData) {
+  const context = await getDashboardActionContext();
+
+  if (!context || !context.businessId || !context.user) {
+    redirect("/dashboard/account?team_status=error&team_message=Business%20not%20found");
+  }
+
+  if (!context.isAdmin && !context.isBusinessOwner) {
+    redirect("/dashboard/account?team_status=error&team_message=Only%20the%20business%20owner%20can%20manage%20team%20members");
+  }
+
+  const teamMemberLimit = getTeamMemberLimit(context.business);
+
+  if (teamMemberLimit < 1) {
+    redirect("/dashboard/account?team_status=error&team_message=Team%20members%20start%20on%20Growth");
+  }
+
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+
+  if (!email) {
+    redirect("/dashboard/account?team_status=error&team_message=Team%20member%20email%20is%20required");
+  }
+
+  try {
+    const currentCount = await getCurrentTeamMemberCount(context.businessId);
+
+    if (currentCount >= teamMemberLimit) {
+      redirect(
+        `/dashboard/account?team_status=error&team_message=${encodeURIComponent(
+          `Your current plan supports up to ${teamMemberLimit} team members.`
+        )}`
+      );
+    }
+
+    const { data: memberProfile, error: memberProfileError } = await adminClient
+      .from("profiles")
+      .select("id, business_id, full_name, email")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (memberProfileError) {
+      redirect(
+        `/dashboard/account?team_status=error&team_message=${encodeURIComponent(memberProfileError.message)}`
+      );
+    }
+
+    if (!memberProfile?.id) {
+      redirect("/dashboard/account?team_status=error&team_message=That%20user%20needs%20to%20sign%20up%20first");
+    }
+
+    if (memberProfile.id === context.business?.owner_id) {
+      redirect("/dashboard/account?team_status=error&team_message=The%20business%20owner%20is%20already%20part%20of%20this%20team");
+    }
+
+    const { data: existingMembership } = await adminClient
+      .from("business_members")
+      .select("business_id, role")
+      .eq("user_id", memberProfile.id)
+      .maybeSingle();
+
+    if (existingMembership?.business_id === context.businessId) {
+      redirect("/dashboard/account?team_status=error&team_message=That%20user%20is%20already%20on%20your%20team");
+    }
+
+    if (existingMembership?.business_id && existingMembership.business_id !== context.businessId) {
+      redirect("/dashboard/account?team_status=error&team_message=That%20user%20already%20belongs%20to%20another%20business");
+    }
+
+    const { error: profileUpdateError } = await adminClient
+      .from("profiles")
+      .update({ business_id: context.businessId })
+      .eq("id", memberProfile.id);
+
+    if (profileUpdateError) {
+      redirect(
+        `/dashboard/account?team_status=error&team_message=${encodeURIComponent(profileUpdateError.message)}`
+      );
+    }
+
+    const { error: membershipUpsertError } = await adminClient
+      .from("business_members")
+      .upsert(
+        {
+          business_id: context.businessId,
+          user_id: memberProfile.id,
+          role: "member",
+          invited_by: context.user.id,
+        },
+        { onConflict: "user_id" }
+      );
+
+    if (membershipUpsertError) {
+      redirect(
+        `/dashboard/account?team_status=error&team_message=${encodeURIComponent(membershipUpsertError.message)}`
+      );
+    }
+
+    revalidatePath("/dashboard/account");
+    redirect("/dashboard/account?team_status=success&team_message=Team%20member%20added%20successfully");
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to add team member.";
+    redirect(`/dashboard/account?team_status=error&team_message=${encodeURIComponent(message)}`);
+  }
+}
+
+export async function removeTeamMemberAction(formData: FormData) {
+  const context = await getDashboardActionContext();
+
+  if (!context || !context.businessId || !context.user) {
+    redirect("/dashboard/account?team_status=error&team_message=Business%20not%20found");
+  }
+
+  if (!context.isAdmin && !context.isBusinessOwner) {
+    redirect("/dashboard/account?team_status=error&team_message=Only%20the%20business%20owner%20can%20manage%20team%20members");
+  }
+
+  const memberId = String(formData.get("memberId") || "").trim();
+
+  if (!memberId) {
+    redirect("/dashboard/account?team_status=error&team_message=Team%20member%20not%20found");
+  }
+
+  if (memberId === context.business?.owner_id) {
+    redirect("/dashboard/account?team_status=error&team_message=The%20business%20owner%20cannot%20be%20removed");
+  }
+
+  const { data: membership, error: membershipError } = await adminClient
+    .from("business_members")
+    .select("business_id, role")
+    .eq("user_id", memberId)
+    .maybeSingle();
+
+  if (membershipError) {
+    redirect(`/dashboard/account?team_status=error&team_message=${encodeURIComponent(membershipError.message)}`);
+  }
+
+  if (!membership || membership.business_id !== context.businessId) {
+    redirect("/dashboard/account?team_status=error&team_message=That%20user%20is%20not%20on%20your%20team");
+  }
+
+  const { error: deleteMembershipError } = await adminClient
+    .from("business_members")
+    .delete()
+    .eq("user_id", memberId)
+    .eq("business_id", context.businessId);
+
+  if (deleteMembershipError) {
+    redirect(
+      `/dashboard/account?team_status=error&team_message=${encodeURIComponent(deleteMembershipError.message)}`
+    );
+  }
+
+  const { error: profileUpdateError } = await adminClient
+    .from("profiles")
+    .update({ business_id: null })
+    .eq("id", memberId)
+    .eq("business_id", context.businessId);
+
+  if (profileUpdateError) {
+    redirect(
+      `/dashboard/account?team_status=error&team_message=${encodeURIComponent(profileUpdateError.message)}`
+    );
+  }
+
+  revalidatePath("/dashboard/account");
+  redirect("/dashboard/account?team_status=success&team_message=Team%20member%20removed");
 }

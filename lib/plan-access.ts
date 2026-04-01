@@ -105,7 +105,7 @@ export const PLAN_CONFIG: Record<
     badge: "Scaling teams",
     features: [
       { label: "Everything in Starter" },
-      { label: "2 team members", comingSoon: true },
+      { label: "2 team members" },
       { label: "Dispatch tracking" },
       { label: "Reports & analytics" },
     ],
@@ -123,7 +123,7 @@ export const PLAN_CONFIG: Record<
     badge: "For real teams",
     features: [
       { label: "Everything in Growth" },
-      { label: "5 team members", comingSoon: true },
+      { label: "5 team members" },
       { label: "Priority support" },
       { label: "Custom branding", comingSoon: true },
       { label: "M-Pesa reconciliation", comingSoon: true },
@@ -253,6 +253,10 @@ export function canUsePlanCapability(capability: PlanCapability, business?: Bill
 
 export function getMonthlyOrderLimit(business?: BillingBusiness | null) {
   return PLAN_CONFIG[getEffectivePlanKey(business)].monthlyOrderLimit;
+}
+
+export function getTeamMemberLimit(business?: BillingBusiness | null) {
+  return PLAN_CONFIG[getEffectivePlanKey(business)].teamMemberLimit;
 }
 
 export function getRemainingMonthlyOrders(

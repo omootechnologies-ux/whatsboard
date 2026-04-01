@@ -53,6 +53,16 @@ create table public.profiles (
   updated_at timestamptz not null default now()
 );
 
+create table public.business_members (
+  id uuid primary key default gen_random_uuid(),
+  business_id uuid not null references public.businesses(id) on delete cascade,
+  user_id uuid not null unique references auth.users(id) on delete cascade,
+  role text not null default 'member',
+  invited_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  constraint business_members_role_check check (role in ('owner', 'member'))
+);
+
 create table public.customers (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references public.businesses(id) on delete cascade,
@@ -163,6 +173,7 @@ create table public.catalog_products (
 
 alter table public.businesses enable row level security;
 alter table public.profiles enable row level security;
+alter table public.business_members enable row level security;
 alter table public.customers enable row level security;
 alter table public.orders enable row level security;
 alter table public.order_notes enable row level security;

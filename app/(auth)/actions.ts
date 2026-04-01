@@ -111,6 +111,20 @@ export async function registerAction(
     return { error: profileError.message };
   }
 
+  const { error: membershipError } = await adminClient.from("business_members").insert({
+    business_id: business.id,
+    user_id: userId,
+    role: "owner",
+    invited_by: userId,
+  });
+
+  if (membershipError && !matchesMissingSchemaError(membershipError.message)) {
+    await adminClient.from("profiles").delete().eq("id", userId);
+    await adminClient.from("businesses").delete().eq("id", business.id);
+    await adminClient.auth.admin.deleteUser(userId);
+    return { error: membershipError.message };
+  }
+
   if (referralCode) {
     const { data: candidateBusinesses } = await adminClient
       .from("businesses")
