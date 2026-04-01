@@ -34,6 +34,7 @@ function SubmitButton() {
 }
 
 export function OrderForm({
+  businessId,
   catalogProducts = [],
   canManageRecords = true,
   allowedStages = ["new_order", "waiting_payment"],
@@ -44,6 +45,7 @@ export function OrderForm({
   orderCountThisMonth = 0,
   remainingMonthlyOrders = null,
 }: {
+  businessId?: string | null;
   catalogProducts?: CatalogOption[];
   canManageRecords?: boolean;
   allowedStages?: OrderStage[];
@@ -66,6 +68,7 @@ export function OrderForm({
 
   return (
     <form action={formAction} className="form-grid">
+      {businessId ? <input type="hidden" name="businessId" value={businessId} /> : null}
       {monthlyOrderLimit !== null ? (
         <div className="form-note form-note-info md:col-span-2">
           Free includes {monthlyOrderLimit} orders per month. You have used {orderCountThisMonth} this month

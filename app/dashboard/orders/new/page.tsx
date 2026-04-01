@@ -20,7 +20,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function NewOrderPage() {
-  const { business, isAdmin, canCreateOrders, monthlyOrderLimit, orderCountThisMonth, remainingMonthlyOrders } =
+  const { business, businessId, isAdmin, canCreateOrders, monthlyOrderLimit, orderCountThisMonth, remainingMonthlyOrders } =
     await getDashboardWriteAccess();
   const catalogProducts = await getOrderCatalogOptions();
   const canUsePaymentTracking = canUsePlanCapabilityForUser("paymentTracking", business, isAdmin);
@@ -64,6 +64,7 @@ export default async function NewOrderPage() {
         />
         <div className="mt-5">
         <OrderForm
+          businessId={businessId}
           catalogProducts={catalogProducts}
           canManageRecords={canCreateOrders}
           allowedStages={getAllowedOrderStagesForUser(business, isAdmin)}

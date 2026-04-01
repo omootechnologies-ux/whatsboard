@@ -53,6 +53,89 @@ async function getDashboardActionContext() {
   return context;
 }
 
+async function getDashboardActionContextFromHint(hintedBusinessId: string) {
+  const context = await getViewerContext();
+
+  if (context.businessId || !context.user || !hintedBusinessId) {
+    return context.businessId ? context : null;
+  }
+
+  const normalizedBusinessId = hintedBusinessId.trim();
+
+  if (!normalizedBusinessId) {
+    return null;
+  }
+
+  const { data: ownedBusiness } = await adminClient
+    .from("businesses")
+    .select("id, owner_id, name, phone, brand_color, currency, created_at, referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at")
+    .eq("id", normalizedBusinessId)
+    .eq("owner_id", context.user.id)
+    .maybeSingle();
+
+  if (ownedBusiness) {
+    await adminClient.from("profiles").upsert({
+      id: context.user.id,
+      business_id: normalizedBusinessId,
+      email: context.user.email ?? null,
+      full_name: context.user.user_metadata?.full_name ?? null,
+    });
+
+    const membershipInsert = await adminClient.from("business_members").insert({
+      business_id: normalizedBusinessId,
+      user_id: context.user.id,
+      role: "owner",
+      invited_by: context.user.id,
+    });
+
+    if (membershipInsert.error && !membershipInsert.error.message.toLowerCase().includes("duplicate key")) {
+      // Ignore repair failure and still allow the owned business context.
+    }
+
+    return {
+      ...context,
+      businessId: normalizedBusinessId,
+      business: ownedBusiness,
+      membershipRole: "owner",
+      isBusinessOwner: true,
+    };
+  }
+
+  const { data: membership } = await adminClient
+    .from("business_members")
+    .select("business_id, role")
+    .eq("business_id", normalizedBusinessId)
+    .eq("user_id", context.user.id)
+    .maybeSingle();
+
+  if (!membership?.business_id) {
+    return null;
+  }
+
+  const { data: business } = await adminClient
+    .from("businesses")
+    .select("id, owner_id, name, phone, brand_color, currency, created_at, referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at")
+    .eq("id", normalizedBusinessId)
+    .maybeSingle();
+
+  if (!business) {
+    return null;
+  }
+
+  await adminClient
+    .from("profiles")
+    .update({ business_id: normalizedBusinessId })
+    .eq("id", context.user.id);
+
+  return {
+    ...context,
+    businessId: normalizedBusinessId,
+    business,
+    membershipRole: membership.role ?? context.membershipRole ?? null,
+    isBusinessOwner: Boolean(business.owner_id && business.owner_id === context.user.id),
+  };
+}
+
 function getCurrentMonthWindow() {
   const now = new Date();
   const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
@@ -390,7 +473,8 @@ export async function createOrderAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const context = await getDashboardActionContext();
+  const hintedBusinessId = String(formData.get("businessId") || "").trim();
+  const context = (await getDashboardActionContext()) ?? (await getDashboardActionContextFromHint(hintedBusinessId));
   if (!context) return { success: false, error: "Business not found." };
   const orderAccess = await getOrderWriteAccess(context, "create");
   if (!orderAccess.allowed) return { success: false, error: orderAccess.message };
