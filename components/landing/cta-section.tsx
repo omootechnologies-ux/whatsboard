@@ -114,21 +114,6 @@ export function CTASection() {
           </div>
         </div>
 
-        {/* Urgency Element */}
-        <div
-          className={cn(
-            "mt-16 max-w-md mx-auto text-center transition-all duration-700 delay-600",
-            isVisible ? "opacity-100 scale-100" : "opacity-0 scale-95"
-          )}
-        >
-          <div className="p-6 rounded-2xl bg-card border border-primary/20 shadow-lg">
-            <p className="text-sm text-muted-foreground mb-2">{t("Limited Time Offer")}</p>
-            <p className="text-lg font-bold text-foreground mb-1">
-              {t("First 100 signups this month get")}
-            </p>
-            <p className="text-2xl font-bold text-primary">{t("2 Months Free Pro Features")}</p>
-          </div>
-        </div>
       </div>
     </section>
   )

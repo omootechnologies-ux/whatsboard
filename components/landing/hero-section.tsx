@@ -73,12 +73,12 @@ export function HeroSection() {
             <div className="flex items-center gap-8 pt-4">
               <div>
                 <p className="text-2xl font-bold text-foreground">2,500+</p>
-                <p className="text-sm text-muted-foreground">{t("Active Sellers")}</p>
+                <p className="text-sm text-muted-foreground">{t("Waiting Sellers")}</p>
               </div>
               <div className="w-px h-12 bg-border" />
               <div>
                 <p className="text-2xl font-bold text-foreground">50K+</p>
-                <p className="text-sm text-muted-foreground">{t("Orders Tracked")}</p>
+                <p className="text-sm text-muted-foreground">{t("Orders To Be Tracked")}</p>
               </div>
               <div className="w-px h-12 bg-border" />
               <div>

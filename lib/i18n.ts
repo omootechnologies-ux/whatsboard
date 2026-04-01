@@ -69,8 +69,8 @@ const swTranslations: Record<string, string> = {
   "WhatsApp Chaos": "vurugu za WhatsApp",
   "Turn scattered WhatsApp orders into an organized sales machine. Track orders, manage customers, and never miss a sale again.":
     "Badilisha oda zilizotapakaa WhatsApp kuwa mfumo wa mauzo uliopangwa. Fuatilia oda, simamia wateja, na usikose mauzo tena.",
-  "Active Sellers": "Wauzaji hai",
-  "Orders Tracked": "Oda zilizofuatiliwa",
+  "Waiting Sellers": "Wauzaji wanaosubiri",
+  "Orders To Be Tracked": "Oda za kufuatiliwa",
   "Happy Customers": "Wateja walioridhika",
   "30 orders per month": "Oda 30 kwa mwezi",
   "Basic dashboard": "Dashibodi ya msingi",
@@ -201,9 +201,6 @@ const swTranslations: Record<string, string> = {
   "Set up in under 5 minutes": "Sanidi ndani ya dakika 5",
   "Works on any device": "Inafanya kazi kwenye kifaa chochote",
   "Cancel anytime": "Sitisha wakati wowote",
-  "Limited Time Offer": "Ofa ya muda mfupi",
-  "First 100 signups this month get": "Waliojisajili 100 wa kwanza mwezi huu wanapata",
-  "2 Months Free Pro Features": "Miezi 2 ya vipengele vya Pro bure",
   "The order management system for Tanzanian and East African online sellers. Turn chat chaos into organized growth.":
     "Mfumo wa kusimamia oda kwa wauzaji wa Tanzania na Afrika Mashariki. Badilisha vurugu za chat kuwa ukuaji uliopangwa.",
   "© 2026 WhatsBoard. All rights reserved.": "© 2026 WhatsBoard. Haki zote zimehifadhiwa.",

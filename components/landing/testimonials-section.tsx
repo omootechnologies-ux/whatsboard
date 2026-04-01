@@ -197,8 +197,8 @@ export function TestimonialsSection() {
           )}
         >
           {[
-            { value: "2,500+", label: "Active Sellers" },
-            { value: "50,000+", label: "Orders Tracked" },
+            { value: "2,500+", label: "Waiting Sellers" },
+            { value: "50,000+", label: "Orders To Be Tracked" },
             { value: "6+", label: "East African Cities" },
             { value: "4.9/5", label: "Average Rating" }
           ].map((stat, index) => (
