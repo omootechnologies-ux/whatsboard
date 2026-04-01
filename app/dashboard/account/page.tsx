@@ -214,15 +214,6 @@ export default async function AccountPage() {
           </div>
         </div>
 
-        {PLAN_CONFIG[effectivePlan].teamMemberLimit > 0 ? (
-          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs text-slate-500">Team allowance</p>
-            <p className="mt-2 text-sm font-medium text-slate-900">
-              Up to {PLAN_CONFIG[effectivePlan].teamMemberLimit} team members on this plan.
-            </p>
-          </div>
-        ) : null}
-
         <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
           <p className="text-xs text-slate-500">Provider reference</p>
           <p className="mt-2 break-all text-sm font-medium text-slate-900">

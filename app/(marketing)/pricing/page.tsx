@@ -243,25 +243,6 @@ export default async function PricingPage({
                   <TranslatedText text={tier.description} />
                 </p>
 
-                {tier.teamMemberLimit > 0 ? (
-                  <div
-                    className={[
-                      "mt-4 rounded-2xl border px-4 py-3 text-sm font-medium",
-                      tier.highlight
-                        ? "border-white/15 bg-white/10 text-primary-foreground"
-                        : "border-border bg-secondary text-foreground",
-                    ].join(" ")}
-                  >
-                    <span className={tier.highlight ? "text-primary-foreground/72" : "text-muted-foreground"}>
-                      <TranslatedText text="Team access" />
-                    </span>
-                    <p className="mt-1 font-semibold">
-                      <TranslatedText text="Up to" /> {tier.teamMemberLimit}{" "}
-                      <TranslatedText text={tier.teamMemberLimit === 1 ? "team member" : "team members"} />
-                    </p>
-                  </div>
-                ) : null}
-
                 <CheckoutButton
                   loggedIn={Boolean(user)}
                   currentPlan={effectivePlan}
