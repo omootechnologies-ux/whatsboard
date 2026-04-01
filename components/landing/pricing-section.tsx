@@ -79,6 +79,25 @@ export function PricingSection() {
                 {t(plan.description)}
               </p>
 
+              {plan.teamMemberLimit > 0 ? (
+                <div
+                  className={[
+                    "mt-4 rounded-2xl border px-4 py-3 text-sm font-medium",
+                    plan.highlight
+                      ? "border-white/15 bg-white/10 text-primary-foreground"
+                      : "border-border bg-secondary text-foreground",
+                  ].join(" ")}
+                >
+                  <span className={plan.highlight ? "text-primary-foreground/72" : "text-muted-foreground"}>
+                    {t("Team access")}
+                  </span>
+                  <p className="mt-1 font-semibold">
+                    {t("Up to")} {plan.teamMemberLimit}{" "}
+                    {t(plan.teamMemberLimit === 1 ? "team member" : "team members")}
+                  </p>
+                </div>
+              ) : null}
+
               <ul className="mt-6 space-y-3">
                 {plan.features.map((feature) => (
                   <li
