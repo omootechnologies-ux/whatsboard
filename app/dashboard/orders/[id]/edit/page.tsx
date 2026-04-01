@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft, ClipboardList, Wallet } from "lucide-react";
 import { getDashboardWriteAccess } from "@/lib/dashboard-access";
 import { getOrderCatalogOptions, getViewerContext } from "@/lib/queries";
 import {
@@ -8,6 +8,15 @@ import {
   getAllowedPaymentStatusesForUser,
 } from "@/lib/plan-access";
 import UpdateOrderForm from "@/components/forms/update-order-form";
+import {
+  DashboardActionLink,
+  DashboardHero,
+  DashboardPage,
+  DashboardPanel,
+  DashboardPanelHeader,
+  DashboardStatCard,
+} from "@/components/dashboard/page-primitives";
+import { formatTZS } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -59,34 +68,65 @@ export default async function EditOrderPage({
     payment_status: order.payment_status ?? "unpaid",
     notes: order.notes ?? "",
   };
+  const canUsePaymentTracking = canUsePlanCapabilityForUser("paymentTracking", business, isAdmin);
+  const canUseFollowUps = canUsePlanCapabilityForUser("followUpReminders", business, isAdmin);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-600">Orders</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Edit order</h1>
-        </div>
-        <Link
-          href="/dashboard/orders"
-          className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
-        >
-          Back
-        </Link>
-      </div>
-
-      <UpdateOrderForm
-        order={normalizedOrder}
-        catalogProducts={catalogProducts}
-        canManageRecords={canManageRecords}
-        allowedStages={getAllowedOrderStagesForUser(business, isAdmin)}
-        allowedPaymentStatuses={getAllowedPaymentStatusesForUser(business, isAdmin)}
-        canUseFollowUps={canUsePlanCapabilityForUser("followUpReminders", business, isAdmin)}
-        canUsePaymentTracking={canUsePlanCapabilityForUser("paymentTracking", business, isAdmin)}
-        monthlyOrderLimit={monthlyOrderLimit}
-        orderCountThisMonth={orderCountThisMonth}
-        remainingMonthlyOrders={remainingMonthlyOrders}
+    <DashboardPage>
+      <DashboardHero
+        eyebrow="Orders"
+        title={`Edit ${normalizedOrder.customer_name || "customer"}'s order`}
+        description="Update the tracked order without leaving the same operating system layout used everywhere else in the dashboard."
+        actions={
+          <>
+            <DashboardActionLink href={`/dashboard/orders/${order.id}`}>
+              View details
+            </DashboardActionLink>
+            <DashboardActionLink href="/dashboard/orders">
+              <ArrowLeft className="h-4 w-4" />
+              Back to orders
+            </DashboardActionLink>
+          </>
+        }
+        aside={
+          <div className="grid gap-3">
+            <DashboardStatCard
+              label="Current amount"
+              value={formatTZS(Number(normalizedOrder.amount ?? 0))}
+              detail="Current order value"
+              icon={<Wallet className="h-5 w-5" />}
+            />
+            <DashboardStatCard
+              label="Current stage"
+              value={(normalizedOrder.stage ?? "new_order").replaceAll("_", " ")}
+              detail={canUsePaymentTracking ? "Payment tracking active" : "Basic tracking mode"}
+              icon={<ClipboardList className="h-5 w-5" />}
+            />
+          </div>
+        }
       />
-    </div>
+
+      <DashboardPanel>
+        <DashboardPanelHeader
+          eyebrow="Order form"
+          title="Edit tracked order"
+          description="Changes here update the same order, customer, and follow-up workflow surfaced across the rest of the dashboard."
+        />
+        <div className="mt-5">
+          <UpdateOrderForm
+            order={normalizedOrder}
+            catalogProducts={catalogProducts}
+            canManageRecords={canManageRecords}
+            allowedStages={getAllowedOrderStagesForUser(business, isAdmin)}
+            allowedPaymentStatuses={getAllowedPaymentStatusesForUser(business, isAdmin)}
+            canUseFollowUps={canUseFollowUps}
+            canUsePaymentTracking={canUsePaymentTracking}
+            monthlyOrderLimit={monthlyOrderLimit}
+            orderCountThisMonth={orderCountThisMonth}
+            remainingMonthlyOrders={remainingMonthlyOrders}
+          />
+        </div>
+      </DashboardPanel>
+    </DashboardPage>
   );
 }

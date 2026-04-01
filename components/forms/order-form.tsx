@@ -83,9 +83,31 @@ export function OrderForm({
       ) : null}
 
       <fieldset disabled={!canManageRecords} className="contents disabled:opacity-70">
-      <input name="customerName" placeholder="Customer name" className="form-input" />
-      <input name="phone" placeholder="Phone number" className="form-input" />
-      <input name="area" placeholder="Delivery area" className="form-input" />
+      <div className="md:col-span-2">
+        <p className="text-sm font-semibold text-foreground">Customer details</p>
+        <p className="mt-1 text-sm text-muted-foreground">Start with the person and delivery area attached to this order.</p>
+      </div>
+
+      <label className="form-field">
+        <span className="form-label">Customer name</span>
+        <input name="customerName" placeholder="Customer name" className="form-input" />
+      </label>
+
+      <label className="form-field">
+        <span className="form-label">Phone number</span>
+        <input name="phone" placeholder="Phone number" className="form-input" />
+      </label>
+
+      <label className="form-field md:col-span-2">
+        <span className="form-label">Delivery area</span>
+        <input name="area" placeholder="Delivery area" className="form-input" />
+      </label>
+
+      <div className="md:col-span-2 pt-2">
+        <p className="text-sm font-semibold text-foreground">Order details</p>
+        <p className="mt-1 text-sm text-muted-foreground">Use the catalog when possible so price and stock stay in sync.</p>
+      </div>
+
       <label className="form-field">
         <span className="form-label">Catalog product</span>
         <select
@@ -104,7 +126,20 @@ export function OrderForm({
             ))}
         </select>
       </label>
-      <div className="form-field">
+
+      <label className="form-field">
+        <span className="form-label">Product or service</span>
+        <input
+          name="product"
+          placeholder="Product or service"
+          readOnly={Boolean(selectedCatalogProduct)}
+          value={selectedCatalogProduct ? selectedCatalogProduct.name : customProduct}
+          onChange={(event) => setCustomProduct(event.target.value)}
+          className="form-input read-only:text-muted-foreground"
+        />
+      </label>
+
+      <label className="form-field">
         <span className="form-label">Price</span>
         <input
           name="amount"
@@ -115,15 +150,7 @@ export function OrderForm({
           onChange={(event) => setCustomAmount(event.target.value)}
           className="form-input read-only:text-muted-foreground"
         />
-      </div>
-      <input
-        name="product"
-        placeholder="Product or service"
-        readOnly={Boolean(selectedCatalogProduct)}
-        value={selectedCatalogProduct ? selectedCatalogProduct.name : customProduct}
-        onChange={(event) => setCustomProduct(event.target.value)}
-        className="form-input read-only:text-muted-foreground"
-      />
+      </label>
 
       {selectedCatalogProduct ? (
         <div className="form-note form-note-info">
@@ -135,25 +162,31 @@ export function OrderForm({
         </div>
       )}
 
-      <select name="stage" defaultValue={visibleStages[0]?.key ?? "new_order"} className="form-select">
-        {visibleStages.map((stage) => (
-          <option key={stage.key} value={stage.key}>
-            {stage.label}
-          </option>
-        ))}
-      </select>
+      <label className="form-field">
+        <span className="form-label">Order stage</span>
+        <select name="stage" defaultValue={visibleStages[0]?.key ?? "new_order"} className="form-select">
+          {visibleStages.map((stage) => (
+            <option key={stage.key} value={stage.key}>
+              {stage.label}
+            </option>
+          ))}
+        </select>
+      </label>
 
-      <select
-        name="paymentStatus"
-        defaultValue={allowedPaymentStatuses[0] ?? "unpaid"}
-        className="form-select"
-      >
-        {allowedPaymentStatuses.map((item) => (
-          <option key={item} value={item}>
-            {item}
-          </option>
-        ))}
-      </select>
+      <label className="form-field">
+        <span className="form-label">Payment status</span>
+        <select
+          name="paymentStatus"
+          defaultValue={allowedPaymentStatuses[0] ?? "unpaid"}
+          className="form-select"
+        >
+          {allowedPaymentStatuses.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+      </label>
 
       {canUsePaymentTracking ? null : (
         <div className="form-note form-note-muted md:col-span-2">
@@ -163,22 +196,32 @@ export function OrderForm({
 
       {canUseFollowUps ? (
         <>
+          <div className="md:col-span-2 pt-2">
+            <p className="text-sm font-semibold text-foreground">Follow-up</p>
+            <p className="mt-1 text-sm text-muted-foreground">Add the next action now so the order never goes cold.</p>
+          </div>
           <label className="form-check-row md:col-span-2">
             <input type="checkbox" name="addFollowUp" className="h-4 w-4" />
             <span>Add follow-up</span>
           </label>
 
-          <input
-            name="followUpDate"
-            type="datetime-local"
-            className="form-input"
-          />
+          <label className="form-field">
+            <span className="form-label">Follow-up date</span>
+            <input
+              name="followUpDate"
+              type="datetime-local"
+              className="form-input"
+            />
+          </label>
 
-          <input
-            name="followUpNote"
-            placeholder="Follow-up note"
-            className="form-input"
-          />
+          <label className="form-field">
+            <span className="form-label">Follow-up note</span>
+            <input
+              name="followUpNote"
+              placeholder="Follow-up note"
+              className="form-input"
+            />
+          </label>
         </>
       ) : (
         <div className="form-note form-note-muted md:col-span-2">
@@ -186,7 +229,10 @@ export function OrderForm({
         </div>
       )}
 
-      <textarea name="notes" placeholder="Notes" className="form-textarea min-h-28 md:col-span-2" />
+      <label className="form-field md:col-span-2">
+        <span className="form-label">Notes</span>
+        <textarea name="notes" placeholder="Notes" className="form-textarea min-h-28" />
+      </label>
 
       {state.error ? <p className="form-note form-note-error md:col-span-2">{state.error}</p> : null}
       {state.success ? <p className="form-note form-note-success md:col-span-2">Order created successfully.</p> : null}

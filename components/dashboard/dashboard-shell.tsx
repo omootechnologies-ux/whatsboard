@@ -13,12 +13,12 @@ import {
   LayoutDashboard,
   LogOut,
   Plus,
-  ReceiptText,
   Settings,
   ShieldCheck,
   ShoppingBag,
   Users,
   Wallet,
+  CreditCard,
 } from "lucide-react";
 import { logoutAction } from "@/app/(auth)/actions";
 import {
@@ -44,7 +44,8 @@ const PRIMARY_NAV: NavItemConfig[] = [
 const SECONDARY_NAV: NavItemConfig[] = [
   { href: "/dashboard/catalog", label: "Catalog", icon: ShoppingBag },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/dashboard/account", label: "Account", icon: ReceiptText },
+  { href: "/dashboard/team", label: "Team", icon: Users },
+  { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 

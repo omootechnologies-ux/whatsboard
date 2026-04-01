@@ -893,11 +893,11 @@ export async function addTeamMemberAction(formData: FormData) {
   const context = await getDashboardActionContext();
 
   if (!context || !context.businessId || !context.user) {
-    redirect("/dashboard/account?team_status=error&team_message=Business%20not%20found");
+    redirect("/dashboard/team?team_status=error&team_message=Business%20not%20found");
   }
 
   if (!context.isAdmin && !context.isBusinessOwner) {
-    redirect("/dashboard/account?team_status=error&team_message=Only%20the%20business%20owner%20can%20manage%20team%20members");
+    redirect("/dashboard/team?team_status=error&team_message=Only%20the%20business%20owner%20can%20manage%20team%20members");
   }
 
   const teamMemberLimit = context.isAdmin
@@ -905,13 +905,13 @@ export async function addTeamMemberAction(formData: FormData) {
     : getTeamMemberLimit(context.business);
 
   if (teamMemberLimit < 1) {
-    redirect("/dashboard/account?team_status=error&team_message=Team%20members%20start%20on%20Growth");
+    redirect("/dashboard/team?team_status=error&team_message=Team%20members%20start%20on%20Growth");
   }
 
   const email = String(formData.get("email") || "").trim().toLowerCase();
 
   if (!email) {
-    redirect("/dashboard/account?team_status=error&team_message=Team%20member%20email%20is%20required");
+    redirect("/dashboard/team?team_status=error&team_message=Team%20member%20email%20is%20required");
   }
 
   try {
@@ -919,7 +919,7 @@ export async function addTeamMemberAction(formData: FormData) {
 
     if (currentCount >= teamMemberLimit) {
       redirect(
-        `/dashboard/account?team_status=error&team_message=${encodeURIComponent(
+        `/dashboard/team?team_status=error&team_message=${encodeURIComponent(
           `Your current plan supports up to ${teamMemberLimit} team members.`
         )}`
       );
@@ -933,16 +933,16 @@ export async function addTeamMemberAction(formData: FormData) {
 
     if (memberProfileError) {
       redirect(
-        `/dashboard/account?team_status=error&team_message=${encodeURIComponent(memberProfileError.message)}`
+        `/dashboard/team?team_status=error&team_message=${encodeURIComponent(memberProfileError.message)}`
       );
     }
 
     if (!memberProfile?.id) {
-      redirect("/dashboard/account?team_status=error&team_message=That%20user%20needs%20to%20sign%20up%20first");
+      redirect("/dashboard/team?team_status=error&team_message=That%20user%20needs%20to%20sign%20up%20first");
     }
 
     if (memberProfile.id === context.business?.owner_id) {
-      redirect("/dashboard/account?team_status=error&team_message=The%20business%20owner%20is%20already%20part%20of%20this%20team");
+      redirect("/dashboard/team?team_status=error&team_message=The%20business%20owner%20is%20already%20part%20of%20this%20team");
     }
 
     const { data: existingMembership } = await adminClient
@@ -952,11 +952,11 @@ export async function addTeamMemberAction(formData: FormData) {
       .maybeSingle();
 
     if (existingMembership?.business_id === context.businessId) {
-      redirect("/dashboard/account?team_status=error&team_message=That%20user%20is%20already%20on%20your%20team");
+      redirect("/dashboard/team?team_status=error&team_message=That%20user%20is%20already%20on%20your%20team");
     }
 
     if (existingMembership?.business_id && existingMembership.business_id !== context.businessId) {
-      redirect("/dashboard/account?team_status=error&team_message=That%20user%20already%20belongs%20to%20another%20business");
+      redirect("/dashboard/team?team_status=error&team_message=That%20user%20already%20belongs%20to%20another%20business");
     }
 
     const { error: profileUpdateError } = await adminClient
@@ -966,7 +966,7 @@ export async function addTeamMemberAction(formData: FormData) {
 
     if (profileUpdateError) {
       redirect(
-        `/dashboard/account?team_status=error&team_message=${encodeURIComponent(profileUpdateError.message)}`
+        `/dashboard/team?team_status=error&team_message=${encodeURIComponent(profileUpdateError.message)}`
       );
     }
 
@@ -984,15 +984,15 @@ export async function addTeamMemberAction(formData: FormData) {
 
     if (membershipUpsertError) {
       redirect(
-        `/dashboard/account?team_status=error&team_message=${encodeURIComponent(membershipUpsertError.message)}`
+        `/dashboard/team?team_status=error&team_message=${encodeURIComponent(membershipUpsertError.message)}`
       );
     }
 
-    revalidatePath("/dashboard/account");
-    redirect("/dashboard/account?team_status=success&team_message=Team%20member%20added%20successfully");
+    revalidatePath("/dashboard/team");
+    redirect("/dashboard/team?team_status=success&team_message=Team%20member%20added%20successfully");
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to add team member.";
-    redirect(`/dashboard/account?team_status=error&team_message=${encodeURIComponent(message)}`);
+    redirect(`/dashboard/team?team_status=error&team_message=${encodeURIComponent(message)}`);
   }
 }
 
@@ -1000,21 +1000,21 @@ export async function removeTeamMemberAction(formData: FormData) {
   const context = await getDashboardActionContext();
 
   if (!context || !context.businessId || !context.user) {
-    redirect("/dashboard/account?team_status=error&team_message=Business%20not%20found");
+    redirect("/dashboard/team?team_status=error&team_message=Business%20not%20found");
   }
 
   if (!context.isAdmin && !context.isBusinessOwner) {
-    redirect("/dashboard/account?team_status=error&team_message=Only%20the%20business%20owner%20can%20manage%20team%20members");
+    redirect("/dashboard/team?team_status=error&team_message=Only%20the%20business%20owner%20can%20manage%20team%20members");
   }
 
   const memberId = String(formData.get("memberId") || "").trim();
 
   if (!memberId) {
-    redirect("/dashboard/account?team_status=error&team_message=Team%20member%20not%20found");
+    redirect("/dashboard/team?team_status=error&team_message=Team%20member%20not%20found");
   }
 
   if (memberId === context.business?.owner_id) {
-    redirect("/dashboard/account?team_status=error&team_message=The%20business%20owner%20cannot%20be%20removed");
+    redirect("/dashboard/team?team_status=error&team_message=The%20business%20owner%20cannot%20be%20removed");
   }
 
   const { data: membership, error: membershipError } = await adminClient
@@ -1024,11 +1024,11 @@ export async function removeTeamMemberAction(formData: FormData) {
     .maybeSingle();
 
   if (membershipError) {
-    redirect(`/dashboard/account?team_status=error&team_message=${encodeURIComponent(membershipError.message)}`);
+    redirect(`/dashboard/team?team_status=error&team_message=${encodeURIComponent(membershipError.message)}`);
   }
 
   if (!membership || membership.business_id !== context.businessId) {
-    redirect("/dashboard/account?team_status=error&team_message=That%20user%20is%20not%20on%20your%20team");
+    redirect("/dashboard/team?team_status=error&team_message=That%20user%20is%20not%20on%20your%20team");
   }
 
   const { error: deleteMembershipError } = await adminClient
@@ -1039,7 +1039,7 @@ export async function removeTeamMemberAction(formData: FormData) {
 
   if (deleteMembershipError) {
     redirect(
-      `/dashboard/account?team_status=error&team_message=${encodeURIComponent(deleteMembershipError.message)}`
+      `/dashboard/team?team_status=error&team_message=${encodeURIComponent(deleteMembershipError.message)}`
     );
   }
 
@@ -1051,10 +1051,10 @@ export async function removeTeamMemberAction(formData: FormData) {
 
   if (profileUpdateError) {
     redirect(
-      `/dashboard/account?team_status=error&team_message=${encodeURIComponent(profileUpdateError.message)}`
+      `/dashboard/team?team_status=error&team_message=${encodeURIComponent(profileUpdateError.message)}`
     );
   }
 
-  revalidatePath("/dashboard/account");
-  redirect("/dashboard/account?team_status=success&team_message=Team%20member%20removed");
+  revalidatePath("/dashboard/team");
+  redirect("/dashboard/team?team_status=success&team_message=Team%20member%20removed");
 }

@@ -1,9 +1,17 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowLeft, Phone, Users } from "lucide-react";
 import { getDashboardWriteAccess, requireDashboardFeatureAccess } from "@/lib/dashboard-access";
 import { getViewerContext } from "@/lib/queries";
 import { updateCustomerAction } from "@/app/dashboard/actions";
 import EditCustomerForm from "@/components/forms/edit-customer-form";
+import {
+  DashboardActionLink,
+  DashboardHero,
+  DashboardPage,
+  DashboardPanel,
+  DashboardPanelHeader,
+  DashboardStatCard,
+} from "@/components/dashboard/page-primitives";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -30,21 +38,45 @@ export default async function EditCustomerPage({
   if (!customer) notFound();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-600">Customers</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Edit customer</h1>
-        </div>
-        <Link
-          href="/dashboard/customers"
-          className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
-        >
-          Back
-        </Link>
-      </div>
+    <DashboardPage>
+      <DashboardHero
+        eyebrow="Customers"
+        title={`Edit ${customer.name || "customer"} record`}
+        description="Keep customer details aligned with the rest of the workspace so follow-ups and repeat-order tracking stay reliable."
+        actions={
+          <DashboardActionLink href="/dashboard/customers">
+            <ArrowLeft className="h-4 w-4" />
+            Back to customers
+          </DashboardActionLink>
+        }
+        aside={
+          <div className="grid gap-3">
+            <DashboardStatCard
+              label="Current phone"
+              value={customer.phone || "Not set"}
+              detail="Primary contact saved for this customer"
+              icon={<Phone className="h-5 w-5" />}
+            />
+            <DashboardStatCard
+              label="Status"
+              value={customer.status || "active"}
+              detail="Current customer record status"
+              icon={<Users className="h-5 w-5" />}
+            />
+          </div>
+        }
+      />
 
-      <EditCustomerForm customer={customer} action={updateCustomerAction.bind(null, customer.id)} canManageRecords={canManageRecords} />
-    </div>
+      <DashboardPanel>
+        <DashboardPanelHeader
+          eyebrow="Customer form"
+          title="Customer details"
+          description="Update contact and location details from the same unified dashboard form system."
+        />
+        <div className="mt-5">
+          <EditCustomerForm customer={customer} action={updateCustomerAction.bind(null, customer.id)} canManageRecords={canManageRecords} />
+        </div>
+      </DashboardPanel>
+    </DashboardPage>
   );
 }

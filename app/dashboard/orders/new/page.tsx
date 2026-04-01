@@ -1,5 +1,4 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, PackageCheck, ShoppingBag } from "lucide-react";
 import { OrderForm } from "@/components/forms/order-form";
 import { getDashboardWriteAccess } from "@/lib/dashboard-access";
 import {
@@ -8,6 +7,14 @@ import {
   getAllowedPaymentStatusesForUser,
 } from "@/lib/plan-access";
 import { getOrderCatalogOptions } from "@/lib/queries";
+import {
+  DashboardActionLink,
+  DashboardHero,
+  DashboardPage,
+  DashboardPanel,
+  DashboardPanelHeader,
+  DashboardStatCard,
+} from "@/components/dashboard/page-primitives";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -16,39 +23,59 @@ export default async function NewOrderPage() {
   const { business, isAdmin, canCreateOrders, monthlyOrderLimit, orderCountThisMonth, remainingMonthlyOrders } =
     await getDashboardWriteAccess();
   const catalogProducts = await getOrderCatalogOptions();
+  const canUsePaymentTracking = canUsePlanCapabilityForUser("paymentTracking", business, isAdmin);
+  const canUseFollowUps = canUsePlanCapabilityForUser("followUpReminders", business, isAdmin);
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold text-slate-900">Create Order</h2>
-          <p className="mt-2 text-slate-600">
-            Fill in the customer and order details, then save.
-          </p>
-        </div>
+    <DashboardPage>
+      <DashboardHero
+        eyebrow="Orders"
+        title="Create a new order without leaving the operating workflow."
+        description="Capture the customer, amount, stage, and next action in one place so the order immediately becomes trackable."
+        actions={
+          <DashboardActionLink href="/dashboard/orders">
+            <ArrowLeft className="h-4 w-4" />
+            Back to orders
+          </DashboardActionLink>
+        }
+        aside={
+          <div className="grid gap-3">
+            <DashboardStatCard
+              label="Catalog products"
+              value={String(catalogProducts.length)}
+              detail="Ready to reuse in new orders"
+              icon={<ShoppingBag className="h-5 w-5" />}
+            />
+            <DashboardStatCard
+              label="Tracking level"
+              value={canUsePaymentTracking ? "Full" : "Basic"}
+              detail={canUseFollowUps ? "Includes follow-ups" : "Follow-ups unlock on Starter"}
+              icon={<PackageCheck className="h-5 w-5" />}
+            />
+          </div>
+        }
+      />
 
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Dashboard
-        </Link>
-      </div>
-
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <DashboardPanel>
+        <DashboardPanelHeader
+          eyebrow="Order form"
+          title="New order details"
+          description="This form follows the same workflow as the dashboard lists: customer first, then order, payment, and next action."
+        />
+        <div className="mt-5">
         <OrderForm
           catalogProducts={catalogProducts}
           canManageRecords={canCreateOrders}
           allowedStages={getAllowedOrderStagesForUser(business, isAdmin)}
           allowedPaymentStatuses={getAllowedPaymentStatusesForUser(business, isAdmin)}
-          canUseFollowUps={canUsePlanCapabilityForUser("followUpReminders", business, isAdmin)}
-          canUsePaymentTracking={canUsePlanCapabilityForUser("paymentTracking", business, isAdmin)}
+          canUseFollowUps={canUseFollowUps}
+          canUsePaymentTracking={canUsePaymentTracking}
           monthlyOrderLimit={monthlyOrderLimit}
           orderCountThisMonth={orderCountThisMonth}
           remainingMonthlyOrders={remainingMonthlyOrders}
         />
-      </section>
-    </div>
+        </div>
+      </DashboardPanel>
+    </DashboardPage>
   );
 }
