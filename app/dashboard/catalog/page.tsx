@@ -6,6 +6,7 @@ import { getCatalogProductsData } from "@/lib/queries";
 import {
   DashboardBadge,
   DashboardEmptyState,
+  DashboardFilterBar,
   DashboardHero,
   DashboardPage,
   DashboardPanel,
@@ -38,10 +39,29 @@ function getWhatsAppShareLink(
   return `https://wa.me/?text=${encodeURIComponent(message)}`;
 }
 
-export default async function CatalogPage() {
+export default async function CatalogPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ q?: string; visibility?: string }>;
+}) {
   await requireDashboardFeatureAccess("catalog");
   const { canManageRecords } = await getDashboardWriteAccess();
-  const { business, products, setupRequired } = await getCatalogProductsData();
+  const { business, products: allProducts, setupRequired } = await getCatalogProductsData();
+  const resolvedSearch = (await searchParams) ?? {};
+  const searchQuery = (resolvedSearch.q ?? "").trim().toLowerCase();
+  const selectedVisibility = (resolvedSearch.visibility ?? "").trim();
+  const products = allProducts.filter((product) => {
+    const matchesSearch =
+      !searchQuery ||
+      product.name.toLowerCase().includes(searchQuery) ||
+      product.description.toLowerCase().includes(searchQuery);
+    const matchesVisibility =
+      !selectedVisibility ||
+      (selectedVisibility === "active" && product.isActive) ||
+      (selectedVisibility === "hidden" && !product.isActive);
+
+    return matchesSearch && matchesVisibility;
+  });
 
   return (
     <DashboardPage>
@@ -65,6 +85,23 @@ export default async function CatalogPage() {
       />
 
       <CatalogProductForm canManageRecords={canManageRecords} />
+
+      <DashboardFilterBar
+        clearHref="/dashboard/catalog"
+        defaultSearch={resolvedSearch.q ?? ""}
+        searchPlaceholder="Search product name or description"
+        filters={[
+          {
+            name: "visibility",
+            defaultValue: selectedVisibility,
+            options: [
+              { label: "All products", value: "" },
+              { label: "Visible", value: "active" },
+              { label: "Hidden", value: "hidden" },
+            ],
+          },
+        ]}
+      />
 
       {setupRequired ? (
         <div className="rounded-2xl border border-[#e9d4d1] bg-[#f9efed] px-4 py-3 text-sm text-[#8f3e36]">

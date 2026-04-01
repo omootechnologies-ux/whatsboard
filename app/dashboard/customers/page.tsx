@@ -6,6 +6,7 @@ import {
   DashboardActionLink,
   DashboardBadge,
   DashboardEmptyState,
+  DashboardFilterBar,
   DashboardHero,
   DashboardPage,
   DashboardPanel,
@@ -16,11 +17,36 @@ import {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function CustomersPage() {
+export default async function CustomersPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ q?: string; status?: string; activity?: string }>;
+}) {
   await requireDashboardFeatureAccess("customers");
-  const customers = await getCustomersData();
-  const repeatCustomers = customers.filter((customer) => customer.isRepeat).length;
+  const allCustomers = await getCustomersData();
+  const resolvedSearch = (await searchParams) ?? {};
+  const searchQuery = (resolvedSearch.q ?? "").trim().toLowerCase();
+  const selectedStatus = (resolvedSearch.status ?? "").trim();
+  const selectedActivity = (resolvedSearch.activity ?? "").trim();
   const now = Date.now();
+  const customers = allCustomers.filter((customer) => {
+    const lastOrderTime = new Date(customer.lastOrderDate).getTime();
+    const isDormant = Number.isFinite(lastOrderTime) && now - lastOrderTime >= 30 * 24 * 60 * 60 * 1000;
+    const matchesSearch =
+      !searchQuery ||
+      customer.name.toLowerCase().includes(searchQuery) ||
+      (customer.phone || "").toLowerCase().includes(searchQuery) ||
+      (customer.area || "").toLowerCase().includes(searchQuery);
+    const matchesStatus = !selectedStatus || (customer.status || "active") === selectedStatus;
+    const matchesActivity =
+      !selectedActivity ||
+      (selectedActivity === "repeat" && customer.isRepeat) ||
+      (selectedActivity === "dormant" && isDormant) ||
+      (selectedActivity === "recent" && !isDormant);
+
+    return matchesSearch && matchesStatus && matchesActivity;
+  });
+  const repeatCustomers = customers.filter((customer) => customer.isRepeat).length;
   const dormantCustomers = customers.filter((customer) => {
     const lastOrderTime = new Date(customer.lastOrderDate).getTime();
     return Number.isFinite(lastOrderTime) && now - lastOrderTime >= 30 * 24 * 60 * 60 * 1000;
@@ -39,6 +65,33 @@ export default async function CustomersPage() {
             <DashboardStatCard label="Repeat" value={String(repeatCustomers)} detail="Customers with multiple orders" icon={<Users className="h-5 w-5" />} />
           </div>
         }
+      />
+
+      <DashboardFilterBar
+        clearHref="/dashboard/customers"
+        defaultSearch={resolvedSearch.q ?? ""}
+        searchPlaceholder="Search name, phone, or area"
+        filters={[
+          {
+            name: "status",
+            defaultValue: selectedStatus,
+            options: [
+              { label: "All statuses", value: "" },
+              { label: "Active", value: "active" },
+              { label: "Inactive", value: "inactive" },
+            ],
+          },
+          {
+            name: "activity",
+            defaultValue: selectedActivity,
+            options: [
+              { label: "All activity", value: "" },
+              { label: "Recent", value: "recent" },
+              { label: "Repeat", value: "repeat" },
+              { label: "Dormant", value: "dormant" },
+            ],
+          },
+        ]}
       />
 
       <DashboardPanel muted>

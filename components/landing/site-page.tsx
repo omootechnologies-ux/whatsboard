@@ -9,7 +9,7 @@ import { TestimonialsSection } from "@/components/landing/testimonials-section";
 import { CTASection } from "@/components/landing/cta-section";
 import { Footer } from "@/components/landing/footer";
 
-export default function WhatsboardLanding() {
+export default function LandingSitePage() {
   return (
     <main className="min-h-screen bg-background font-sans">
       <Navigation />

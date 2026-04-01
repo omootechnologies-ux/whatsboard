@@ -1,1 +1,1 @@
-export { default } from "@/components/marketing/whatsboard-homepage/app/page";
+export { default } from "@/components/landing/site-page";

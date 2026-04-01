@@ -7,6 +7,7 @@ import {
   DashboardActionLink,
   DashboardBadge,
   DashboardEmptyState,
+  DashboardFilterBar,
   DashboardHero,
   DashboardPage,
   DashboardPanel,
@@ -30,10 +31,30 @@ function badgeTone(stage: string) {
   return map[stage] ?? "neutral";
 }
 
-export default async function OrdersPage() {
+export default async function OrdersPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ q?: string; stage?: string; payment?: string }>;
+}) {
   const { business, isAdmin, canCreateOrders, monthlyOrderLimit, orderCountThisMonth, remainingMonthlyOrders } =
     await getDashboardWriteAccess();
-  const { orders } = await getDashboardData();
+  const { orders: allOrders } = await getDashboardData();
+  const resolvedSearch = (await searchParams) ?? {};
+  const searchQuery = (resolvedSearch.q ?? "").trim().toLowerCase();
+  const selectedStage = (resolvedSearch.stage ?? "").trim();
+  const selectedPayment = (resolvedSearch.payment ?? "").trim();
+  const orders = allOrders.filter((order) => {
+    const matchesSearch =
+      !searchQuery ||
+      order.customerName.toLowerCase().includes(searchQuery) ||
+      order.product.toLowerCase().includes(searchQuery) ||
+      order.area.toLowerCase().includes(searchQuery) ||
+      order.phone.toLowerCase().includes(searchQuery);
+    const matchesStage = !selectedStage || order.stage === selectedStage;
+    const matchesPayment = !selectedPayment || order.paymentStatus === selectedPayment;
+
+    return matchesSearch && matchesStage && matchesPayment;
+  });
   const canSeeCustomers = canAccessDashboardFeatureForUser("customers", business, isAdmin);
   const canSeeFollowUps = canAccessDashboardFeatureForUser("followUps", business, isAdmin);
   const canTrackPayments = canUsePlanCapabilityForUser("paymentTracking", business, isAdmin);
@@ -100,6 +121,38 @@ export default async function OrdersPage() {
           </Link>
         </div>
       ) : null}
+
+      <DashboardFilterBar
+        clearHref="/dashboard/orders"
+        defaultSearch={resolvedSearch.q ?? ""}
+        searchPlaceholder="Search customer, phone, product, or area"
+        filters={[
+          {
+            name: "stage",
+            defaultValue: selectedStage,
+            options: [
+              { label: "All stages", value: "" },
+              { label: "New", value: "new_order" },
+              { label: "Waiting payment", value: "waiting_payment" },
+              { label: "Paid", value: "paid" },
+              { label: "Packing", value: "packing" },
+              { label: "Dispatched", value: "dispatched" },
+              { label: "Delivered", value: "delivered" },
+            ],
+          },
+          {
+            name: "payment",
+            defaultValue: selectedPayment,
+            options: [
+              { label: "All payments", value: "" },
+              { label: "Unpaid", value: "unpaid" },
+              { label: "Partial", value: "partial" },
+              { label: "Paid", value: "paid" },
+              { label: "COD", value: "cod" },
+            ],
+          },
+        ]}
+      />
 
       <DashboardPanel>
         <DashboardPanelHeader

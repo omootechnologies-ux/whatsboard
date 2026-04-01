@@ -6,6 +6,7 @@ import {
   DashboardActionLink,
   DashboardBadge,
   DashboardEmptyState,
+  DashboardFilterBar,
   DashboardHero,
   DashboardPage,
   DashboardPanel,
@@ -15,9 +16,34 @@ import {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default async function FollowUpsPage() {
+export default async function FollowUpsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ q?: string; state?: string }>;
+}) {
   await requireDashboardFeatureAccess("followUps");
-  const followUps = await getFollowUpsData();
+  const allFollowUps = await getFollowUpsData();
+  const resolvedSearch = (await searchParams) ?? {};
+  const searchQuery = (resolvedSearch.q ?? "").trim().toLowerCase();
+  const selectedState = (resolvedSearch.state ?? "").trim();
+  const now = Date.now();
+  const followUps = allFollowUps.filter((item) => {
+    const dueTime = item.dueAt ? new Date(item.dueAt).getTime() : null;
+    const isOverdue = !item.completed && Number.isFinite(dueTime) && (dueTime as number) < now;
+    const matchesSearch =
+      !searchQuery ||
+      item.customerName.toLowerCase().includes(searchQuery) ||
+      item.product.toLowerCase().includes(searchQuery) ||
+      item.note.toLowerCase().includes(searchQuery) ||
+      item.phone.toLowerCase().includes(searchQuery);
+    const matchesState =
+      !selectedState ||
+      (selectedState === "pending" && !item.completed) ||
+      (selectedState === "completed" && item.completed) ||
+      (selectedState === "overdue" && isOverdue);
+
+    return matchesSearch && matchesState;
+  });
   const pendingCount = followUps.filter((item) => !item.completed).length;
 
   return (
@@ -40,6 +66,24 @@ export default async function FollowUpsPage() {
             </div>
           </div>
         }
+      />
+
+      <DashboardFilterBar
+        clearHref="/dashboard/follow-ups"
+        defaultSearch={resolvedSearch.q ?? ""}
+        searchPlaceholder="Search customer, phone, product, or note"
+        filters={[
+          {
+            name: "state",
+            defaultValue: selectedState,
+            options: [
+              { label: "All follow-ups", value: "" },
+              { label: "Pending", value: "pending" },
+              { label: "Overdue", value: "overdue" },
+              { label: "Completed", value: "completed" },
+            ],
+          },
+        ]}
       />
 
       <DashboardPanel>
