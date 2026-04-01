@@ -23,6 +23,35 @@ type ViewerBusiness = {
   billing_current_period_ends_at?: string | null;
 };
 
+function generateFallbackBusinessName(user: {
+  email?: string | null;
+  user_metadata?: Record<string, any> | null;
+}, profile?: { business_name?: string | null; full_name?: string | null } | null) {
+  const fromProfile = String(profile?.business_name ?? "").trim();
+  if (fromProfile) return fromProfile;
+
+  const fromMetadata = String(user.user_metadata?.business_name ?? "").trim();
+  if (fromMetadata) return fromMetadata;
+
+  const fromName = String(profile?.full_name ?? user.user_metadata?.full_name ?? "").trim();
+  if (fromName) return `${fromName}'s business`;
+
+  const emailPrefix = String(user.email ?? "").split("@")[0]?.trim();
+  if (emailPrefix) return `${emailPrefix}'s business`;
+
+  return "My business";
+}
+
+function generateReferralCode(value: string, businessId: string) {
+  const slug = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "")
+    .slice(0, 6)
+    .padEnd(4, "x");
+
+  return `${slug}-${businessId.replace(/-/g, "").slice(0, 6)}`.toUpperCase();
+}
+
 export async function getViewerContext() {
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
@@ -42,7 +71,7 @@ export async function getViewerContext() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("business_id, full_name, email")
+    .select("business_id, full_name, email, business_name")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -115,6 +144,72 @@ export async function getViewerContext() {
       ) {
         // Ignore membership repair failures here so the user can still access the owned business.
       } else {
+        membershipBusinessId = resolvedBusinessId;
+        membershipRole = "owner";
+      }
+    }
+  }
+
+  if (!resolvedBusinessId) {
+    const businessName = generateFallbackBusinessName(user, profile);
+
+    let businessInsert = await adminClient
+      .from("businesses")
+      .insert({
+        owner_id: user.id,
+        name: businessName,
+        referral_code: generateReferralCode(businessName, user.id),
+        billing_plan: "free",
+        billing_status: "free",
+      })
+      .select("id, owner_id, name, phone, brand_color, currency, created_at, referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at")
+      .single();
+
+    if (businessInsert.error && isMissingOptionalFieldError(businessInsert.error.message)) {
+      businessInsert = await adminClient
+        .from("businesses")
+        .insert({
+          owner_id: user.id,
+          name: businessName,
+          referral_code: generateReferralCode(businessName, user.id),
+        })
+        .select("id, owner_id, name, phone, brand_color, currency, created_at, referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at")
+        .single();
+    }
+
+    if (businessInsert.error && isMissingOptionalFieldError(businessInsert.error.message)) {
+      businessInsert = await adminClient
+        .from("businesses")
+        .insert({
+          owner_id: user.id,
+          name: businessName,
+        })
+        .select("id, owner_id, name, phone, brand_color, currency, created_at")
+        .single();
+    }
+
+    if (!businessInsert.error && businessInsert.data?.id) {
+      resolvedBusinessId = businessInsert.data.id;
+      business = businessInsert.data as ViewerBusiness;
+
+      await adminClient.from("profiles").upsert({
+        id: user.id,
+        business_id: resolvedBusinessId,
+        full_name: profile?.full_name ?? user.user_metadata?.full_name ?? null,
+        email: profile?.email ?? user.email ?? null,
+        business_name: profile?.business_name ?? businessName,
+      });
+
+      const membershipInsert = await adminClient.from("business_members").insert({
+        business_id: resolvedBusinessId,
+        user_id: user.id,
+        role: "owner",
+        invited_by: user.id,
+      });
+
+      const membershipErrorMessage = membershipInsert.error?.message?.toLowerCase() ?? "";
+
+      if (!membershipInsert.error || membershipErrorMessage.includes("duplicate key")) {
         membershipBusinessId = resolvedBusinessId;
         membershipRole = "owner";
       }
