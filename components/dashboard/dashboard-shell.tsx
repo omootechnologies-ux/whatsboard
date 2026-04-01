@@ -42,6 +42,7 @@ const PRIMARY_NAV: NavItemConfig[] = [
 ];
 
 const SECONDARY_NAV: NavItemConfig[] = [
+  { href: "/dashboard/catalog", label: "Catalog", icon: ShoppingBag },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/account", label: "Account", icon: ReceiptText },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
@@ -138,6 +139,10 @@ export function DashboardShell({
     return true;
   });
   const visibleSecondaryNav = SECONDARY_NAV.filter((item) => {
+    if (item.href === "/dashboard/catalog") {
+      return canAccessDashboardFeatureForUser("catalog", business, isAdmin);
+    }
+
     if (item.href === "/dashboard/analytics") {
       return canAccessDashboardFeatureForUser("analytics", business, isAdmin);
     }
@@ -168,7 +173,7 @@ export function DashboardShell({
       </div>
 
       <div className="relative flex min-h-screen">
-        <aside className="hidden w-[20rem] shrink-0 border-r border-border bg-card xl:flex xl:flex-col 2xl:w-[22rem]">
+        <aside className="hidden w-[18.5rem] shrink-0 border-r border-border bg-card lg:flex lg:flex-col xl:w-[20rem]">
           <div className="border-b border-[#e8e8e2] px-6 py-6">
             <Link href="/dashboard" className="flex items-center gap-3">
               <span className="inline-flex h-12 w-12 items-center justify-center rounded-3xl border border-[#e8e8e2] bg-[#0f5d46] text-white shadow-[0_16px_30px_rgba(15,93,70,0.12)]">
@@ -184,27 +189,24 @@ export function DashboardShell({
           </div>
 
           <div className="px-5 pt-5">
-            <div className="rounded-[30px] border border-border bg-secondary/40 p-5 text-foreground shadow-[0_24px_80px_rgba(17,17,17,0.05)]">
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#e8e8e2] bg-white px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#0f5d46]">
-                <ShoppingBag className="h-3.5 w-3.5" />
-                {t("Daily workflow")}
+            <div className="rounded-[28px] border border-border bg-secondary/40 p-5 text-foreground shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#5e6461]">
+                    {t("Current plan")}
+                  </p>
+                  <p className="mt-2 text-lg font-black tracking-tight text-foreground">
+                    {getPlanName(effectivePlan)}
+                  </p>
+                </div>
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <ShoppingBag className="h-4 w-4" />
+                </span>
               </div>
-              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#5e6461]">
-                {t("Built for chat orders")}
-              </p>
-              <h2 className="mt-3 text-lg font-black leading-tight text-[#111111] 2xl:text-xl">
-                {t("Keep orders, payments, follow-ups, and delivery steps in one place.")}
-              </h2>
-              <p className="mt-2 text-sm leading-6 text-[#5e6461]">
-                {t("Made for WhatsApp sellers who need less screenshot hunting and clearer daily control.")}
-              </p>
 
-              <div className="mt-4 rounded-2xl border border-border bg-card px-4 py-3">
-                <p className="text-[10px] uppercase tracking-[0.18em] text-[#5e6461]">{t("Current plan")}</p>
-                <p className="mt-2 text-sm font-semibold text-foreground">
-                  {getPlanName(effectivePlan)}
-                </p>
-              </div>
+              <p className="mt-4 text-sm leading-6 text-[#5e6461]">
+                {t("Orders, customers, follow-ups, and delivery steps in one simple workflow.")}
+              </p>
 
               <Link
                 href={
@@ -217,21 +219,13 @@ export function DashboardShell({
                 <Plus className="h-4 w-4" />
                 {canCreateOrders ? t("Add New Order") : t("Upgrade Plan")}
               </Link>
-
-              <div className="mt-5 grid grid-cols-1 gap-3 2xl:grid-cols-2">
-                <div className="rounded-2xl border border-border bg-card p-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#5e6461]">{t("Focus")}</p>
-                  <p className="mt-2 text-sm font-semibold text-foreground">{t("Order control")}</p>
-                </div>
-                <div className="rounded-2xl border border-border bg-card p-3">
-                  <p className="text-[10px] uppercase tracking-[0.18em] text-[#5e6461]">{t("Priority")}</p>
-                  <p className="mt-2 text-sm font-semibold text-foreground">{t("Fast follow-up")}</p>
-                </div>
-              </div>
             </div>
           </div>
 
           <nav className="flex-1 space-y-1 px-5 py-5">
+            <p className="mb-3 px-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#5e6461]">
+              {t("Main navigation")}
+            </p>
             {visiblePrimaryNav.map((item) => (
               <NavItem key={item.href} {...item} />
             ))}
@@ -239,6 +233,9 @@ export function DashboardShell({
 
           <div className="border-t border-[#e8e8e2] p-5">
             <div className="mb-3 space-y-1">
+              <p className="mb-3 px-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#5e6461]">
+                {t("Workspace")}
+              </p>
               {visibleSecondaryNav.map((item) => (
                 <NavItem key={item.href} {...item} />
               ))}
@@ -304,7 +301,7 @@ export function DashboardShell({
               </div>
 
               <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-end">
-                <div className="hidden min-w-0 items-center gap-3 rounded-2xl border border-[#173728]/10 bg-[#173728]/4 px-3 py-2 text-[#173728]/80 lg:flex">
+                <div className="hidden min-w-0 items-center gap-3 rounded-2xl border border-[#173728]/10 bg-[#173728]/4 px-3 py-2 text-[#173728]/80 md:flex">
                   <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[#173728]/12 bg-[#173728] text-xs font-bold text-white">
                     {initials}
                   </span>
@@ -322,10 +319,10 @@ export function DashboardShell({
                       ? "/dashboard/orders/new"
                       : "/pricing?status=upgrade&message=Upgrade%20when%20you%20need%20more%20than%2030%20orders%20this%20month"
                   }
-                  className="inline-flex items-center gap-2 rounded-2xl border border-[#173728] bg-[#173728] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0f281d]"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-[#173728] bg-[#173728] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0f281d] sm:px-4"
                 >
                   <Plus className="h-4 w-4" />
-                  {canCreateOrders ? t("New Order") : t("Upgrade")}
+                  <span className="hidden sm:inline">{canCreateOrders ? t("New Order") : t("Upgrade")}</span>
                 </Link>
               </div>
             </div>
@@ -333,19 +330,35 @@ export function DashboardShell({
             {mobileMenuOpen ? (
               <nav className="border-t border-white/8 lg:hidden">
                 <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-2 px-4 py-3 sm:px-5">
-                  {visibleSecondaryNav
-                    .filter((item) => item.href === "/dashboard/account" || item.href === "/dashboard/settings")
-                    .map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="inline-flex items-center gap-2 rounded-2xl border border-[#173728]/10 bg-[#173728]/4 px-3 py-2 text-xs font-semibold text-[#173728]/80 transition hover:bg-[#173728]/7 hover:text-[#173728]"
-                      >
-                        <item.icon className="h-3.5 w-3.5" />
-                        {item.label}
-                      </Link>
-                    ))}
+                  <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#5e6461]">
+                    {t("Main navigation")}
+                  </p>
+                  {visiblePrimaryNav.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-[#173728]/10 bg-[#173728]/4 px-3 py-2 text-xs font-semibold text-[#173728]/80 transition hover:bg-[#173728]/7 hover:text-[#173728]"
+                    >
+                      <item.icon className="h-3.5 w-3.5" />
+                      {t(item.label)}
+                    </Link>
+                  ))}
+
+                  <p className="mt-2 px-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#5e6461]">
+                    {t("Workspace")}
+                  </p>
+                  {visibleSecondaryNav.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="inline-flex items-center gap-2 rounded-2xl border border-[#173728]/10 bg-[#173728]/4 px-3 py-2 text-xs font-semibold text-[#173728]/80 transition hover:bg-[#173728]/7 hover:text-[#173728]"
+                    >
+                      <item.icon className="h-3.5 w-3.5" />
+                      {t(item.label)}
+                    </Link>
+                  ))}
 
                   <form action={logoutAction}>
                     <button
@@ -361,7 +374,7 @@ export function DashboardShell({
             ) : null}
           </header>
 
-          <main className="w-full max-w-[1600px] flex-1 px-3 py-4 pb-24 font-sans sm:px-4 lg:px-8 lg:py-8 lg:pb-8">
+          <main className="w-full max-w-[1600px] flex-1 px-3 py-4 pb-24 font-sans sm:px-4 lg:px-6 lg:py-6 lg:pb-8 xl:px-8">
             {children}
           </main>
 

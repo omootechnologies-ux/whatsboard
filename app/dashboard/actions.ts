@@ -900,7 +900,9 @@ export async function addTeamMemberAction(formData: FormData) {
     redirect("/dashboard/account?team_status=error&team_message=Only%20the%20business%20owner%20can%20manage%20team%20members");
   }
 
-  const teamMemberLimit = getTeamMemberLimit(context.business);
+  const teamMemberLimit = context.isAdmin
+    ? getTeamMemberLimit({ billing_plan: "business", billing_status: "active" })
+    : getTeamMemberLimit(context.business);
 
   if (teamMemberLimit < 1) {
     redirect("/dashboard/account?team_status=error&team_message=Team%20members%20start%20on%20Growth");

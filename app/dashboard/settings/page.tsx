@@ -1,9 +1,27 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { Settings, Store, Phone, Globe2, MapPin, StickyNote, LogOut, Save } from "lucide-react";
+import {
+  Globe2,
+  LogOut,
+  MapPin,
+  Phone,
+  Save,
+  Settings,
+  StickyNote,
+  Store,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logoutAction } from "@/app/(auth)/actions";
+import {
+  DashboardActionLink,
+  DashboardHero,
+  DashboardInfoGrid,
+  DashboardPage,
+  DashboardPanel,
+  DashboardPanelHeader,
+  DashboardStatCard,
+} from "@/components/dashboard/page-primitives";
 
 type SettingsProfile = {
   id: string;
@@ -74,11 +92,7 @@ export default async function SettingsPage({
   const status = resolvedSearch.status;
   const message = resolvedSearch.message;
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .maybeSingle();
+  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).maybeSingle();
 
   const values: SettingsProfile = {
     id: user.id,
@@ -94,81 +108,81 @@ export default async function SettingsPage({
   };
 
   return (
-    <div className="space-y-8">
-      <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm lg:p-8">
-          <div className="flex items-start gap-4">
-            <span className="inline-flex h-14 w-14 items-center justify-center rounded-3xl bg-emerald-50 text-emerald-600">
-              <Settings className="h-6 w-6" />
-            </span>
-
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-600">
-                Settings
-              </p>
-              <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-900">
-                Business settings
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
-                Update your business details, preferred contact channels, and default selling info.
-                These settings help keep your WhatsBoard workspace clean and consistent.
-              </p>
-            </div>
+    <DashboardPage>
+      <DashboardHero
+        eyebrow="Settings"
+        title="Keep workspace details clean so the rest of the dashboard stays consistent."
+        description="Update the core business defaults your team uses across orders, customers, and daily operations."
+        actions={
+          <>
+            <DashboardActionLink href="/dashboard">Back to overview</DashboardActionLink>
+            <form action={logoutAction}>
+              <button className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[#e9d4d1] bg-[#f9efed] px-5 py-3 text-sm font-semibold text-[#8f3e36] transition hover:bg-[#f3e1de]">
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </button>
+            </form>
+          </>
+        }
+        aside={
+          <div className="space-y-3">
+            <DashboardStatCard
+              label="Workspace email"
+              value={user.email ?? "Not set"}
+              detail="Account currently signed into this workspace"
+              icon={<Settings className="h-5 w-5" />}
+            />
           </div>
-        </div>
+        }
+      />
 
-        <div className="rounded-[32px] border border-[#173728]/10 bg-white p-6 text-[#173728] shadow-[0_24px_80px_rgba(23,55,40,0.06)] lg:p-7">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#173728]/55">
-            Account
-          </p>
-          <h2 className="mt-3 text-2xl font-black tracking-tight">
-            Signed in as
-          </h2>
-          <p className="mt-3 break-all text-sm leading-7 text-[#173728]/75">
-            {user.email}
-          </p>
-
-          <div className="mt-6 rounded-2xl border border-[#173728]/10 bg-[#173728]/4 px-4 py-3 text-sm text-[#173728]/80">
-            Keep this page updated so your dashboard reflects the real business behind the orders.
-          </div>
-
-          <form action={logoutAction} className="mt-6">
-            <button className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#173728] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#0f281d]">
-              <LogOut className="h-4 w-4" />
-              Sign out
-            </button>
-          </form>
-        </div>
-      </section>
-
-      {status === "success" && (
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+      {status === "success" ? (
+        <div className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary">
           Settings saved successfully.
         </div>
-      )}
+      ) : null}
 
-      {status === "error" && (
-        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+      {status === "error" ? (
+        <div className="rounded-2xl border border-[#e9d4d1] bg-[#f9efed] px-4 py-3 text-sm text-[#8f3e36]">
           {message || "Failed to save settings."}
         </div>
-      )}
+      ) : null}
 
-      <form action={saveSettings} className="space-y-6">
-        <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm lg:p-8">
-          <div className="mb-6">
-            <h2 className="text-xl font-black tracking-tight text-slate-900">Business profile</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              The core identity of your business inside the dashboard.
-            </p>
-          </div>
+      <DashboardInfoGrid columns="three">
+        <DashboardStatCard
+          label="Business name"
+          value={values.business_name || "Not set"}
+          detail="Displayed in your workspace and customer-facing context"
+          icon={<Store className="h-5 w-5" />}
+        />
+        <DashboardStatCard
+          label="Default currency"
+          value={values.default_currency || "TZS"}
+          detail="Used as the starting point for pricing and orders"
+          icon={<Globe2 className="h-5 w-5" />}
+        />
+        <DashboardStatCard
+          label="Default area"
+          value={values.default_area || "Not set"}
+          detail="Helpful for delivery defaults and common destinations"
+          icon={<MapPin className="h-5 w-5" />}
+        />
+      </DashboardInfoGrid>
 
-          <div className="grid gap-4 md:grid-cols-2">
+      <form action={saveSettings} className="space-y-5">
+        <DashboardPanel>
+          <DashboardPanelHeader
+            eyebrow="Profile"
+            title="Business profile"
+            description="The basic identity and contact information attached to your workspace."
+          />
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
             <Field label="Full name" icon={<Store className="h-4 w-4" />}>
               <input
                 name="full_name"
                 defaultValue={values.full_name ?? ""}
                 placeholder="Your full name"
-                className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
+                className="form-input"
               />
             </Field>
 
@@ -177,7 +191,7 @@ export default async function SettingsPage({
                 name="business_name"
                 defaultValue={values.business_name ?? ""}
                 placeholder="Your business name"
-                className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
+                className="form-input"
               />
             </Field>
 
@@ -186,7 +200,7 @@ export default async function SettingsPage({
                 name="phone"
                 defaultValue={values.phone ?? ""}
                 placeholder="e.g. +255..."
-                className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
+                className="form-input"
               />
             </Field>
 
@@ -195,27 +209,25 @@ export default async function SettingsPage({
                 name="whatsapp_number"
                 defaultValue={values.whatsapp_number ?? ""}
                 placeholder="WhatsApp number"
-                className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
+                className="form-input"
               />
             </Field>
           </div>
-        </section>
+        </DashboardPanel>
 
-        <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm lg:p-8">
-          <div className="mb-6">
-            <h2 className="text-xl font-black tracking-tight text-slate-900">Selling channels</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Save your common social handles and business channels.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
+        <DashboardPanel>
+          <DashboardPanelHeader
+            eyebrow="Channels"
+            title="Selling channels"
+            description="Store the social handles you repeatedly use in sales conversations."
+          />
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
             <Field label="Instagram handle" icon={<Globe2 className="h-4 w-4" />}>
               <input
                 name="instagram_handle"
                 defaultValue={values.instagram_handle ?? ""}
                 placeholder="@yourbrand"
-                className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
+                className="form-input"
               />
             </Field>
 
@@ -224,26 +236,24 @@ export default async function SettingsPage({
                 name="tiktok_handle"
                 defaultValue={values.tiktok_handle ?? ""}
                 placeholder="@yourbrand"
-                className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
+                className="form-input"
               />
             </Field>
           </div>
-        </section>
+        </DashboardPanel>
 
-        <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm lg:p-8">
-          <div className="mb-6">
-            <h2 className="text-xl font-black tracking-tight text-slate-900">Business defaults</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              These defaults help standardize the way you manage orders.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
+        <DashboardPanel>
+          <DashboardPanelHeader
+            eyebrow="Defaults"
+            title="Workspace defaults"
+            description="Small defaults that reduce repetitive data entry across the dashboard."
+          />
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
             <Field label="Default currency" icon={<Globe2 className="h-4 w-4" />}>
               <select
                 name="default_currency"
                 defaultValue={values.default_currency ?? "TZS"}
-                className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
+                className="form-select"
               >
                 <option value="TZS">TZS</option>
                 <option value="KES">KES</option>
@@ -258,34 +268,34 @@ export default async function SettingsPage({
                 name="default_area"
                 defaultValue={values.default_area ?? ""}
                 placeholder="e.g. Kariakoo, Dar es Salaam"
-                className="h-12 w-full rounded-2xl border border-slate-300 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-400"
+                className="form-input"
               />
             </Field>
           </div>
-        </section>
+        </DashboardPanel>
 
-        <section className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-sm lg:p-8">
-          <div className="mb-6">
-            <h2 className="text-xl font-black tracking-tight text-slate-900">Notes</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Keep internal notes about your business, delivery rules, or selling style.
-            </p>
+        <DashboardPanel>
+          <DashboardPanelHeader
+            eyebrow="Notes"
+            title="Operational notes"
+            description="Capture any recurring delivery rules, business preferences, or internal reminders."
+          />
+          <div className="mt-5">
+            <Field label="Internal notes" icon={<StickyNote className="h-4 w-4" />}>
+              <textarea
+                name="notes"
+                defaultValue={values.notes ?? ""}
+                placeholder="Write anything useful for your own operations..."
+                className="form-textarea min-h-[160px]"
+              />
+            </Field>
           </div>
-
-          <Field label="Internal notes" icon={<StickyNote className="h-4 w-4" />}>
-            <textarea
-              name="notes"
-              defaultValue={values.notes ?? ""}
-              placeholder="Write anything useful for your own operations..."
-              className="min-h-[160px] w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-emerald-400"
-            />
-          </Field>
-        </section>
+        </DashboardPanel>
 
         <div className="flex flex-col gap-3 sm:flex-row">
           <button
             type="submit"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-600"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#0a3d2e]"
           >
             <Save className="h-4 w-4" />
             Save settings
@@ -293,13 +303,13 @@ export default async function SettingsPage({
 
           <Link
             href="/dashboard"
-            className="inline-flex items-center justify-center rounded-2xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition hover:border-slate-400"
+            className="inline-flex items-center justify-center rounded-2xl border border-border bg-card px-6 py-3 text-sm font-semibold text-foreground transition hover:border-primary/20 hover:bg-primary/5 hover:text-primary"
           >
             Back to dashboard
           </Link>
         </div>
       </form>
-    </div>
+    </DashboardPage>
   );
 }
 
@@ -314,8 +324,8 @@ function Field({
 }) {
   return (
     <label className="grid gap-2">
-      <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
-        {icon && <span className="text-slate-400">{icon}</span>}
+      <span className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
+        {icon ? <span className="text-muted-foreground">{icon}</span> : null}
         {label}
       </span>
       {children}

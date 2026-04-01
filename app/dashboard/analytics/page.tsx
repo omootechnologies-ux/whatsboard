@@ -1,4 +1,5 @@
 import AnalyticsDashboard from "@/components/dashboard/analytics-dashboard";
+import { DashboardPage } from "@/components/dashboard/page-primitives";
 import { requireDashboardFeatureAccess } from "@/lib/dashboard-access";
 import { getAnalyticsData } from "@/lib/queries";
 
@@ -10,13 +11,13 @@ export default async function AnalyticsPage() {
   const { revenueData, paymentMix, areaData, summary } = await getAnalyticsData();
 
   return (
-    <div className="space-y-6">
+    <DashboardPage>
       <AnalyticsDashboard
         revenueData={revenueData}
         paymentMix={paymentMix}
         areaData={areaData}
         summary={summary}
       />
-    </div>
+    </DashboardPage>
   );
 }

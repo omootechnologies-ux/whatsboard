@@ -1,5 +1,16 @@
 import Link from "next/link";
-import { UserCircle2, Building2, Mail, Phone, Palette, Coins, CalendarDays, CreditCard, LogOut, UserPlus2, Users } from "lucide-react";
+import {
+  Building2,
+  CalendarDays,
+  Coins,
+  CreditCard,
+  LogOut,
+  Palette,
+  Phone,
+  UserCircle2,
+  UserPlus2,
+  Users,
+} from "lucide-react";
 import { getAccountData, getCurrentMonthOrderUsage } from "@/lib/queries";
 import { logoutAction } from "@/app/(auth)/actions";
 import { addTeamMemberAction, removeTeamMemberAction } from "@/app/dashboard/actions";
@@ -12,6 +23,16 @@ import {
   getRemainingMonthlyOrders,
   getTeamMemberLimitForUser,
 } from "@/lib/plan-access";
+import {
+  DashboardBadge,
+  DashboardEmptyState,
+  DashboardHero,
+  DashboardInfoGrid,
+  DashboardPage,
+  DashboardPanel,
+  DashboardPanelHeader,
+  DashboardStatCard,
+} from "@/components/dashboard/page-primitives";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -34,248 +55,234 @@ export default async function AccountPage({
     { label: "Orders", allowed: canAccessDashboardFeatureForUser("orders", business, isAdmin) },
     { label: "Customers", allowed: canAccessDashboardFeatureForUser("customers", business, isAdmin) },
     { label: "Follow-ups", allowed: canAccessDashboardFeatureForUser("followUps", business, isAdmin) },
+    { label: "Catalog", allowed: canAccessDashboardFeatureForUser("catalog", business, isAdmin) },
     { label: "Analytics", allowed: canAccessDashboardFeatureForUser("analytics", business, isAdmin) },
     { label: "Account", allowed: canAccessDashboardFeatureForUser("account", business, isAdmin) },
     { label: "Settings", allowed: canAccessDashboardFeatureForUser("settings", business, isAdmin) },
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-slate-900">Account</h2>
-        <p className="mt-2 text-slate-600">
-          Your user information and the business connected to this account.
-        </p>
-      </div>
+    <DashboardPage>
+      <DashboardHero
+        eyebrow="Account"
+        title="Manage your workspace, billing, and team from one place."
+        description="This page brings together user identity, business details, billing visibility, and team seats without sending you across multiple admin screens."
+        aside={
+          <div className="space-y-3">
+            <DashboardStatCard label="Current plan" value={getPlanName(effectivePlan)} detail="Billing access and feature level" icon={<CreditCard className="h-5 w-5" />} />
+            <DashboardStatCard
+              label="Monthly usage"
+              value={monthlyOrderLimit === null ? String(orderCountThisMonth) : `${orderCountThisMonth}/${monthlyOrderLimit}`}
+              detail={monthlyOrderLimit === null ? "Unlimited plan" : `${remainingMonthlyOrders ?? 0} orders left this month`}
+              icon={<Users className="h-5 w-5" />}
+            />
+          </div>
+        }
+      />
 
       {resolvedSearch.team_message ? (
         <div
           className={`rounded-2xl border px-4 py-3 text-sm ${
             resolvedSearch.team_status === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-              : "border-rose-200 bg-rose-50 text-rose-700"
+              ? "border-primary/20 bg-primary/10 text-primary"
+              : "border-[#e9d4d1] bg-[#f9efed] text-[#8f3e36]"
           }`}
         >
           {resolvedSearch.team_message}
         </div>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-600">
-              <UserCircle2 className="h-5 w-5" />
+      <DashboardInfoGrid columns="three">
+        <DashboardStatCard label="Billing status" value={effectivePlan === "free" ? "free" : business?.billing_status ?? "inactive"} detail="Current billing state for this business" icon={<CreditCard className="h-5 w-5" />} />
+        <DashboardStatCard label="Team seats" value={teamMemberLimit > 0 ? `${teamSeatsUsed}/${teamMemberLimit}` : "0"} detail={teamMemberLimit > 0 ? "Seats used on this plan" : "Starts on Growth"} icon={<Users className="h-5 w-5" />} />
+        <DashboardStatCard label="Latest transaction" value={billingTransaction?.status ?? "none"} detail="Most recent billing transaction status" icon={<Coins className="h-5 w-5" />} />
+      </DashboardInfoGrid>
+
+      <section className="grid gap-4 xl:grid-cols-2">
+        <DashboardPanel>
+          <DashboardPanelHeader
+            eyebrow="User"
+            title="User profile"
+            description="Information for the currently signed-in user."
+          />
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-border bg-secondary/50 p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <UserCircle2 className="h-4 w-4" />
+                <p className="text-xs">Full name</p>
+              </div>
+              <p className="mt-2 font-medium text-foreground">{profile?.full_name ?? "Not set"}</p>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">User profile</h3>
-              <p className="text-sm text-slate-500">Information for the logged-in user</p>
+            <div className="rounded-2xl border border-border bg-secondary/50 p-4">
+              <p className="text-xs text-muted-foreground">Email</p>
+              <p className="mt-2 font-medium text-foreground">{profile?.email ?? user?.email ?? "Not set"}</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-secondary/50 p-4 md:col-span-2">
+              <p className="text-xs text-muted-foreground">User ID</p>
+              <p className="mt-2 break-all text-sm font-medium text-foreground">{user?.id ?? "Not available"}</p>
             </div>
           </div>
+        </DashboardPanel>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs text-slate-500">Full name</p>
-              <p className="mt-2 font-medium text-slate-900">{profile?.full_name ?? "Not set"}</p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs text-slate-500">Email</p>
-              <p className="mt-2 font-medium text-slate-900">{profile?.email ?? user?.email ?? "Not set"}</p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 md:col-span-2">
-              <p className="text-xs text-slate-500">User ID</p>
-              <p className="mt-2 break-all text-sm font-medium text-slate-900">{user?.id ?? "Not available"}</p>
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-5 flex items-center gap-3">
-            <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-600">
-              <Building2 className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">Business profile</h3>
-              <p className="text-sm text-slate-500">The business aligned to this account</p>
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex items-center gap-2 text-slate-500">
+        <DashboardPanel>
+          <DashboardPanelHeader
+            eyebrow="Workspace"
+            title="Business profile"
+            description="The business currently connected to this account."
+          />
+          <div className="mt-5 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl border border-border bg-secondary/50 p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <Building2 className="h-4 w-4" />
                 <p className="text-xs">Business name</p>
               </div>
-              <p className="mt-2 font-medium text-slate-900">{business?.name ?? "Not set"}</p>
+              <p className="mt-2 font-medium text-foreground">{business?.name ?? "Not set"}</p>
             </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex items-center gap-2 text-slate-500">
+            <div className="rounded-2xl border border-border bg-secondary/50 p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <Phone className="h-4 w-4" />
                 <p className="text-xs">Business phone</p>
               </div>
-              <p className="mt-2 font-medium text-slate-900">{business?.phone ?? "Not set"}</p>
+              <p className="mt-2 font-medium text-foreground">{business?.phone ?? "Not set"}</p>
             </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex items-center gap-2 text-slate-500">
+            <div className="rounded-2xl border border-border bg-secondary/50 p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <Palette className="h-4 w-4" />
                 <p className="text-xs">Brand color</p>
               </div>
-              <p className="mt-2 font-medium text-slate-900">{business?.brand_color ?? "#22c55e"}</p>
+              <p className="mt-2 font-medium text-foreground">{business?.brand_color ?? "#22c55e"}</p>
             </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex items-center gap-2 text-slate-500">
+            <div className="rounded-2xl border border-border bg-secondary/50 p-4">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <Coins className="h-4 w-4" />
                 <p className="text-xs">Currency</p>
               </div>
-              <p className="mt-2 font-medium text-slate-900">{business?.currency ?? "TZS"}</p>
+              <p className="mt-2 font-medium text-foreground">{business?.currency ?? "TZS"}</p>
             </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 md:col-span-2">
-              <div className="flex items-center gap-2 text-slate-500">
+            <div className="rounded-2xl border border-border bg-secondary/50 p-4 md:col-span-2">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <CalendarDays className="h-4 w-4" />
                 <p className="text-xs">Business created</p>
               </div>
-              <p className="mt-2 font-medium text-slate-900">
+              <p className="mt-2 font-medium text-foreground">
                 {business?.created_at ? new Date(business.created_at).toLocaleString() : "Not available"}
               </p>
             </div>
           </div>
 
-          <form action={logoutAction} className="mt-6">
-            <button className="inline-flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 hover:bg-rose-100">
+          <form action={logoutAction} className="mt-5">
+            <button className="inline-flex items-center gap-2 rounded-2xl border border-[#e9d4d1] bg-[#f9efed] px-4 py-3 text-sm font-medium text-[#8f3e36] transition hover:bg-[#f3e1de]">
               <LogOut className="h-4 w-4" />
               Sign out
             </button>
           </form>
-        </section>
-      </div>
+        </DashboardPanel>
+      </section>
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-600">
-            <CreditCard className="h-5 w-5" />
+      <DashboardPanel>
+        <DashboardPanelHeader
+          eyebrow="Billing"
+          title="Plan and billing visibility"
+          description="Plan state, allowance, provider reference, and unlocked features."
+        />
+        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-2xl border border-border bg-secondary/50 p-4">
+            <p className="text-xs text-muted-foreground">Current plan</p>
+            <p className="mt-2 font-medium text-foreground">{getPlanName(effectivePlan)}</p>
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900">Billing</h3>
-            <p className="text-sm text-slate-500">Current plan and latest payment state</p>
+          <div className="rounded-2xl border border-border bg-secondary/50 p-4">
+            <p className="text-xs text-muted-foreground">Billing status</p>
+            <p className="mt-2 font-medium text-foreground">{effectivePlan === "free" ? "free" : business?.billing_status ?? "inactive"}</p>
           </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs text-slate-500">Current plan</p>
-            <p className="mt-2 font-medium capitalize text-slate-900">
-              {getPlanName(effectivePlan)}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs text-slate-500">Billing status</p>
-            <p className="mt-2 font-medium capitalize text-slate-900">
-              {effectivePlan === "free" ? "free" : business?.billing_status ?? "inactive"}
-            </p>
-          </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs text-slate-500">Paid through</p>
-            <p className="mt-2 font-medium text-slate-900">
+          <div className="rounded-2xl border border-border bg-secondary/50 p-4">
+            <p className="text-xs text-muted-foreground">Paid through</p>
+            <p className="mt-2 font-medium text-foreground">
               {business?.billing_current_period_ends_at
                 ? new Date(business.billing_current_period_ends_at).toLocaleDateString()
                 : "Not available"}
             </p>
           </div>
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs text-slate-500">Latest transaction</p>
-            <p className="mt-2 font-medium capitalize text-slate-900">{billingTransaction?.status ?? "None yet"}</p>
+          <div className="rounded-2xl border border-border bg-secondary/50 p-4">
+            <p className="text-xs text-muted-foreground">Latest transaction</p>
+            <p className="mt-2 font-medium text-foreground">{billingTransaction?.status ?? "None yet"}</p>
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-xs text-slate-500">Order allowance this month</p>
-          <p className="mt-2 text-sm font-medium text-slate-900">
-            {monthlyOrderLimit === null
-              ? `${orderCountThisMonth} orders used this month. Your plan is unlimited.`
-              : `${orderCountThisMonth} of ${monthlyOrderLimit} orders used this month${
-                  remainingMonthlyOrders !== null ? ` • ${remainingMonthlyOrders} left` : ""
-                }.`}
-          </p>
-        </div>
+        <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(260px,0.9fr)]">
+          <div className="rounded-2xl border border-border bg-secondary/50 p-4">
+            <p className="text-xs text-muted-foreground">Order allowance this month</p>
+            <p className="mt-2 text-sm font-medium text-foreground">
+              {monthlyOrderLimit === null
+                ? `${orderCountThisMonth} orders used this month. Your plan is unlimited.`
+                : `${orderCountThisMonth} of ${monthlyOrderLimit} orders used this month${
+                    remainingMonthlyOrders !== null ? ` • ${remainingMonthlyOrders} left` : ""
+                  }.`}
+            </p>
+          </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-xs text-slate-500">Unlocked dashboard features</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {unlockedFeatures.map((feature) => (
-              <span
-                key={feature.label}
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                  feature.allowed ? "bg-emerald-50 text-emerald-700" : "bg-slate-200 text-slate-600"
-                }`}
-              >
-                {feature.label}
-              </span>
-            ))}
+          <div className="rounded-2xl border border-border bg-secondary/50 p-4">
+            <p className="text-xs text-muted-foreground">Unlocked dashboard features</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {unlockedFeatures.map((feature) => (
+                <DashboardBadge key={feature.label} tone={feature.allowed ? "success" : "neutral"}>
+                  {feature.label}
+                </DashboardBadge>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-secondary/50 p-4">
+            <p className="text-xs text-muted-foreground">Provider reference</p>
+            <p className="mt-2 break-all text-sm font-medium text-foreground">
+              {business?.billing_provider_reference ??
+                billingTransaction?.payment_reference ??
+                billingTransaction?.session_reference ??
+                "Not available"}
+            </p>
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-xs text-slate-500">What this plan includes</p>
+        <div className="mt-4 rounded-2xl border border-border bg-secondary/50 p-4">
+          <p className="text-xs text-muted-foreground">What this plan includes</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {PLAN_CONFIG[effectivePlan].features.map((feature) => (
-              <span
-                key={feature.label}
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                  feature.comingSoon ? "bg-slate-200 text-slate-600" : "bg-emerald-50 text-emerald-700"
-                }`}
-              >
+              <DashboardBadge key={feature.label} tone={feature.comingSoon ? "neutral" : "success"}>
                 {feature.label}
                 {feature.comingSoon ? " (coming soon)" : ""}
-              </span>
+              </DashboardBadge>
             ))}
           </div>
         </div>
 
-        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-          <p className="text-xs text-slate-500">Provider reference</p>
-          <p className="mt-2 break-all text-sm font-medium text-slate-900">
-            {business?.billing_provider_reference ?? billingTransaction?.payment_reference ?? billingTransaction?.session_reference ?? "Not available"}
-          </p>
-        </div>
-
-        <div className="mt-6">
+        <div className="mt-5">
           <Link
             href="/pricing"
-            className="inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 transition hover:border-slate-400"
+            className="inline-flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/20 hover:bg-primary/5 hover:text-primary"
           >
             Manage plan on pricing page
           </Link>
         </div>
-      </section>
+      </DashboardPanel>
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="mb-5 flex items-center gap-3">
-          <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-600">
-            <Users className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-slate-900">Team members</h3>
-            <p className="text-sm text-slate-500">Growth supports 2 team members. Business supports 5.</p>
-          </div>
-        </div>
+      <DashboardPanel>
+        <DashboardPanelHeader
+          eyebrow="Team"
+          title="Team members"
+          description="Growth supports 2 team members. Business supports 5."
+        />
 
         {teamMemberLimit > 0 ? (
           <>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs text-slate-500">Seats used</p>
-              <p className="mt-2 text-sm font-medium text-slate-900">
+            <div className="mt-5 rounded-2xl border border-border bg-secondary/50 p-4">
+              <p className="text-xs text-muted-foreground">Seats used</p>
+              <p className="mt-2 text-sm font-medium text-foreground">
                 {teamSeatsUsed} of {teamMemberLimit} team seats used on {getPlanName(effectivePlan)}.
               </p>
             </div>
 
             {canManageTeam ? (
-              <form action={addTeamMemberAction} className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                <label className="text-xs text-slate-500" htmlFor="team-email">
+              <form action={addTeamMemberAction} className="mt-4 rounded-2xl border border-border bg-secondary/50 p-4">
+                <label className="text-xs text-muted-foreground" htmlFor="team-email">
                   Add member by email
                 </label>
                 <div className="mt-3 flex flex-col gap-3 sm:flex-row">
@@ -285,14 +292,14 @@ export default async function AccountPage({
                     type="email"
                     required
                     placeholder="seller@example.com"
-                    className="min-w-0 flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-emerald-400"
+                    className="min-w-0 flex-1 rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground outline-none transition focus:border-primary/30"
                   />
-                  <button className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-emerald-700">
+                  <button className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-medium text-white transition hover:bg-[#0a3d2e]">
                     <UserPlus2 className="h-4 w-4" />
                     Add member
                   </button>
                 </div>
-                <p className="mt-3 text-xs text-slate-500">
+                <p className="mt-3 text-xs text-muted-foreground">
                   The user must already have a WhatsBoard account before you can add them to your team.
                 </p>
               </form>
@@ -303,22 +310,22 @@ export default async function AccountPage({
                 teamMembers.map((member) => (
                   <div
                     key={member.userId}
-                    className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                    className="flex flex-col gap-3 rounded-2xl border border-border bg-secondary/50 p-4 sm:flex-row sm:items-center sm:justify-between"
                   >
                     <div className="min-w-0">
-                      <p className="font-medium text-slate-900">
-                        {member.fullName || member.email || "Unnamed user"}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-500">{member.email || "No email"}</p>
-                      <p className="mt-2 text-xs uppercase tracking-[0.18em] text-slate-400">
-                        {member.role === "owner" ? "Owner" : "Team member"}
-                      </p>
+                      <p className="font-medium text-foreground">{member.fullName || member.email || "Unnamed user"}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{member.email || "No email"}</p>
+                      <div className="mt-2">
+                        <DashboardBadge tone={member.role === "owner" ? "primary" : "neutral"}>
+                          {member.role === "owner" ? "Owner" : "Team member"}
+                        </DashboardBadge>
+                      </div>
                     </div>
 
                     {canManageTeam && member.role !== "owner" ? (
                       <form action={removeTeamMemberAction}>
                         <input type="hidden" name="memberId" value={member.userId} />
-                        <button className="inline-flex items-center justify-center rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm font-medium text-rose-700 transition hover:bg-rose-50">
+                        <button className="inline-flex items-center justify-center rounded-2xl border border-[#e9d4d1] bg-card px-4 py-3 text-sm font-medium text-[#8f3e36] transition hover:bg-[#f9efed]">
                           Remove
                         </button>
                       </form>
@@ -326,27 +333,25 @@ export default async function AccountPage({
                   </div>
                 ))
               ) : (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-                  No team members yet. Add people here when your plan supports seats.
-                </div>
+                <DashboardEmptyState title="No team members yet" description="Add people here when your plan supports seats." />
               )}
             </div>
           </>
         ) : (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-sm font-medium text-slate-900">Team members start on Growth.</p>
-            <p className="mt-2 text-sm text-slate-500">
-              Upgrade to Growth for 2 team members or Business for 5.
-            </p>
-            <Link
-              href="/pricing"
-              className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-medium text-slate-900 transition hover:border-slate-400"
-            >
-              Upgrade on pricing page
-            </Link>
-          </div>
+          <DashboardEmptyState
+            title="Team members start on Growth"
+            description="Upgrade to Growth for 2 team members or Business for 5."
+            action={
+              <Link
+                href="/pricing"
+                className="inline-flex items-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-medium text-foreground transition hover:border-primary/20 hover:bg-primary/5 hover:text-primary"
+              >
+                Upgrade on pricing page
+              </Link>
+            }
+          />
         )}
-      </section>
-    </div>
+      </DashboardPanel>
+    </DashboardPage>
   );
 }

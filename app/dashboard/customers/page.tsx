@@ -1,7 +1,17 @@
 import Link from "next/link";
-import { ArrowRight, MessageCircle, Pencil, Users } from "lucide-react";
+import { MessageCircle, Pencil, Users } from "lucide-react";
 import { requireDashboardFeatureAccess } from "@/lib/dashboard-access";
 import { getCustomersData } from "@/lib/queries";
+import {
+  DashboardActionLink,
+  DashboardBadge,
+  DashboardEmptyState,
+  DashboardHero,
+  DashboardPage,
+  DashboardPanel,
+  DashboardPanelHeader,
+  DashboardStatCard,
+} from "@/components/dashboard/page-primitives";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -17,74 +27,40 @@ export default async function CustomersPage() {
   });
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-4 2xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-[32px] border border-[#173728]/10 bg-white p-6 text-[#173728] shadow-[0_24px_100px_rgba(23,55,40,0.06)] sm:p-7">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#173728]/56">Customers</p>
-          <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Customer relationship board</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-[#173728]/68">
-            See who is buying, who is repeating, and jump straight into edits without losing context on smaller screens.
-          </p>
-          <Link
-            href="/dashboard/orders"
-            className="mt-6 inline-flex items-center gap-2 rounded-2xl border border-[#173728]/10 bg-[#173728]/4 px-5 py-3 text-sm font-semibold text-[#173728] transition hover:bg-[#173728]/7"
-          >
-            Go to orders
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-
-        <div className="rounded-[32px] border border-slate-200 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-7">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-              <Users className="h-5 w-5" />
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-slate-900">Customer base</p>
-              <p className="text-xs text-slate-500">Saved automatically from active orders</p>
-            </div>
+    <DashboardPage>
+      <DashboardHero
+        eyebrow="Customers"
+        title="See who is buying, repeating, and going quiet."
+        description="Customer records are built from orders automatically, then surfaced here so you can edit details and re-engage the right people."
+        actions={<DashboardActionLink href="/dashboard/orders">Go to orders</DashboardActionLink>}
+        aside={
+          <div className="grid grid-cols-2 gap-3">
+            <DashboardStatCard label="Total" value={String(customers.length)} detail="Saved from active orders" icon={<Users className="h-5 w-5" />} />
+            <DashboardStatCard label="Repeat" value={String(repeatCustomers)} detail="Customers with multiple orders" icon={<Users className="h-5 w-5" />} />
           </div>
+        }
+      />
 
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <div className="rounded-[22px] bg-slate-50 p-4">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Total</p>
-              <p className="mt-2 text-2xl font-black text-slate-950">{customers.length}</p>
-            </div>
-            <div className="rounded-[22px] bg-slate-50 p-4">
-              <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400">Repeat</p>
-              <p className="mt-2 text-2xl font-black text-slate-950">{repeatCustomers}</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-sm font-semibold text-slate-900">Customer re-engagement</p>
-            <p className="mt-1 text-xs text-slate-500">
-              Sellers who have not ordered in 30+ days and are ready for a follow-up.
-            </p>
-          </div>
-          <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-            {dormantCustomers.length} dormant customers
-          </span>
-        </div>
-
-        <div className="mt-4 space-y-3">
+      <DashboardPanel muted>
+        <DashboardPanelHeader
+          eyebrow="Re-engagement"
+          title="Customers who may need a follow-up"
+          description="People who have not ordered in 30+ days and may be ready for a quick WhatsApp nudge."
+        />
+        <div className="mt-5 space-y-3">
           {dormantCustomers.length ? (
             dormantCustomers.slice(0, 6).map((customer) => (
-              <div key={customer.id} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="font-semibold text-slate-900">{customer.name}</p>
-                  <p className="mt-1 text-xs text-slate-500">
+              <div key={customer.id} className="flex flex-col gap-3 rounded-[20px] border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground">{customer.name}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Last order {new Date(customer.lastOrderDate).toLocaleDateString()}
                   </p>
                 </div>
                 <a
                   href={`https://wa.me/${encodeURIComponent((customer.phone || "").replace(/[^\d]/g, ""))}?text=${encodeURIComponent(`Hi ${customer.name}, it has been a while since your last order. We have new stock ready for you.`)}`}
                   target="_blank"
-                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-border bg-secondary/70 px-4 py-3 text-sm font-semibold text-primary transition hover:border-primary/20 hover:bg-primary/5"
                 >
                   <MessageCircle className="h-4 w-4" />
                   Send follow-up
@@ -92,98 +68,102 @@ export default async function CustomersPage() {
               </div>
             ))
           ) : (
-            <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
-              No dormant customers right now.
-            </div>
+            <DashboardEmptyState title="No dormant customers right now" description="Your recent customer activity is still healthy." />
           )}
         </div>
-      </section>
+      </DashboardPanel>
 
-      <section className="space-y-4 md:hidden">
-        {customers.length > 0 ? (
-          customers.map((customer) => (
-            <div key={customer.id} className="rounded-[26px] border border-slate-200 bg-white p-4 shadow-[0_18px_60px_rgba(15,23,42,0.06)]">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-slate-900">{customer.name}</p>
-                  <p className="mt-1 text-xs text-slate-500">{customer.phone || "—"}</p>
+      <DashboardPanel>
+        <DashboardPanelHeader
+          eyebrow="Customer list"
+          title="All customer records"
+          description="A mobile card view for quick edits and a wider table for heavier scanning."
+        />
+
+        <section className="mt-5 space-y-3 md:hidden">
+          {customers.length ? (
+            customers.map((customer) => (
+              <div key={customer.id} className="rounded-[22px] border border-border bg-secondary/40 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-foreground">{customer.name}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{customer.phone || "—"}</p>
+                  </div>
+                  <DashboardBadge tone="neutral">{customer.status || "active"}</DashboardBadge>
                 </div>
-                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700">
-                  {customer.status || "active"}
-                </span>
+
+                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Area</p>
+                    <p className="mt-1 text-foreground/80">{customer.area || "—"}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Orders</p>
+                    <p className="mt-1 font-semibold text-foreground">{customer.orderCount}</p>
+                  </div>
+                </div>
+
+                <Link
+                  href={`/dashboard/customers/${customer.id}/edit`}
+                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:border-primary/20 hover:bg-primary/5 hover:text-primary"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Edit customer
+                </Link>
               </div>
+            ))
+          ) : (
+            <DashboardEmptyState title="No customers found" description="Customer records appear automatically as you save orders." />
+          )}
+        </section>
 
-              <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-slate-400">Area</p>
-                  <p className="mt-1 text-slate-700">{customer.area || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-slate-400">Orders</p>
-                  <p className="mt-1 font-semibold text-slate-900">{customer.orderCount}</p>
-                </div>
-              </div>
-
-              <Link
-                href={`/dashboard/customers/${customer.id}/edit`}
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
-              >
-                <Pencil className="h-4 w-4" />
-                Edit customer
-              </Link>
-            </div>
-          ))
-        ) : (
-          <div className="rounded-[26px] border border-dashed border-slate-300 bg-white px-4 py-12 text-center text-sm text-slate-500">
-            No customers found.
-          </div>
-        )}
-      </section>
-
-      <section className="hidden rounded-[28px] border border-slate-200 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.06)] md:block">
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead className="border-b border-slate-200 bg-slate-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Name</th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Phone</th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Area</th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Orders</th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Status</th>
-                <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-[0.2em] text-slate-400">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {customers.length > 0 ? (
-                customers.map((customer) => (
-                  <tr key={customer.id} className="border-b border-slate-100 last:border-0">
-                    <td className="px-4 py-4 font-semibold text-slate-900">{customer.name}</td>
-                    <td className="px-4 py-4 text-sm text-slate-700">{customer.phone || "—"}</td>
-                    <td className="px-4 py-4 text-sm text-slate-500">{customer.area || "—"}</td>
-                    <td className="px-4 py-4 text-sm text-slate-700">{customer.orderCount}</td>
-                    <td className="px-4 py-4 text-sm text-slate-700">{customer.status || "active"}</td>
-                    <td className="px-4 py-4 text-right">
-                      <Link
-                        href={`/dashboard/customers/${customer.id}/edit`}
-                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                        Edit
-                      </Link>
+        <section className="mt-5 hidden overflow-hidden rounded-[22px] border border-border md:block">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="border-b border-border bg-secondary/60">
+                <tr>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Name</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Phone</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Area</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Orders</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Status</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Action</th>
+                </tr>
+              </thead>
+              <tbody className="bg-card">
+                {customers.length ? (
+                  customers.map((customer) => (
+                    <tr key={customer.id} className="border-b border-border last:border-0">
+                      <td className="px-4 py-4 font-semibold text-foreground">{customer.name}</td>
+                      <td className="px-4 py-4 text-sm text-foreground/80">{customer.phone || "—"}</td>
+                      <td className="px-4 py-4 text-sm text-muted-foreground">{customer.area || "—"}</td>
+                      <td className="px-4 py-4 text-sm text-foreground/80">{customer.orderCount}</td>
+                      <td className="px-4 py-4">
+                        <DashboardBadge tone="neutral">{customer.status || "active"}</DashboardBadge>
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <Link
+                          href={`/dashboard/customers/${customer.id}/edit`}
+                          className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground transition hover:border-primary/20 hover:bg-primary/5 hover:text-primary"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Edit
+                        </Link>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-12">
+                      <DashboardEmptyState title="No customers found" description="Customer records appear automatically as you save orders." />
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-sm text-slate-500">
-                    No customers found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </DashboardPanel>
+    </DashboardPage>
   );
 }

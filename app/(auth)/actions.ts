@@ -37,7 +37,8 @@ export async function registerAction(
     businessName: formData.get("businessName"),
     fullName: formData.get("fullName"),
     email: formData.get("email"),
-    password: formData.get("password")
+    password: formData.get("password"),
+    referralCode: formData.get("referralCode"),
   });
 
   if (!parsed.success) {
@@ -86,6 +87,17 @@ export async function registerAction(
         owner_id: userId,
         name: businessName,
         referral_code: generateReferralCode(businessName, userId),
+      })
+      .select("id")
+      .single();
+  }
+
+  if (businessInsert.error && matchesMissingSchemaError(businessInsert.error.message)) {
+    businessInsert = await adminClient
+      .from("businesses")
+      .insert({
+        owner_id: userId,
+        name: businessName,
       })
       .select("id")
       .single();
@@ -149,7 +161,7 @@ export async function registerAction(
         converted_at: convertedAt,
       });
 
-      if (!referralInsert.error || !matchesMissingSchemaError(referralInsert.error?.message)) {
+      if (!referralInsert.error) {
         const nextCreditDays = Number(referrerBusiness.referral_credit_days ?? 0) + 30;
         let nextBillingPeriodEnd = referrerBusiness.billing_current_period_ends_at;
 
@@ -167,7 +179,7 @@ export async function registerAction(
           })
           .eq("id", referrerBusiness.id);
 
-        if (!referrerUpdate.error || !matchesMissingSchemaError(referrerUpdate.error?.message)) {
+        if (!referrerUpdate.error) {
           await adminClient
             .from("businesses")
             .update({

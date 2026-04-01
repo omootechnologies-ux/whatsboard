@@ -44,23 +44,25 @@ export default function AnalyticsDashboard({
   return (
     <>
       <section className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-[32px] border border-[#173728]/10 bg-white p-6 text-[#173728] shadow-[0_24px_100px_rgba(23,55,40,0.06)] sm:p-7">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-200/80">Analytics</p>
-          <h1 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">Fintech-style performance view</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-[#173728]/68">
+        <div className="rounded-[28px] border border-border bg-card p-5 shadow-sm sm:p-6 lg:p-7">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary/60">Analytics</p>
+          <h1 className="mt-3 text-3xl font-black tracking-tight text-foreground sm:text-4xl">
+            See revenue, delivery pressure, and customer activity in one view.
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-muted-foreground">
             Track live revenue shape, payment composition, and area performance using your real customer and order data.
           </p>
         </div>
 
-        <div className="rounded-[32px] border border-border bg-card p-6 shadow-[0_24px_80px_rgba(15,23,42,0.06)] sm:p-7">
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-muted-foreground">Weekly pulse</p>
+        <div className="rounded-[28px] border border-border bg-card p-5 shadow-sm sm:p-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">Weekly pulse</p>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <div className="rounded-[22px] bg-secondary/50 p-4">
+            <div className="rounded-[22px] border border-border bg-secondary/50 p-4">
               <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Best day</p>
               <p className="mt-2 text-2xl font-black text-foreground">{summary.bestDay}</p>
               <p className="mt-1 text-xs text-muted-foreground">{formatTZS(summary.bestDayRevenue)}</p>
             </div>
-            <div className="rounded-[22px] bg-secondary/50 p-4">
+            <div className="rounded-[22px] border border-border bg-secondary/50 p-4">
               <p className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground">Top stage</p>
               <p className="mt-2 text-2xl font-black capitalize text-foreground">{niceStageLabel(summary.topStage)}</p>
               <p className="mt-1 text-xs text-muted-foreground">Biggest active workflow bucket</p>
@@ -70,7 +72,7 @@ export default function AnalyticsDashboard({
       </section>
 
       <div className="grid gap-5 xl:grid-cols-2">
-        <div className="rounded-3xl border border-border bg-card p-6 shadow-[0_24px_80px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[26px] border border-border bg-card p-5 shadow-sm sm:p-6">
           <h3 className="mb-4 text-lg font-semibold text-foreground">Revenue trend</h3>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -84,7 +86,7 @@ export default function AnalyticsDashboard({
           </div>
         </div>
 
-        <div className="rounded-3xl border border-border bg-card p-6 shadow-[0_24px_80px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[26px] border border-border bg-card p-5 shadow-sm sm:p-6">
           <h3 className="mb-4 text-lg font-semibold text-foreground">Orders by area</h3>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -100,7 +102,7 @@ export default function AnalyticsDashboard({
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[0.8fr_1.2fr]">
-        <div className="rounded-3xl border border-border bg-card p-6 shadow-[0_24px_80px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[26px] border border-border bg-card p-5 shadow-sm sm:p-6">
           <h3 className="mb-4 text-lg font-semibold text-foreground">Payment mix</h3>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -116,22 +118,22 @@ export default function AnalyticsDashboard({
           </div>
         </div>
 
-        <div className="rounded-3xl border border-border bg-card p-6 shadow-[0_24px_80px_rgba(15,23,42,0.06)]">
+        <div className="rounded-[26px] border border-border bg-card p-5 shadow-sm sm:p-6">
           <h3 className="mb-4 text-lg font-semibold text-foreground">What your live data is saying</h3>
           <div className="grid gap-4 md:grid-cols-3">
-            <div className="rounded-2xl bg-secondary/50 p-4">
+            <div className="rounded-2xl border border-border bg-secondary/50 p-4">
               <p className="text-sm text-muted-foreground">Best day</p>
               <p className="mt-2 text-2xl font-bold text-foreground">{summary.bestDay}</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 {summary.bestDayOrders} orders, {formatTZS(summary.bestDayRevenue)}
               </p>
             </div>
-            <div className="rounded-2xl bg-secondary/50 p-4">
+            <div className="rounded-2xl border border-border bg-secondary/50 p-4">
               <p className="text-sm text-muted-foreground">Repeat customers</p>
               <p className="mt-2 text-2xl font-bold text-foreground">{summary.repeatCustomers}</p>
               <p className="mt-1 text-sm text-muted-foreground">Customers who have ordered more than once</p>
             </div>
-            <div className="rounded-2xl bg-secondary/50 p-4">
+            <div className="rounded-2xl border border-border bg-secondary/50 p-4">
               <p className="text-sm text-muted-foreground">Dormant customers</p>
               <p className="mt-2 text-2xl font-bold text-foreground">{summary.dormantCustomers}</p>
               <p className="mt-1 text-sm text-muted-foreground">Customers with 30+ days since their last order</p>

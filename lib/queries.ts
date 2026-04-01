@@ -240,7 +240,20 @@ export async function getCustomersData() {
     );
 
     const orderCount = item.orders?.length ?? 0;
-    const lastOrderDate = item.orders?.[0]?.created_at ?? item.created_at;
+    const lastOrderDate =
+      (item.orders ?? []).reduce((latest: string | null, order: any) => {
+        const createdAt = order?.created_at ?? null;
+
+        if (!createdAt) {
+          return latest;
+        }
+
+        if (!latest) {
+          return createdAt;
+        }
+
+        return new Date(createdAt).getTime() > new Date(latest).getTime() ? createdAt : latest;
+      }, null) ?? item.created_at;
 
     return {
       id: item.id,
