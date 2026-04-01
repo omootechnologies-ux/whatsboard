@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { adminClient } from "@/lib/supabase/admin";
 import { getViewerContext } from "@/lib/queries";
 import {
   canCreateOrders,
@@ -8,6 +9,7 @@ import {
 } from "@/lib/plan-access";
 
 const createOrderSchema = z.object({
+  businessId: z.string().uuid().optional().or(z.literal("")),
   customerName: z.string().min(1),
   phone: z.string().min(1),
   area: z.string().optional().default(""),
@@ -19,7 +21,196 @@ const createOrderSchema = z.object({
   stage: z.string().optional().default("new_order"),
   paymentStatus: z.string().optional().default("unpaid"),
   notes: z.string().optional().default(""),
+  addFollowUp: z.boolean().optional().default(false),
+  followUpDate: z.string().optional().default(""),
+  followUpNote: z.string().optional().default(""),
 });
+
+function generateReferralCode(value: string, businessId: string) {
+  const slug = value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "")
+    .slice(0, 6)
+    .padEnd(4, "x");
+
+  return `${slug}-${businessId.replace(/-/g, "").slice(0, 6)}`.toUpperCase();
+}
+
+async function resolveOrderBusinessContext(hintedBusinessId?: string | null) {
+  const context = await getViewerContext();
+
+  if (context.businessId && context.business) {
+    return context;
+  }
+
+  const user = context.user;
+
+  if (!user) {
+    return { ...context, businessId: null, business: null };
+  }
+
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("business_id, full_name, email, business_name")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  let resolvedBusinessId = hintedBusinessId?.trim() || profile?.business_id || null;
+  let membershipRole: string | null = null;
+  let business = context.business;
+
+  if (resolvedBusinessId) {
+    const { data: membership } = await adminClient
+      .from("business_members")
+      .select("business_id, role")
+      .eq("business_id", resolvedBusinessId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (membership?.business_id) {
+      membershipRole = membership.role ?? null;
+    } else {
+      const { data: ownedBusiness } = await adminClient
+        .from("businesses")
+        .select("id, owner_id, name, phone, brand_color, currency, created_at, referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at")
+        .eq("id", resolvedBusinessId)
+        .eq("owner_id", user.id)
+        .maybeSingle();
+
+      if (ownedBusiness?.id) {
+        business = ownedBusiness;
+        membershipRole = "owner";
+      } else {
+        resolvedBusinessId = null;
+      }
+    }
+  }
+
+  if (!resolvedBusinessId) {
+    const { data: membership } = await adminClient
+      .from("business_members")
+      .select("business_id, role")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (membership?.business_id) {
+      resolvedBusinessId = membership.business_id;
+      membershipRole = membership.role ?? null;
+    }
+  }
+
+  if (!resolvedBusinessId) {
+    const { data: ownedBusiness } = await adminClient
+      .from("businesses")
+      .select("id, owner_id, name, phone, brand_color, currency, created_at, referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at")
+      .eq("owner_id", user.id)
+      .maybeSingle();
+
+    if (ownedBusiness?.id) {
+      resolvedBusinessId = ownedBusiness.id;
+      business = ownedBusiness;
+      membershipRole = "owner";
+    }
+  }
+
+  if (!resolvedBusinessId) {
+    const businessName =
+      String(profile?.business_name ?? "").trim() ||
+      String(user.user_metadata?.business_name ?? "").trim() ||
+      (String(profile?.full_name ?? user.user_metadata?.full_name ?? "").trim()
+        ? `${String(profile?.full_name ?? user.user_metadata?.full_name ?? "").trim()}'s business`
+        : "") ||
+      (String(user.email ?? "").split("@")[0]?.trim()
+        ? `${String(user.email ?? "").split("@")[0].trim()}'s business`
+        : "") ||
+      "My business";
+
+    let businessInsert = await adminClient
+      .from("businesses")
+      .insert({
+        owner_id: user.id,
+        name: businessName,
+        referral_code: generateReferralCode(businessName, user.id),
+        billing_plan: "free",
+        billing_status: "free",
+      })
+      .select("id, owner_id, name, phone, brand_color, currency, created_at, referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at")
+      .single();
+
+    let errorMessage = businessInsert.error?.message?.toLowerCase() ?? "";
+
+    if (businessInsert.error && (errorMessage.includes("column") || errorMessage.includes("does not exist"))) {
+      businessInsert = await adminClient
+        .from("businesses")
+        .insert({
+          owner_id: user.id,
+          name: businessName,
+          referral_code: generateReferralCode(businessName, user.id),
+        })
+        .select("id, owner_id, name, phone, brand_color, currency, created_at, referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at")
+        .single();
+      errorMessage = businessInsert.error?.message?.toLowerCase() ?? "";
+    }
+
+    if (businessInsert.error && (errorMessage.includes("column") || errorMessage.includes("does not exist"))) {
+      businessInsert = await adminClient
+        .from("businesses")
+        .insert({
+          owner_id: user.id,
+          name: businessName,
+        })
+        .select("id, owner_id, name, phone, brand_color, currency, created_at")
+        .single();
+    }
+
+    if (businessInsert.data?.id) {
+      resolvedBusinessId = businessInsert.data.id;
+      business = businessInsert.data;
+      membershipRole = "owner";
+    }
+  }
+
+  if (!resolvedBusinessId) {
+    return { ...context, businessId: null, business: null };
+  }
+
+  if (!business) {
+    const { data: resolvedBusiness } = await adminClient
+      .from("businesses")
+      .select("id, owner_id, name, phone, brand_color, currency, created_at, referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at")
+      .eq("id", resolvedBusinessId)
+      .maybeSingle();
+
+    business = resolvedBusiness ?? null;
+  }
+
+  await adminClient.from("profiles").upsert({
+    id: user.id,
+    business_id: resolvedBusinessId,
+    full_name: profile?.full_name ?? user.user_metadata?.full_name ?? null,
+    email: profile?.email ?? user.email ?? null,
+    business_name: profile?.business_name ?? business?.name ?? null,
+  });
+
+  const membershipInsert = await adminClient.from("business_members").insert({
+    business_id: resolvedBusinessId,
+    user_id: user.id,
+    role: membershipRole ?? "owner",
+    invited_by: user.id,
+  });
+
+  const membershipError = membershipInsert.error?.message?.toLowerCase() ?? "";
+
+  if (membershipInsert.error && !membershipError.includes("duplicate key")) {
+    // Ignore repair failure and continue with the resolved business.
+  }
+
+  return {
+    ...context,
+    businessId: resolvedBusinessId,
+    business,
+  };
+}
 
 export async function POST(request: Request) {
   try {
@@ -33,7 +224,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const { supabase, businessId, isAdmin, business } = await getViewerContext();
+    const { supabase, businessId, isAdmin, business } = await resolveOrderBusinessContext(
+      parsed.data.businessId
+    );
 
     if (!businessId) {
       return NextResponse.json({ error: "Business not found" }, { status: 401 });
@@ -218,6 +411,24 @@ export async function POST(request: Request) {
       if (updateCatalogError) {
         await supabase.from("orders").delete().eq("business_id", businessId).eq("id", order.id);
         return NextResponse.json({ error: updateCatalogError.message }, { status: 500 });
+      }
+    }
+
+    if (parsed.data.addFollowUp) {
+      const dueAt = parsed.data.followUpDate
+        ? new Date(parsed.data.followUpDate).toISOString()
+        : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+      const { error: followUpError } = await supabase.from("follow_ups").insert({
+        business_id: businessId,
+        order_id: order.id,
+        due_at: dueAt,
+        note: parsed.data.followUpNote?.trim() || `Follow up with ${customerName} about ${resolvedProduct}`,
+        completed: false,
+      });
+
+      if (followUpError) {
+        return NextResponse.json({ error: followUpError.message }, { status: 500 });
       }
     }
 
