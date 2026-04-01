@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { isMissingOptionalFieldError } from "@/lib/supabase-errors";
+import { isMissingOptionalFieldError, isMissingRelationError } from "@/lib/supabase-errors";
 import { adminClient } from "@/lib/supabase/admin";
 
 type ViewerBusiness = {
@@ -44,7 +44,7 @@ export async function getViewerContext() {
     .from("profiles")
     .select("business_id, full_name, email")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   let membershipBusinessId: string | null = null;
   let membershipRole: string | null = null;
@@ -75,8 +75,51 @@ export async function getViewerContext() {
   }
 
   let business: ViewerBusiness | null = null;
+  let resolvedBusinessId = membershipBusinessId ?? profile?.business_id ?? null;
 
-  const resolvedBusinessId = membershipBusinessId ?? profile?.business_id ?? null;
+  if (!resolvedBusinessId) {
+    const { data: ownerBusinessData } = await supabase
+      .from("businesses")
+      .select("id, owner_id, name, phone, brand_color, currency, created_at")
+      .eq("owner_id", user.id)
+      .maybeSingle();
+
+    if (ownerBusinessData?.id) {
+      resolvedBusinessId = ownerBusinessData.id;
+      business = ownerBusinessData as ViewerBusiness;
+
+      if (profile) {
+        await supabase.from("profiles").update({ business_id: resolvedBusinessId }).eq("id", user.id);
+      } else {
+        await supabase.from("profiles").upsert({
+          id: user.id,
+          business_id: resolvedBusinessId,
+          full_name: user.user_metadata?.full_name ?? null,
+          email: user.email ?? null,
+        });
+      }
+
+      const membershipInsert = await adminClient.from("business_members").insert({
+        business_id: resolvedBusinessId,
+        user_id: user.id,
+        role: "owner",
+        invited_by: user.id,
+      });
+
+      const membershipErrorMessage = membershipInsert.error?.message?.toLowerCase() ?? "";
+
+      if (
+        membershipInsert.error &&
+        !isMissingRelationError(membershipInsert.error.message) &&
+        !membershipErrorMessage.includes("duplicate key")
+      ) {
+        // Ignore membership repair failures here so the user can still access the owned business.
+      } else {
+        membershipBusinessId = resolvedBusinessId;
+        membershipRole = "owner";
+      }
+    }
+  }
 
   if (resolvedBusinessId) {
     const { data: baseBusinessData } = await supabase
@@ -85,7 +128,7 @@ export async function getViewerContext() {
       .eq("id", resolvedBusinessId)
       .single();
 
-    business = baseBusinessData ?? null;
+    business = business ?? baseBusinessData ?? null;
 
     const { data: extendedBusinessData, error: extendedBusinessError } = await supabase
       .from("businesses")
