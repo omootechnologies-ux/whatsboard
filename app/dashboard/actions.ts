@@ -46,11 +46,135 @@ type CreateOrderPayload = {
 async function getDashboardActionContext() {
   const context = await getViewerContext();
 
-  if (!context.businessId) {
+  if (context.businessId) {
+    return context;
+  }
+
+  const user = context.user;
+
+  if (!user) {
     return null;
   }
 
-  return context;
+  const { data: profile } = await adminClient
+    .from("profiles")
+    .select("business_id, full_name, email, business_name")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  const { data: membership } = await adminClient
+    .from("business_members")
+    .select("business_id, role")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  let resolvedBusinessId = membership?.business_id ?? profile?.business_id ?? null;
+  let resolvedRole = membership?.role ?? null;
+  let business = context.business;
+
+  if (!resolvedBusinessId) {
+    const { data: ownedBusiness } = await adminClient
+      .from("businesses")
+      .select("id, owner_id, name, phone, brand_color, currency, created_at, referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at")
+      .eq("owner_id", user.id)
+      .maybeSingle();
+
+    if (ownedBusiness?.id) {
+      resolvedBusinessId = ownedBusiness.id;
+      resolvedRole = "owner";
+      business = ownedBusiness;
+    }
+  }
+
+  if (!resolvedBusinessId) {
+    const profileBusinessName = String(profile?.business_name ?? "").trim();
+    const metadataBusinessName = String(user.user_metadata?.business_name ?? "").trim();
+    const profileFullName = String(profile?.full_name ?? user.user_metadata?.full_name ?? "").trim();
+    const emailPrefix = String(user.email ?? "").split("@")[0]?.trim();
+    const businessName =
+      profileBusinessName ||
+      metadataBusinessName ||
+      (profileFullName ? `${profileFullName}'s business` : "") ||
+      (emailPrefix ? `${emailPrefix}'s business` : "") ||
+      "My business";
+
+    let businessInsert = await adminClient
+      .from("businesses")
+      .insert({
+        owner_id: user.id,
+        name: businessName,
+        referral_code: generateReferralCode(businessName, user.id),
+        billing_plan: "free",
+        billing_status: "free",
+      })
+      .select("id, owner_id, name, phone, brand_color, currency, created_at, referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at")
+      .single();
+
+    let errorMessage = businessInsert.error?.message?.toLowerCase() ?? "";
+
+    if (businessInsert.error && (errorMessage.includes("column") || errorMessage.includes("does not exist"))) {
+      businessInsert = await adminClient
+        .from("businesses")
+        .insert({
+          owner_id: user.id,
+          name: businessName,
+          referral_code: generateReferralCode(businessName, user.id),
+        })
+        .select("id, owner_id, name, phone, brand_color, currency, created_at, referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at")
+        .single();
+      errorMessage = businessInsert.error?.message?.toLowerCase() ?? "";
+    }
+
+    if (businessInsert.error && (errorMessage.includes("column") || errorMessage.includes("does not exist"))) {
+      businessInsert = await adminClient
+        .from("businesses")
+        .insert({
+          owner_id: user.id,
+          name: businessName,
+        })
+        .select("id, owner_id, name, phone, brand_color, currency, created_at")
+        .single();
+    }
+
+    if (businessInsert.data?.id) {
+      resolvedBusinessId = businessInsert.data.id;
+      resolvedRole = "owner";
+      business = businessInsert.data;
+    }
+  }
+
+  if (!resolvedBusinessId || !business) {
+    return null;
+  }
+
+  await adminClient.from("profiles").upsert({
+    id: user.id,
+    business_id: resolvedBusinessId,
+    full_name: profile?.full_name ?? user.user_metadata?.full_name ?? null,
+    email: profile?.email ?? user.email ?? null,
+    business_name: profile?.business_name ?? business.name ?? null,
+  });
+
+  const membershipInsert = await adminClient.from("business_members").insert({
+    business_id: resolvedBusinessId,
+    user_id: user.id,
+    role: resolvedRole ?? "owner",
+    invited_by: user.id,
+  });
+
+  const membershipErrorMessage = membershipInsert.error?.message?.toLowerCase() ?? "";
+
+  if (membershipInsert.error && !membershipErrorMessage.includes("duplicate key")) {
+    // Ignore repair failure here; business context is already resolved.
+  }
+
+  return {
+    ...context,
+    businessId: resolvedBusinessId,
+    business,
+    membershipRole: resolvedRole,
+    isBusinessOwner: Boolean(business.owner_id && business.owner_id === user.id),
+  };
 }
 
 async function getDashboardActionContextFromHint(hintedBusinessId: string) {
