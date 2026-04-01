@@ -3,9 +3,9 @@ import { ArrowLeft } from "lucide-react";
 import { OrderForm } from "@/components/forms/order-form";
 import { getDashboardWriteAccess } from "@/lib/dashboard-access";
 import {
-  canUsePlanCapability,
-  getAllowedOrderStages,
-  getAllowedPaymentStatuses,
+  canUsePlanCapabilityForUser,
+  getAllowedOrderStagesForUser,
+  getAllowedPaymentStatusesForUser,
 } from "@/lib/plan-access";
 import { getOrderCatalogOptions } from "@/lib/queries";
 
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function NewOrderPage() {
-  const { business, canCreateOrders, monthlyOrderLimit, orderCountThisMonth, remainingMonthlyOrders } =
+  const { business, isAdmin, canCreateOrders, monthlyOrderLimit, orderCountThisMonth, remainingMonthlyOrders } =
     await getDashboardWriteAccess();
   const catalogProducts = await getOrderCatalogOptions();
 
@@ -40,10 +40,10 @@ export default async function NewOrderPage() {
         <OrderForm
           catalogProducts={catalogProducts}
           canManageRecords={canCreateOrders}
-          allowedStages={getAllowedOrderStages(business)}
-          allowedPaymentStatuses={getAllowedPaymentStatuses(business)}
-          canUseFollowUps={canUsePlanCapability("followUpReminders", business)}
-          canUsePaymentTracking={canUsePlanCapability("paymentTracking", business)}
+          allowedStages={getAllowedOrderStagesForUser(business, isAdmin)}
+          allowedPaymentStatuses={getAllowedPaymentStatusesForUser(business, isAdmin)}
+          canUseFollowUps={canUsePlanCapabilityForUser("followUpReminders", business, isAdmin)}
+          canUsePaymentTracking={canUsePlanCapabilityForUser("paymentTracking", business, isAdmin)}
           monthlyOrderLimit={monthlyOrderLimit}
           orderCountThisMonth={orderCountThisMonth}
           remainingMonthlyOrders={remainingMonthlyOrders}

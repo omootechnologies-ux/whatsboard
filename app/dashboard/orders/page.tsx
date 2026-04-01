@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, BellRing, Pencil, Plus, Wallet } from "lucide-react";
 import { getDashboardWriteAccess } from "@/lib/dashboard-access";
-import { canAccessDashboardFeature, canUsePlanCapability } from "@/lib/plan-access";
+import { canAccessDashboardFeatureForUser, canUsePlanCapabilityForUser } from "@/lib/plan-access";
 import { getDashboardData } from "@/lib/queries";
 import { formatTZS } from "@/lib/utils";
 
@@ -22,12 +22,12 @@ function badge(stage: string) {
 }
 
 export default async function OrdersPage() {
-  const { business, canCreateOrders, monthlyOrderLimit, orderCountThisMonth, remainingMonthlyOrders } =
+  const { business, isAdmin, canCreateOrders, monthlyOrderLimit, orderCountThisMonth, remainingMonthlyOrders } =
     await getDashboardWriteAccess();
   const { orders } = await getDashboardData();
-  const canSeeCustomers = canAccessDashboardFeature("customers", business);
-  const canSeeFollowUps = canAccessDashboardFeature("followUps", business);
-  const canTrackPayments = canUsePlanCapability("paymentTracking", business);
+  const canSeeCustomers = canAccessDashboardFeatureForUser("customers", business, isAdmin);
+  const canSeeFollowUps = canAccessDashboardFeatureForUser("followUps", business, isAdmin);
+  const canTrackPayments = canUsePlanCapabilityForUser("paymentTracking", business, isAdmin);
   const unpaidValue = orders
     .filter((order) => order.paymentStatus !== "paid")
     .reduce((sum, order) => sum + order.amount, 0);

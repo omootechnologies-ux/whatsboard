@@ -22,7 +22,7 @@ import {
 } from "lucide-react";
 import { logoutAction } from "@/app/(auth)/actions";
 import {
-  canAccessDashboardFeature,
+  canAccessDashboardFeatureForUser,
   getEffectivePlanKey,
   getPlanName,
 } from "@/lib/plan-access";
@@ -128,18 +128,18 @@ export function DashboardShell({
   const effectivePlan = getEffectivePlanKey(business);
   const visiblePrimaryNav = PRIMARY_NAV.filter((item) => {
     if (item.href === "/dashboard/customers") {
-      return canAccessDashboardFeature("customers", business);
+      return canAccessDashboardFeatureForUser("customers", business, isAdmin);
     }
 
     if (item.href === "/dashboard/follow-ups") {
-      return canAccessDashboardFeature("followUps", business);
+      return canAccessDashboardFeatureForUser("followUps", business, isAdmin);
     }
 
     return true;
   });
   const visibleSecondaryNav = SECONDARY_NAV.filter((item) => {
     if (item.href === "/dashboard/analytics") {
-      return canAccessDashboardFeature("analytics", business);
+      return canAccessDashboardFeatureForUser("analytics", business, isAdmin);
     }
 
     return true;

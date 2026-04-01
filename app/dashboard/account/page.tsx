@@ -5,12 +5,12 @@ import { logoutAction } from "@/app/(auth)/actions";
 import { addTeamMemberAction, removeTeamMemberAction } from "@/app/dashboard/actions";
 import { PLAN_CONFIG } from "@/lib/billing";
 import {
-  canAccessDashboardFeature,
+  canAccessDashboardFeatureForUser,
   getEffectivePlanKey,
   getMonthlyOrderLimit,
   getPlanName,
   getRemainingMonthlyOrders,
-  getTeamMemberLimit,
+  getTeamMemberLimitForUser,
 } from "@/lib/plan-access";
 
 export const dynamic = "force-dynamic";
@@ -25,18 +25,18 @@ export default async function AccountPage({
   const resolvedSearch = (await searchParams) ?? {};
   const effectivePlan = getEffectivePlanKey(business);
   const monthlyOrderLimit = getMonthlyOrderLimit(business);
-  const teamMemberLimit = getTeamMemberLimit(business);
+  const teamMemberLimit = getTeamMemberLimitForUser(business, isAdmin);
   const orderCountThisMonth = await getCurrentMonthOrderUsage();
   const remainingMonthlyOrders = getRemainingMonthlyOrders(business, orderCountThisMonth);
   const teamSeatsUsed = teamMembers.filter((member) => member.role !== "owner").length;
   const canManageTeam = Boolean(isAdmin || isBusinessOwner);
   const unlockedFeatures = [
-    { label: "Orders", allowed: canAccessDashboardFeature("orders", business) },
-    { label: "Customers", allowed: canAccessDashboardFeature("customers", business) },
-    { label: "Follow-ups", allowed: canAccessDashboardFeature("followUps", business) },
-    { label: "Analytics", allowed: canAccessDashboardFeature("analytics", business) },
-    { label: "Account", allowed: canAccessDashboardFeature("account", business) },
-    { label: "Settings", allowed: canAccessDashboardFeature("settings", business) },
+    { label: "Orders", allowed: canAccessDashboardFeatureForUser("orders", business, isAdmin) },
+    { label: "Customers", allowed: canAccessDashboardFeatureForUser("customers", business, isAdmin) },
+    { label: "Follow-ups", allowed: canAccessDashboardFeatureForUser("followUps", business, isAdmin) },
+    { label: "Analytics", allowed: canAccessDashboardFeatureForUser("analytics", business, isAdmin) },
+    { label: "Account", allowed: canAccessDashboardFeatureForUser("account", business, isAdmin) },
+    { label: "Settings", allowed: canAccessDashboardFeatureForUser("settings", business, isAdmin) },
   ];
 
   return (

@@ -246,9 +246,27 @@ export function canAccessDashboardFeature(feature: DashboardFeature, business?: 
   return PLAN_ORDER[currentPlan] >= PLAN_ORDER[DASHBOARD_FEATURE_MIN_PLAN[feature]];
 }
 
+export function canAccessDashboardFeatureForUser(
+  feature: DashboardFeature,
+  business?: BillingBusiness | null,
+  isAdmin?: boolean
+) {
+  if (isAdmin) return true;
+  return canAccessDashboardFeature(feature, business);
+}
+
 export function canUsePlanCapability(capability: PlanCapability, business?: BillingBusiness | null) {
   const currentPlan = getEffectivePlanKey(business);
   return PLAN_ORDER[currentPlan] >= PLAN_ORDER[CAPABILITY_MIN_PLAN[capability]];
+}
+
+export function canUsePlanCapabilityForUser(
+  capability: PlanCapability,
+  business?: BillingBusiness | null,
+  isAdmin?: boolean
+) {
+  if (isAdmin) return true;
+  return canUsePlanCapability(capability, business);
 }
 
 export function getMonthlyOrderLimit(business?: BillingBusiness | null) {
@@ -257,6 +275,14 @@ export function getMonthlyOrderLimit(business?: BillingBusiness | null) {
 
 export function getTeamMemberLimit(business?: BillingBusiness | null) {
   return PLAN_CONFIG[getEffectivePlanKey(business)].teamMemberLimit;
+}
+
+export function getTeamMemberLimitForUser(business?: BillingBusiness | null, isAdmin?: boolean) {
+  if (isAdmin) {
+    return PLAN_CONFIG.business.teamMemberLimit;
+  }
+
+  return getTeamMemberLimit(business);
 }
 
 export function getRemainingMonthlyOrders(
@@ -294,8 +320,27 @@ export function getAllowedOrderStages(business?: BillingBusiness | null): OrderS
   return GROWTH_ORDER_STAGES;
 }
 
+export function getAllowedOrderStagesForUser(business?: BillingBusiness | null, isAdmin?: boolean): OrderStage[] {
+  if (isAdmin) {
+    return GROWTH_ORDER_STAGES;
+  }
+
+  return getAllowedOrderStages(business);
+}
+
 export function getAllowedPaymentStatuses(business?: BillingBusiness | null): PaymentStatus[] {
   return canUsePlanCapability("paymentTracking", business) ? PAID_PAYMENT_STATUSES : FREE_PAYMENT_STATUSES;
+}
+
+export function getAllowedPaymentStatusesForUser(
+  business?: BillingBusiness | null,
+  isAdmin?: boolean
+): PaymentStatus[] {
+  if (isAdmin) {
+    return PAID_PAYMENT_STATUSES;
+  }
+
+  return getAllowedPaymentStatuses(business);
 }
 
 export function canManageOrders(business?: BillingBusiness | null) {

@@ -3,9 +3,9 @@ import { notFound } from "next/navigation";
 import { getDashboardWriteAccess } from "@/lib/dashboard-access";
 import { getOrderCatalogOptions, getViewerContext } from "@/lib/queries";
 import {
-  canUsePlanCapability,
-  getAllowedOrderStages,
-  getAllowedPaymentStatuses,
+  canUsePlanCapabilityForUser,
+  getAllowedOrderStagesForUser,
+  getAllowedPaymentStatusesForUser,
 } from "@/lib/plan-access";
 import UpdateOrderForm from "@/components/forms/update-order-form";
 
@@ -17,7 +17,7 @@ export default async function EditOrderPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { business, canManageRecords, monthlyOrderLimit, orderCountThisMonth, remainingMonthlyOrders } =
+  const { business, isAdmin, canManageRecords, monthlyOrderLimit, orderCountThisMonth, remainingMonthlyOrders } =
     await getDashboardWriteAccess();
   const { supabase, businessId } = await getViewerContext();
   const { id } = await params;
@@ -79,10 +79,10 @@ export default async function EditOrderPage({
         order={normalizedOrder}
         catalogProducts={catalogProducts}
         canManageRecords={canManageRecords}
-        allowedStages={getAllowedOrderStages(business)}
-        allowedPaymentStatuses={getAllowedPaymentStatuses(business)}
-        canUseFollowUps={canUsePlanCapability("followUpReminders", business)}
-        canUsePaymentTracking={canUsePlanCapability("paymentTracking", business)}
+        allowedStages={getAllowedOrderStagesForUser(business, isAdmin)}
+        allowedPaymentStatuses={getAllowedPaymentStatusesForUser(business, isAdmin)}
+        canUseFollowUps={canUsePlanCapabilityForUser("followUpReminders", business, isAdmin)}
+        canUsePaymentTracking={canUsePlanCapabilityForUser("paymentTracking", business, isAdmin)}
         monthlyOrderLimit={monthlyOrderLimit}
         orderCountThisMonth={orderCountThisMonth}
         remainingMonthlyOrders={remainingMonthlyOrders}

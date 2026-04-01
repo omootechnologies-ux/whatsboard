@@ -9,7 +9,7 @@ import {
   Users,
 } from "lucide-react";
 import { getDashboardWriteAccess } from "@/lib/dashboard-access";
-import { canAccessDashboardFeature, canUsePlanCapability } from "@/lib/plan-access";
+import { canAccessDashboardFeatureForUser, canUsePlanCapabilityForUser } from "@/lib/plan-access";
 import { getCustomersData, getDashboardData, getFollowUpsData } from "@/lib/queries";
 import { formatTZS } from "@/lib/utils";
 
@@ -59,6 +59,7 @@ function statusTone(stage: string) {
 export default async function DashboardPage() {
   const {
     business,
+    isAdmin,
     canCreateOrders,
     monthlyOrderLimit,
     orderCountThisMonth,
@@ -69,10 +70,10 @@ export default async function DashboardPage() {
     getCustomersData(),
     getFollowUpsData(),
   ]);
-  const canSeeCustomers = canAccessDashboardFeature("customers", business);
-  const canSeeFollowUps = canAccessDashboardFeature("followUps", business);
-  const canSeeAnalytics = canAccessDashboardFeature("analytics", business);
-  const canTrackPayments = canUsePlanCapability("paymentTracking", business);
+  const canSeeCustomers = canAccessDashboardFeatureForUser("customers", business, isAdmin);
+  const canSeeFollowUps = canAccessDashboardFeatureForUser("followUps", business, isAdmin);
+  const canSeeAnalytics = canAccessDashboardFeatureForUser("analytics", business, isAdmin);
+  const canTrackPayments = canUsePlanCapabilityForUser("paymentTracking", business, isAdmin);
 
   const totalOrders = metrics?.totalOrders ?? 0;
   const unpaidOrders = metrics?.unpaidOrders ?? 0;
