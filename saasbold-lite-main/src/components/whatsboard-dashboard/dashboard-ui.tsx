@@ -46,7 +46,7 @@ type ToolbarChip = {
 };
 
 const desktopNav: NavItem[] = [
-  { href: "/", label: "Dashboard", group: "Operations", icon: Home },
+  { href: "/dashboard", label: "Overview", group: "Operations", icon: Home },
   { href: "/orders", label: "Orders", group: "Operations", icon: Package2 },
   { href: "/customers", label: "Customers", group: "Operations", icon: Users },
   { href: "/follow-ups", label: "Follow-ups", group: "Operations", icon: Bell },
@@ -56,7 +56,9 @@ const desktopNav: NavItem[] = [
 ];
 
 const mobileNav = desktopNav.filter((item) =>
-  ["/", "/orders", "/customers", "/payments", "/settings"].includes(item.href),
+  ["/dashboard", "/orders", "/customers", "/payments", "/settings"].includes(
+    item.href,
+  ),
 );
 
 export function paymentBadgeTone(status: PaymentStatus) {
@@ -89,9 +91,8 @@ export function DashboardShellFrame({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const currentLabel =
-    desktopNav.find((item) =>
-      item.href === "/" ? pathname === "/" : pathname.startsWith(item.href),
-    )?.label ?? "Dashboard";
+    desktopNav.find((item) => pathname.startsWith(item.href))?.label ??
+    "Overview";
   const groupedNav = useMemo(
     () =>
       (["Operations", "Control"] as const).map((group) => ({
@@ -294,10 +295,7 @@ export function DashboardShellFrame({
           <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-[var(--color-wb-border)] bg-white/96 backdrop-blur-xl lg:hidden">
             <div className="mx-auto flex max-w-screen-sm items-stretch justify-between px-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] pt-2">
               {mobileNav.map((item) => {
-                const active =
-                  item.href === "/"
-                    ? pathname === "/"
-                    : pathname.startsWith(item.href);
+                const active = pathname.startsWith(item.href);
                 const Icon = item.icon;
                 return (
                   <Link
@@ -339,8 +337,7 @@ function AppLink({
   collapsed?: boolean;
   onClick?: () => void;
 }) {
-  const active =
-    item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+  const active = pathname.startsWith(item.href);
   const Icon = item.icon;
 
   return (
