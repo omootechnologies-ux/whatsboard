@@ -1,20 +1,106 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, ShieldCheck } from "lucide-react";
+import { ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type AuthMode = "login" | "register";
+
+function resolveAuthErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    const message = error.message.toLowerCase();
+    if (message.includes("invalid login credentials")) {
+      return "Email or password is incorrect. Please try again.";
+    }
+    if (message.includes("email not confirmed")) {
+      return "Please confirm your email first, then sign in.";
+    }
+    if (message.includes("user already registered")) {
+      return "This email is already registered. Please sign in instead.";
+    }
+    if (message.includes("password should be at least")) {
+      return "Password must be at least 8 characters.";
+    }
+    if (message.includes("missing required env var")) {
+      return "Authentication is not configured correctly. Contact support.";
+    }
+    return error.message;
+  }
+  return "Something went wrong. Please try again.";
+}
+
+function getRedirectPath(nextParam: string | null) {
+  if (!nextParam) return "/dashboard";
+  if (!nextParam.startsWith("/") || nextParam.startsWith("//")) {
+    return "/dashboard";
+  }
+  if (nextParam.startsWith("/login") || nextParam.startsWith("/register")) {
+    return "/dashboard";
+  }
+  return nextParam;
+}
 
 export function AuthForm({ mode }: { mode: AuthMode }) {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  const [redirectPath, setRedirectPath] = useState("/dashboard");
 
   const isRegister = mode === "register";
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setRedirectPath(getRedirectPath(params.get("next")));
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function checkSession() {
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const { data, error } = await supabase.auth.getSession();
+
+        if (error) {
+          setErrorMessage(resolveAuthErrorMessage(error));
+          return;
+        }
+
+        if (data.session) {
+          router.replace(redirectPath);
+          router.refresh();
+          return;
+        }
+      } catch (error) {
+        setErrorMessage(resolveAuthErrorMessage(error));
+      } finally {
+        if (mounted) {
+          setIsCheckingSession(false);
+        }
+      }
+    }
+
+    checkSession();
+
+    return () => {
+      mounted = false;
+    };
+  }, [router, redirectPath]);
+
+  if (isCheckingSession) {
+    return (
+      <div className="wb-shell-card w-full max-w-lg p-8">
+        <div className="flex items-center gap-3 text-[var(--color-wb-text-muted)]">
+          <Loader2 className="h-5 w-5 animate-spin text-[var(--color-wb-primary)]" />
+          <span className="text-sm font-semibold">Checking your session...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="wb-shell-card w-full max-w-lg p-6 sm:p-8">
@@ -42,10 +128,25 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             const formData = new FormData(event.currentTarget);
             const email = String(formData.get("email") || "").trim();
             const password = String(formData.get("password") || "");
+            const confirmPassword = String(
+              formData.get("confirmPassword") || "",
+            );
             const businessName = String(formData.get("businessName") || "").trim();
 
             if (!email || !password) {
               setErrorMessage("Email and password are required.");
+              return;
+            }
+            if (!email.includes("@")) {
+              setErrorMessage("Enter a valid email address.");
+              return;
+            }
+            if (password.length < 8) {
+              setErrorMessage("Password must be at least 8 characters.");
+              return;
+            }
+            if (isRegister && password !== confirmPassword) {
+              setErrorMessage("Passwords do not match.");
               return;
             }
 
@@ -74,7 +175,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 return;
               }
 
-              router.push("/dashboard");
+              router.push(redirectPath);
               router.refresh();
               return;
             }
@@ -89,8 +190,10 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               return;
             }
 
-            router.push("/dashboard");
+            router.push(redirectPath);
             router.refresh();
+          } catch (error) {
+            setErrorMessage(resolveAuthErrorMessage(error));
           } finally {
             setIsSubmitting(false);
           }
@@ -106,6 +209,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               required
               placeholder="Amani Collections"
               className="wb-input"
+              autoComplete="organization"
             />
           </label>
         ) : null}
@@ -120,6 +224,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             required
             placeholder="you@business.com"
             className="wb-input"
+            autoComplete="email"
           />
         </label>
 
@@ -133,20 +238,42 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             required
             placeholder="••••••••"
             className="wb-input"
+            autoComplete={isRegister ? "new-password" : "current-password"}
           />
         </label>
+
+        {isRegister ? (
+          <label className="block">
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-wb-text-muted)]">
+              Confirm Password
+            </span>
+            <input
+              name="confirmPassword"
+              type="password"
+              required
+              placeholder="••••••••"
+              className="wb-input"
+              autoComplete="new-password"
+            />
+          </label>
+        ) : null}
 
         <button
           type="submit"
           className="wb-button-primary w-full justify-center"
           disabled={isSubmitting}
         >
-          {isSubmitting
-            ? "Please wait..."
-            : isRegister
-              ? "Create account"
-              : "Login"}
-          <ArrowRight className="h-4 w-4" />
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Please wait...
+            </>
+          ) : isRegister ? (
+            "Create account"
+          ) : (
+            "Login"
+          )}
+          {!isSubmitting ? <ArrowRight className="h-4 w-4" /> : null}
         </button>
       </form>
 
