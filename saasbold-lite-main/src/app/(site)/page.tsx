@@ -16,6 +16,8 @@ import {
 } from "@/components/whatsboard-dashboard/formatting";
 import { getDashboardSnapshot } from "@/lib/whatsboard-repository";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const {
     stats: dashboardStats,

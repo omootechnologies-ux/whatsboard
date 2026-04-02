@@ -9,6 +9,8 @@ import {
 import { formatCurrency } from "@/components/whatsboard-dashboard/formatting";
 import { getAnalyticsSnapshot } from "@/lib/whatsboard-repository";
 
+export const dynamic = "force-dynamic";
+
 export default async function AnalyticsPage() {
   const { stats: dashboardStats, series: analyticsSeries } =
     await getAnalyticsSnapshot();
