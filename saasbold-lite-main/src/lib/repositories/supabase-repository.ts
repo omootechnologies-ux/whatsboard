@@ -28,6 +28,7 @@ import {
   createSupabaseServiceClient,
   isSupabaseServerConfigured,
 } from "@/lib/supabase/server";
+import { createSupabaseLegacyRepository } from "@/lib/repositories/supabase-legacy-repository";
 
 type WorkspaceRow = {
   id: string;
@@ -1395,26 +1396,9 @@ async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
 }
 
 export function createSupabaseRepository(): WhatsboardRepository {
-  return {
-    listOrders,
-    getOrderById,
-    createOrder,
-    updateOrder,
-    listCustomers,
-    getCustomerById,
-    createCustomer,
-    updateCustomer,
-    listFollowUps,
-    createFollowUp,
-    updateFollowUp,
-    listOrderFollowUps,
-    listPayments,
-    createPayment,
-    updatePayment,
-    listOrderPayments,
-    getAnalyticsSnapshot,
-    getDashboardSnapshot,
-  };
+  // Production currently uses a legacy Supabase schema with business_id-based
+  // tables. Use the compatibility repository to keep dashboard flows working.
+  return createSupabaseLegacyRepository();
 }
 
 export { isSupabaseServerConfigured };
