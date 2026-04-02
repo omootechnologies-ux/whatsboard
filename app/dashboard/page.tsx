@@ -14,13 +14,16 @@ import { getCustomersData, getDashboardData, getFollowUpsData } from "@/lib/quer
 import {
   DashboardActionLink,
   DashboardBadge,
+  DashboardChartCard,
   DashboardEmptyState,
   DashboardHero,
   DashboardInfoGrid,
+  DashboardOrderStageBoard,
   DashboardPage,
   DashboardPanel,
   DashboardPanelHeader,
   DashboardStatCard,
+  DashboardTimeline,
 } from "@/components/dashboard/page-primitives";
 import { formatTZS } from "@/lib/utils";
 
@@ -63,74 +66,173 @@ export default async function DashboardOverviewPage() {
   const totalOrders = metrics?.totalOrders ?? 0;
   const unpaidOrders = metrics?.unpaidOrders ?? 0;
   const unpaidValue = metrics?.unpaidValue ?? 0;
-  const packingCount = orders.filter((order) => ["paid", "packing", "dispatched"].includes(order.stage)).length;
+  const paidOrders = metrics?.paidOrders ?? 0;
   const deliveredCount = orders.filter((order) => order.stage === "delivered").length;
+  const activeOrders = orders.filter((order) => order.stage !== "delivered").length;
   const pendingFollowUps = followUps.filter((item) => !item.completed);
-  const dormantCustomers = customers.filter((customer) => {
-    const lastOrderTime = new Date(customer.lastOrderDate).getTime();
-    return Number.isFinite(lastOrderTime) && Date.now() - lastOrderTime >= 30 * 24 * 60 * 60 * 1000;
-  });
-  const recentOrders = orders.slice(0, 5);
-  const nextFollowUps = pendingFollowUps.slice(0, 4);
-  const pipelineSnapshot = [
+  const overdueFollowUps = pendingFollowUps.filter((item) => new Date(item.dueAt).getTime() < Date.now());
+  const inMotionOrders = orders.filter((order) =>
+    ["waiting_payment", "paid", "packing", "dispatched"].includes(order.stage)
+  );
+  const recentOrders = orders.slice(0, 4);
+  const topCustomers = customers.slice(0, 4);
+  const chartData = [
     { label: "New", value: orders.filter((order) => order.stage === "new_order").length },
-    { label: "Payment", value: orders.filter((order) => order.stage === "waiting_payment").length },
-    { label: "Paid", value: orders.filter((order) => order.stage === "paid").length },
-    { label: "Packing", value: orders.filter((order) => order.stage === "packing").length },
-    { label: "Dispatch", value: orders.filter((order) => order.stage === "dispatched").length },
-    { label: "Done", value: orders.filter((order) => order.stage === "delivered").length },
+    { label: "Pay", value: orders.filter((order) => order.stage === "waiting_payment").length },
+    { label: "Pack", value: orders.filter((order) => order.stage === "packing").length },
+    { label: "Ship", value: orders.filter((order) => order.stage === "dispatched").length },
+    { label: "Done", value: deliveredCount },
+  ];
+
+  const timelineItems: Array<{
+    title: string;
+    detail: string;
+    meta?: string;
+    tone?: "neutral" | "primary" | "success" | "warning";
+  }> = [
+    ...recentOrders.map((order) => ({
+      title: `Order from ${order.customerName}`,
+      detail: `${order.product} for ${formatTZS(order.amount)} ${order.area ? `in ${order.area}` : ""}`.trim(),
+      meta: order.createdAt ? new Date(order.createdAt).toLocaleDateString() : undefined,
+      tone: (stageTone(order.stage) === "warning" ? "warning" : stageTone(order.stage) === "success" ? "success" : "primary") as
+        | "warning"
+        | "success"
+        | "primary",
+    })),
+    ...pendingFollowUps.slice(0, 2).map((followUp) => ({
+      title: `Follow-up for ${followUp.customerName}`,
+      detail: followUp.note || "Customer still needs a response.",
+      meta: followUp.dueAt ? new Date(followUp.dueAt).toLocaleDateString() : undefined,
+      tone: (new Date(followUp.dueAt).getTime() < Date.now() ? "warning" : "neutral") as "warning" | "neutral",
+    })),
+  ].slice(0, 5);
+
+  const orderBoardColumns = [
+    {
+      key: "new",
+      title: "New orders",
+      tone: "neutral" as const,
+      orders: orders
+        .filter((order) => order.stage === "new_order")
+        .slice(0, 3)
+        .map((order) => ({
+          id: order.id,
+          customerName: order.customerName,
+          product: order.product,
+          amount: order.amount,
+          area: order.area,
+          paymentStatus: canTrackPayments ? order.paymentStatus : undefined,
+        })),
+    },
+    {
+      key: "payment",
+      title: "Waiting payment",
+      tone: "warning" as const,
+      orders: orders
+        .filter((order) => order.stage === "waiting_payment")
+        .slice(0, 3)
+        .map((order) => ({
+          id: order.id,
+          customerName: order.customerName,
+          product: order.product,
+          amount: order.amount,
+          area: order.area,
+          paymentStatus: canTrackPayments ? order.paymentStatus : undefined,
+        })),
+    },
+    {
+      key: "packing",
+      title: "Packing",
+      tone: "primary" as const,
+      orders: orders
+        .filter((order) => ["paid", "packing"].includes(order.stage))
+        .slice(0, 3)
+        .map((order) => ({
+          id: order.id,
+          customerName: order.customerName,
+          product: order.product,
+          amount: order.amount,
+          area: order.area,
+          paymentStatus: canTrackPayments ? order.paymentStatus : undefined,
+        })),
+    },
+    {
+      key: "dispatch",
+      title: "Dispatch & done",
+      tone: "success" as const,
+      orders: orders
+        .filter((order) => ["dispatched", "delivered"].includes(order.stage))
+        .slice(0, 3)
+        .map((order) => ({
+          id: order.id,
+          customerName: order.customerName,
+          product: order.product,
+          amount: order.amount,
+          area: order.area,
+          paymentStatus: canTrackPayments ? order.paymentStatus : undefined,
+        })),
+    },
   ];
 
   return (
     <DashboardPage>
       <DashboardHero
         eyebrow="Overview"
-        title="Keep every order, payment, and follow-up in one clear workspace."
-        description="This is your daily control room. Review what needs payment, what needs packing, and which customers or follow-ups need attention next."
+        title="Turn chat sales into a clean operating system for today’s work."
+        description="Review urgent follow-ups, active orders, payment exposure, and seller activity from one calm control room built for WhatsApp-led selling."
         actions={
           <>
             <DashboardActionLink
               href={
                 canCreateOrders
                   ? "/dashboard/orders/new"
-                  : "/pricing?status=upgrade&message=Upgrade%20to%20Starter%20for%20unlimited%20orders"
+                  : "/pricing?status=upgrade&message=Upgrade%20to%20Starter%20for%20more%20orders"
               }
               tone="primary"
             >
-              {canCreateOrders ? "Create order" : "Upgrade for more orders"}
+              Create order
             </DashboardActionLink>
             <DashboardActionLink href={canSeeFollowUps ? "/dashboard/follow-ups" : "/dashboard/orders"}>
-              {canSeeFollowUps ? "Review follow-ups" : "Review orders"}
+              {canSeeFollowUps ? "Open action center" : "Review orders"}
             </DashboardActionLink>
           </>
         }
         aside={
-          <div className="space-y-3">
-            <div className="rounded-[22px] bg-secondary/60 p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Waiting payment</p>
-              <p className="mt-2 text-3xl font-black tracking-tight text-foreground">
-                {canTrackPayments ? unpaidOrders : `${orderCountThisMonth}/${monthlyOrderLimit ?? totalOrders}`}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                {canTrackPayments
-                  ? `${formatTZS(unpaidValue)} still not collected.`
-                  : `${remainingMonthlyOrders ?? 0} free orders left this month.`}
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-              <div className="rounded-[22px] bg-secondary/60 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">In motion</p>
-                <p className="mt-2 text-2xl font-black text-foreground">{packingCount}</p>
-                <p className="mt-1 text-sm text-muted-foreground">Paid, packing, or already dispatched.</p>
+          <div className="space-y-4">
+            <div className="rounded-[24px] border border-[#dfe7e2] bg-[#f8fbf9] p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5e6461]">What needs attention now</p>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+                <div>
+                  <p className="text-3xl font-black tracking-[-0.04em] text-[#111111]">{overdueFollowUps.length}</p>
+                  <p className="mt-1 text-sm text-[#5e6461]">Overdue follow-ups</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-black tracking-[-0.04em] text-[#111111]">{activeOrders}</p>
+                  <p className="mt-1 text-sm text-[#5e6461]">Orders still moving</p>
+                </div>
+                <div>
+                  <p className="text-3xl font-black tracking-[-0.04em] text-[#111111]">
+                    {canTrackPayments ? formatTZS(unpaidValue) : `${remainingMonthlyOrders ?? 0}`}
+                  </p>
+                  <p className="mt-1 text-sm text-[#5e6461]">
+                    {canTrackPayments ? "Still waiting to collect" : "Free orders left this month"}
+                  </p>
+                </div>
               </div>
-              <div className="rounded-[22px] bg-secondary/60 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Follow-ups due</p>
-                <p className="mt-2 text-2xl font-black text-foreground">
-                  {canSeeFollowUps ? pendingFollowUps.length : "Starter"}
-                </p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {canSeeFollowUps ? "Customers still waiting for a reply." : "Unlock reminders on Starter."}
-                </p>
+            </div>
+            <div className="rounded-[24px] border border-[#dfe7e2] bg-white p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold text-[#111111]">Seller rhythm</p>
+                  <p className="mt-1 text-sm text-[#5e6461]">
+                    {canSeeAnalytics
+                      ? "Payments, dispatch, and customer flow are visible."
+                      : "Upgrade when you need analytics and catalog workflows."}
+                  </p>
+                </div>
+                <DashboardBadge tone={canSeeAnalytics ? "success" : "warning"}>
+                  {canSeeAnalytics ? "Growth ready" : "Starter path"}
+                </DashboardBadge>
               </div>
             </div>
           </div>
@@ -138,247 +240,201 @@ export default async function DashboardOverviewPage() {
       />
 
       <DashboardInfoGrid>
-        <DashboardStatCard label="Orders" value={String(totalOrders)} detail="All orders currently tracked" icon={<ShoppingBag className="h-5 w-5" />} />
         <DashboardStatCard
-          label={canSeeCustomers ? "Customers" : "Free quota"}
-          value={canSeeCustomers ? String(customers.length) : String(remainingMonthlyOrders ?? monthlyOrderLimit ?? 0)}
-          detail={canSeeCustomers ? "Customer records created from orders" : "Orders left this month on Free"}
-          icon={<Users className="h-5 w-5" />}
+          label="Active orders"
+          value={String(activeOrders)}
+          detail="Orders that still need payment, packing, or delivery action."
+          icon={<ShoppingBag className="h-5 w-5" />}
+          trend={{ value: `${orders.filter((order) => order.stage === "new_order").length} newly captured`, tone: "up" }}
         />
-        <DashboardStatCard label="Delivered" value={String(deliveredCount)} detail="Orders already completed" icon={<Truck className="h-5 w-5" />} />
         <DashboardStatCard
-          label="Follow-ups"
-          value={canSeeFollowUps ? String(pendingFollowUps.length) : "Starter"}
-          detail={canSeeFollowUps ? "Open reminders still pending" : "Upgrade to unlock reminders"}
+          label="Overdue follow-ups"
+          value={canSeeFollowUps ? String(overdueFollowUps.length) : "Starter"}
+          detail={canSeeFollowUps ? "Customers waiting for your next move." : "Unlock follow-up reminders on Starter."}
           icon={<BellRing className="h-5 w-5" />}
+          trend={{ value: canSeeFollowUps ? `${pendingFollowUps.length} open reminders` : "Upgrade to unlock", tone: canSeeFollowUps ? "neutral" : "down" }}
+        />
+        <DashboardStatCard
+          label={canTrackPayments ? "Sales snapshot" : "Free quota"}
+          value={canTrackPayments ? formatTZS(paidOrders ? orders.filter((order) => order.paymentStatus === "paid").reduce((sum, order) => sum + order.amount, 0) : 0) : `${orderCountThisMonth}/${monthlyOrderLimit ?? 30}`}
+          detail={canTrackPayments ? "Confirmed cash collected from paid orders." : "Orders used in your current free cycle."}
+          icon={<CreditCard className="h-5 w-5" />}
+          trend={{ value: canTrackPayments ? `${unpaidOrders} still unpaid` : `${remainingMonthlyOrders ?? 0} remaining`, tone: canTrackPayments ? "neutral" : "down" }}
+        />
+        <DashboardStatCard
+          label={canSeeCustomers ? "Customer pulse" : "Delivered"}
+          value={canSeeCustomers ? String(customers.length) : String(deliveredCount)}
+          detail={canSeeCustomers ? "Customer records created as the business grows." : "Orders completed and closed."}
+          icon={<Users className="h-5 w-5" />}
+          trend={{ value: canSeeCustomers ? `${topCustomers.length} recently active` : `${deliveredCount} delivered`, tone: "up" }}
         />
       </DashboardInfoGrid>
 
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)]">
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.06fr)_minmax(340px,0.94fr)]">
         <DashboardPanel>
           <DashboardPanelHeader
-            eyebrow="Pipeline"
-            title="Order flow overview"
-            description="See where orders are collecting, then jump into the full order board."
+            eyebrow="Orders board"
+            title="The sales board is the product hero"
+            description="See the full operating flow from new orders to dispatch in one premium, touch-friendly board."
             href="/dashboard/orders"
-            hrefLabel="Open orders"
+            hrefLabel="Open full orders board"
           />
-          <div className="mt-5 grid gap-3 grid-cols-2 sm:grid-cols-3 xl:grid-cols-6">
-            {pipelineSnapshot.map((stage) => (
-              <div key={stage.label} className="rounded-[20px] border border-border bg-secondary/50 p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">{stage.label}</p>
-                <p className="mt-3 text-2xl font-black tracking-tight text-foreground">{stage.value}</p>
-              </div>
-            ))}
+          <div className="mt-5">
+            <DashboardOrderStageBoard columns={orderBoardColumns} />
           </div>
         </DashboardPanel>
 
         <DashboardPanel muted>
           <DashboardPanelHeader
-            title="Dispatch tracker"
-            description="What is ready to move after payment and packing."
+            eyebrow="Urgent actions"
+            title="What to work on today"
+            description="Focus only on the orders and follow-ups that can lose money if ignored."
           />
           <div className="mt-5 space-y-3">
-            <div className="rounded-[20px] border border-border bg-card p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Ready for packing</p>
-              <p className="mt-2 text-2xl font-black text-foreground">{orders.filter((order) => order.stage === "paid").length}</p>
-            </div>
-            <div className="rounded-[20px] border border-border bg-card p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">In packing</p>
-              <p className="mt-2 text-2xl font-black text-foreground">{orders.filter((order) => order.stage === "packing").length}</p>
-            </div>
-            <div className="rounded-[20px] border border-border bg-card p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Out for dispatch</p>
-              <p className="mt-2 text-2xl font-black text-foreground">{orders.filter((order) => order.stage === "dispatched").length}</p>
-            </div>
+            {overdueFollowUps.slice(0, 3).map((item) => (
+              <div key={item.id} className="rounded-[22px] border border-[#e9ddd8] bg-white p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-[#111111]">{item.customerName}</p>
+                    <p className="mt-1 text-sm text-[#5e6461]">{item.note || "No note added yet."}</p>
+                  </div>
+                  <DashboardBadge tone="danger">Overdue</DashboardBadge>
+                </div>
+                <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+                  <span className="text-[#5e6461]">
+                    {item.product || "No product"} {item.area ? `• ${item.area}` : ""}
+                  </span>
+                  <Link href="/dashboard/follow-ups" className="font-semibold text-[#0f5d46]">
+                    Review
+                  </Link>
+                </div>
+              </div>
+            ))}
+            {!overdueFollowUps.length ? (
+              <DashboardEmptyState
+                title="No overdue follow-ups"
+                description="Your seller queue is under control right now."
+              />
+            ) : null}
+
+            {inMotionOrders.slice(0, 2).map((order) => (
+              <div key={order.id} className="rounded-[22px] border border-[#dfe7e2] bg-white p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-[#111111]">{order.customerName}</p>
+                    <p className="mt-1 text-sm text-[#5e6461]">{order.product}</p>
+                  </div>
+                  <DashboardBadge tone={stageTone(order.stage)}>{order.stage.replaceAll("_", " ")}</DashboardBadge>
+                </div>
+                <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+                  <span className="font-semibold text-[#0f5d46]">{formatTZS(order.amount)}</span>
+                  <Link href={`/dashboard/orders/${order.id}/edit`} className="font-semibold text-[#0f5d46]">
+                    Update
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
         </DashboardPanel>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
+        <DashboardChartCard
+          title="Sales flow by stage"
+          subtitle="One chart only. See where orders are bunching up in the workflow."
+          data={chartData}
+          footer={
+            canSeeAnalytics
+              ? "Use this to see whether the business is stuck at payment, packing, or dispatch."
+              : "Upgrade to Growth for deeper analytics pages while keeping this daily view simple."
+          }
+        />
+
         <DashboardPanel>
           <DashboardPanelHeader
             eyebrow="Recent activity"
-            title="Latest orders"
-            description="The newest activity across the order book."
-            href="/dashboard/orders"
-            hrefLabel="View all orders"
+            title="Business movement"
+            description="A compact timeline of new orders, reminders, and customer actions."
+          />
+          <div className="mt-5">
+            {timelineItems.length ? (
+              <DashboardTimeline items={timelineItems} />
+            ) : (
+              <DashboardEmptyState
+                title="No activity yet"
+                description="New orders and follow-ups will start building your timeline here."
+              />
+            )}
+          </div>
+        </DashboardPanel>
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(320px,0.95fr)]">
+        <DashboardPanel>
+          <DashboardPanelHeader
+            eyebrow="Recent customers"
+            title="Customer activity worth tracking"
+            description="The latest people buying from the business, ready for repeat sales or follow-up."
+            href={canSeeCustomers ? "/dashboard/customers" : undefined}
+            hrefLabel={canSeeCustomers ? "Open customers" : undefined}
           />
           <div className="mt-5 space-y-3">
-            {recentOrders.length ? (
-              recentOrders.map((order) => (
-                <div
-                  key={order.id}
-                  className="grid gap-3 rounded-[20px] border border-border bg-secondary/50 p-4 lg:grid-cols-[minmax(0,1.1fr)_auto_auto]"
-                >
+            {canSeeCustomers && topCustomers.length ? (
+              topCustomers.map((customer) => (
+                <div key={customer.id} className="flex flex-col gap-3 rounded-[22px] border border-[#e6ece8] bg-[#fbfcfb] p-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
-                    <p className="truncate font-semibold text-foreground">{order.customerName}</p>
-                    <p className="mt-1 truncate text-sm text-muted-foreground">
-                      {order.product} {order.area ? `• ${order.area}` : ""}
-                    </p>
+                    <p className="font-semibold text-[#111111]">{customer.name}</p>
+                    <p className="mt-1 text-sm text-[#5e6461]">{customer.phone || "No phone"} {customer.area ? `• ${customer.area}` : ""}</p>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <DashboardBadge tone={stageTone(order.stage)}>{order.stage.replaceAll("_", " ")}</DashboardBadge>
-                    {canTrackPayments ? (
-                      <DashboardBadge tone={order.paymentStatus === "paid" ? "success" : "danger"}>
-                        {order.paymentStatus === "paid" ? "Paid" : "Unpaid"}
-                      </DashboardBadge>
-                    ) : null}
-                  </div>
-                  <div className="flex items-center justify-between gap-3 lg:justify-end">
-                    <p className="text-sm font-bold text-foreground">{formatTZS(order.amount)}</p>
-                    <Link
-                      href={`/dashboard/orders/${order.id}/edit`}
-                      className="inline-flex rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground transition hover:border-primary/30 hover:text-primary"
-                    >
-                      Edit
-                    </Link>
+                  <div className="flex flex-wrap items-center gap-3 text-sm">
+                    <span className="font-semibold text-[#0f5d46]">{formatTZS(customer.totalSpent)}</span>
+                    <DashboardBadge tone={customer.status === "active" ? "success" : "neutral"}>{customer.status}</DashboardBadge>
                   </div>
                 </div>
               ))
             ) : (
               <DashboardEmptyState
-                title="No orders yet"
-                description="Start with your first order and WhatsBoard will build customers and follow-ups from there."
-                action={
-                  <DashboardActionLink
-                    href={
-                      canCreateOrders
-                        ? "/dashboard/orders/new"
-                        : "/pricing?status=upgrade&message=Upgrade%20to%20Starter%20for%20unlimited%20orders"
-                    }
-                    tone="primary"
-                  >
-                    {canCreateOrders ? "Add order" : "Upgrade to add more orders"}
-                  </DashboardActionLink>
+                title={canSeeCustomers ? "No customers yet" : "Customer records unlock on Starter"}
+                description={
+                  canSeeCustomers
+                    ? "Create orders and WhatsBoard will build the customer base automatically."
+                    : "Upgrade to turn every sale into a reusable customer record."
                 }
               />
             )}
           </div>
         </DashboardPanel>
 
-        <div className="space-y-4">
-          <DashboardPanel muted>
-            <DashboardPanelHeader
-              title="Payment control"
-              description={canTrackPayments ? "Know exactly what still needs collection." : "Unlock payment tracking on Starter."}
-            />
-            <div className="mt-5 rounded-[20px] border border-border bg-card p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-                {canTrackPayments ? "Unpaid value" : "Free usage"}
-              </p>
-              <p className="mt-2 break-words text-2xl font-black text-foreground">
-                {canTrackPayments ? formatTZS(unpaidValue) : `${orderCountThisMonth}/${monthlyOrderLimit ?? totalOrders}`}
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {canTrackPayments
-                  ? `${unpaidOrders} orders still need payment confirmation.`
-                  : `${remainingMonthlyOrders ?? 0} free orders left this month.`}
-              </p>
-            </div>
-          </DashboardPanel>
-
-          <DashboardPanel>
-            <DashboardPanelHeader
-              title="Next follow-ups"
-              description={canSeeFollowUps ? "Keep delayed chats and orders moving." : "Follow-up reminders unlock on Starter."}
-              href={canSeeFollowUps ? "/dashboard/follow-ups" : undefined}
-              hrefLabel={canSeeFollowUps ? "Open follow-ups" : undefined}
-            />
-            <div className="mt-5 space-y-3">
-              {canSeeFollowUps && nextFollowUps.length ? (
-                nextFollowUps.map((item) => (
-                  <div key={item.id} className="rounded-[20px] border border-border bg-secondary/50 p-4">
-                    <p className="font-semibold text-foreground">{item.customerName}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {item.product || "No product"} {item.area ? `• ${item.area}` : ""}
-                    </p>
-                    <p className="mt-2 text-sm leading-6 text-foreground/75">{item.note || "No note added yet."}</p>
-                  </div>
-                ))
-              ) : (
-                <DashboardEmptyState
-                  title={canSeeFollowUps ? "No follow-ups pending right now" : "Follow-up reminders unlock on Starter"}
-                  description={
-                    canSeeFollowUps
-                      ? "You are caught up for now."
-                      : "Upgrade to keep next actions visible instead of relying on memory."
-                  }
-                />
-              )}
-            </div>
-          </DashboardPanel>
-        </div>
-      </section>
-
-      <DashboardInfoGrid columns="three">
-        <DashboardPanel>
-          <p className="text-sm font-semibold text-foreground">{canCreateOrders ? "Create order" : "Upgrade for more orders"}</p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {canCreateOrders
-              ? "Start from a fresh sale and let WhatsBoard create or match the customer automatically."
-              : "Free gives you 30 orders per month. Upgrade to Starter for unlimited orders and deeper workflows."}
-          </p>
-          <Link
-            href={
-              canCreateOrders
-                ? "/dashboard/orders/new"
-                : "/pricing?status=upgrade&message=Upgrade%20to%20Starter%20for%20unlimited%20orders"
-            }
-            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary transition hover:text-[#0a3d2e]"
-          >
-            Continue
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </DashboardPanel>
-
-        <DashboardPanel>
-          <p className="text-sm font-semibold text-foreground">{canSeeCustomers ? "Customer list" : "Customer profiles"}</p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {canSeeCustomers
-              ? "See repeat buyers and dormant customers who may need a quick follow-up."
-              : "Upgrade to Starter to unlock customer history, follow-ups, and profile editing."}
-          </p>
-          <Link
-            href={
-              canSeeCustomers
-                ? "/dashboard/customers"
-                : "/pricing?status=upgrade&message=Upgrade%20to%20Starter%20to%20unlock%20customer%20profiles"
-            }
-            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary transition hover:text-[#0a3d2e]"
-          >
-            {canSeeCustomers ? "Open customers" : "See pricing"}
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </DashboardPanel>
-
-        <DashboardPanel>
-          <p className="text-sm font-semibold text-foreground">{canSeeAnalytics ? "Reports & analytics" : "Settings"}</p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {canSeeAnalytics
-              ? "Track reports from live order and customer data."
-              : "Keep business details, defaults, and contact info clean for daily operations."}
-          </p>
-          <Link
-            href={canSeeAnalytics ? "/dashboard/analytics" : "/dashboard/settings"}
-            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary transition hover:text-[#0a3d2e]"
-          >
-            Open
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </DashboardPanel>
-      </DashboardInfoGrid>
-
-      {canSeeCustomers && dormantCustomers.length > 0 ? (
         <DashboardPanel muted>
           <DashboardPanelHeader
-            title="Dormant customers to re-engage"
-            description={`${dormantCustomers.length} customers have not ordered in 30 days or more. Check the customer page to send a quick follow-up.`}
-            href="/dashboard/customers"
-            hrefLabel="Open customers"
+            eyebrow="Quick actions"
+            title="Move the business forward"
+            description="The fastest next steps for an owner working from chat traffic."
           />
+          <div className="mt-5 grid gap-3">
+            <DashboardActionLink
+              href={canCreateOrders ? "/dashboard/orders/new" : "/pricing?status=upgrade&message=Upgrade%20to%20Starter%20for%20more%20orders"}
+              tone="primary"
+            >
+              <PackageCheck className="h-4 w-4" />
+              {canCreateOrders ? "Create order" : "Upgrade for more orders"}
+            </DashboardActionLink>
+            <DashboardActionLink href={canSeeFollowUps ? "/dashboard/follow-ups" : "/dashboard/orders"}>
+              <BellRing className="h-4 w-4" />
+              {canSeeFollowUps ? "Review follow-ups" : "Review orders"}
+            </DashboardActionLink>
+            <DashboardActionLink href={canSeeCustomers ? "/dashboard/customers" : "/pricing"}>
+              <Users className="h-4 w-4" />
+              {canSeeCustomers ? "Open customers" : "Unlock customers"}
+            </DashboardActionLink>
+            <DashboardActionLink href="/dashboard/orders">
+              <Truck className="h-4 w-4" />
+              Open order board
+              <ArrowRight className="h-4 w-4" />
+            </DashboardActionLink>
+          </div>
         </DashboardPanel>
-      ) : null}
+      </section>
     </DashboardPage>
   );
 }

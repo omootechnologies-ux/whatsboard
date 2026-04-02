@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BellRing, Pencil, Plus, Wallet } from "lucide-react";
+import { BellRing, CreditCard, Pencil, Plus, ShoppingBag, Truck } from "lucide-react";
 import { getDashboardWriteAccess } from "@/lib/dashboard-access";
 import { canAccessDashboardFeatureForUser, canUsePlanCapabilityForUser } from "@/lib/plan-access";
 import { getDashboardData } from "@/lib/queries";
@@ -9,9 +9,11 @@ import {
   DashboardEmptyState,
   DashboardFilterBar,
   DashboardHero,
+  DashboardOrderStageBoard,
   DashboardPage,
   DashboardPanel,
   DashboardPanelHeader,
+  DashboardStatCard,
 } from "@/components/dashboard/page-primitives";
 import { formatTZS } from "@/lib/utils";
 
@@ -31,6 +33,12 @@ function badgeTone(stage: string) {
   return map[stage] ?? "neutral";
 }
 
+function paymentTone(paymentStatus: string) {
+  if (paymentStatus === "paid") return "success" as const;
+  if (paymentStatus === "partial") return "warning" as const;
+  return "danger" as const;
+}
+
 export default async function OrdersPage({
   searchParams,
 }: {
@@ -43,6 +51,7 @@ export default async function OrdersPage({
   const searchQuery = (resolvedSearch.q ?? "").trim().toLowerCase();
   const selectedStage = (resolvedSearch.stage ?? "").trim();
   const selectedPayment = (resolvedSearch.payment ?? "").trim();
+
   const orders = allOrders.filter((order) => {
     const matchesSearch =
       !searchQuery ||
@@ -55,72 +64,128 @@ export default async function OrdersPage({
 
     return matchesSearch && matchesStage && matchesPayment;
   });
+
   const canSeeCustomers = canAccessDashboardFeatureForUser("customers", business, isAdmin);
   const canSeeFollowUps = canAccessDashboardFeatureForUser("followUps", business, isAdmin);
   const canTrackPayments = canUsePlanCapabilityForUser("paymentTracking", business, isAdmin);
-  const unpaidValue = orders
+  const unsettledValue = orders
     .filter((order) => order.paymentStatus !== "paid")
     .reduce((sum, order) => sum + order.amount, 0);
+
+  const columns = [
+    {
+      key: "new_order",
+      title: "New order",
+      tone: "neutral" as const,
+      orders: orders
+        .filter((order) => order.stage === "new_order")
+        .map((order) => ({
+          id: order.id,
+          customerName: order.customerName,
+          product: order.product,
+          amount: order.amount,
+          area: order.area,
+          paymentStatus: canTrackPayments ? order.paymentStatus : undefined,
+        })),
+    },
+    {
+      key: "waiting_payment",
+      title: "Awaiting payment",
+      tone: "warning" as const,
+      orders: orders
+        .filter((order) => order.stage === "waiting_payment")
+        .map((order) => ({
+          id: order.id,
+          customerName: order.customerName,
+          product: order.product,
+          amount: order.amount,
+          area: order.area,
+          paymentStatus: canTrackPayments ? order.paymentStatus : undefined,
+        })),
+    },
+    {
+      key: "packing",
+      title: "Paid / Packing",
+      tone: "primary" as const,
+      orders: orders
+        .filter((order) => ["paid", "packing"].includes(order.stage))
+        .map((order) => ({
+          id: order.id,
+          customerName: order.customerName,
+          product: order.product,
+          amount: order.amount,
+          area: order.area,
+          paymentStatus: canTrackPayments ? order.paymentStatus : undefined,
+        })),
+    },
+    {
+      key: "dispatch",
+      title: "Dispatch / Delivered",
+      tone: "success" as const,
+      orders: orders
+        .filter((order) => ["dispatched", "delivered"].includes(order.stage))
+        .map((order) => ({
+          id: order.id,
+          customerName: order.customerName,
+          product: order.product,
+          amount: order.amount,
+          area: order.area,
+          paymentStatus: canTrackPayments ? order.paymentStatus : undefined,
+        })),
+    },
+  ];
 
   return (
     <DashboardPage>
       <DashboardHero
-        eyebrow="Orders"
-        title="Keep the order book clear, current, and easy to act on."
-        description="Review all live orders, track stage changes, and jump into edits quickly on both desktop and mobile."
+        eyebrow="Orders board"
+        title="Run the full seller workflow from one premium orders board."
+        description="Search fast, filter by stage or payment, and move between new orders, payment checks, packing, and delivery without losing the mobile-first rhythm."
         actions={
           <>
             <DashboardActionLink
               href={
                 canCreateOrders
                   ? "/dashboard/orders/new"
-                  : "/pricing?status=upgrade&message=Upgrade%20to%20Starter%20for%20unlimited%20orders"
+                  : "/pricing?status=upgrade&message=Upgrade%20to%20Starter%20for%20more%20orders"
               }
               tone="primary"
             >
               <Plus className="h-4 w-4" />
-              {canCreateOrders ? "New order" : "Upgrade for more orders"}
+              {canCreateOrders ? "Create order" : "Upgrade for more orders"}
             </DashboardActionLink>
             {canSeeFollowUps ? (
               <DashboardActionLink href="/dashboard/follow-ups">
-                Open follow-ups
                 <BellRing className="h-4 w-4" />
+                Open follow-ups
               </DashboardActionLink>
             ) : null}
             {canSeeCustomers ? <DashboardActionLink href="/dashboard/customers">Open customers</DashboardActionLink> : null}
           </>
         }
         aside={
-          <div className="flex items-start gap-3">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Wallet className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground">Order pressure</p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {canTrackPayments ? "Unsettled value still waiting to convert to cash." : "Upgrade to Starter to unlock payment tracking."}
-              </p>
-              <p className="mt-5 break-words text-3xl font-black tracking-tight text-foreground">
-                {monthlyOrderLimit === null ? formatTZS(unpaidValue) : `${orderCountThisMonth}/${monthlyOrderLimit}`}
-              </p>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {monthlyOrderLimit === null
-                  ? `${orders.length} total orders currently tracked.`
-                  : `${remainingMonthlyOrders ?? 0} free orders left this month.`}
-              </p>
-            </div>
+          <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+            <DashboardStatCard
+              label="Orders in board"
+              value={String(orders.length)}
+              detail="All visible orders after current filters."
+              icon={<ShoppingBag className="h-5 w-5" />}
+            />
+            <DashboardStatCard
+              label={canTrackPayments ? "Unsettled value" : "Free quota"}
+              value={canTrackPayments ? formatTZS(unsettledValue) : `${orderCountThisMonth}/${monthlyOrderLimit ?? 30}`}
+              detail={canTrackPayments ? "Cash still waiting to clear." : `${remainingMonthlyOrders ?? 0} free orders left this month.`}
+              icon={<CreditCard className="h-5 w-5" />}
+            />
+            <DashboardStatCard
+              label="Dispatch queue"
+              value={String(orders.filter((order) => ["packing", "dispatched"].includes(order.stage)).length)}
+              detail="Orders already moving beyond payment."
+              icon={<Truck className="h-5 w-5" />}
+            />
           </div>
         }
       />
-
-      {monthlyOrderLimit !== null ? (
-        <div className="rounded-2xl border border-[#e9d4d1] bg-[#f9efed] px-4 py-3 text-sm text-[#8f3e36]">
-          Free gives you up to {monthlyOrderLimit} orders this month. Follow-ups, payment tracking, and customer workflows start on Starter.
-          <Link href="/pricing" className="ml-2 font-semibold underline">
-            Upgrade now
-          </Link>
-        </div>
-      ) : null}
 
       <DashboardFilterBar
         clearHref="/dashboard/orders"
@@ -156,116 +221,154 @@ export default async function OrdersPage({
 
       <DashboardPanel>
         <DashboardPanelHeader
-          eyebrow="Order list"
-          title="All tracked orders"
-          description="A cleaner order view with mobile cards and a desktop table for heavier scanning."
+          eyebrow="Board"
+          title="Touch-friendly order stages"
+          description="The board is the hero. Each column shows what needs your next action and keeps the workflow readable on any screen."
+        />
+        <div className="mt-5">
+          <DashboardOrderStageBoard columns={columns} emptyMessage="No orders in this stage for the current filters." />
+        </div>
+      </DashboardPanel>
+
+      <DashboardPanel>
+        <DashboardPanelHeader
+          eyebrow="Order ledger"
+          title="Every order in one clean management view"
+          description="Cards on mobile and a readable table on desktop so sellers can act quickly without horizontal chaos."
         />
 
         <section className="mt-5 space-y-3 md:hidden">
           {orders.length ? (
             orders.map((order) => (
-              <div key={order.id} className="rounded-[22px] border border-border bg-secondary/40 p-4">
+              <div key={order.id} className="rounded-[24px] border border-[#dfe7e2] bg-white p-4 shadow-[0_12px_28px_rgba(17,17,17,0.04)]">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="truncate font-semibold text-foreground">{order.customerName}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{order.phone || "No phone"}</p>
+                    <p className="truncate font-semibold text-[#111111]">{order.customerName}</p>
+                    <p className="mt-1 text-xs text-[#5e6461]">{order.phone || "No phone"}</p>
                   </div>
                   <DashboardBadge tone={badgeTone(order.stage)}>{order.stage.replaceAll("_", " ")}</DashboardBadge>
                 </div>
 
                 <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                   <div className="min-w-0">
-                    <p className="text-muted-foreground">Product</p>
-                    <p className="mt-1 truncate font-medium text-foreground">{order.product}</p>
+                    <p className="text-[#5e6461]">Product</p>
+                    <p className="mt-1 truncate font-medium text-[#111111]">{order.product}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Amount</p>
-                    <p className="mt-1 font-bold text-primary">{formatTZS(order.amount)}</p>
+                    <p className="text-[#5e6461]">Amount</p>
+                    <p className="mt-1 font-bold text-[#0f5d46]">{formatTZS(order.amount)}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Area</p>
-                    <p className="mt-1 text-foreground/80">{order.area || "—"}</p>
+                    <p className="text-[#5e6461]">Area</p>
+                    <p className="mt-1 text-[#111111]">{order.area || "—"}</p>
                   </div>
                   {canTrackPayments ? (
                     <div>
-                      <p className="text-muted-foreground">Payment</p>
+                      <p className="text-[#5e6461]">Payment</p>
                       <div className="mt-1">
-                        <DashboardBadge tone={order.paymentStatus === "paid" ? "success" : "danger"}>
-                          {order.paymentStatus}
-                        </DashboardBadge>
+                        <DashboardBadge tone={paymentTone(order.paymentStatus)}>{order.paymentStatus}</DashboardBadge>
                       </div>
                     </div>
                   ) : null}
                 </div>
 
-                <Link
-                  href={`/dashboard/orders/${order.id}/edit`}
-                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition hover:border-primary/20 hover:bg-primary/5 hover:text-primary"
-                >
-                  <Pencil className="h-4 w-4" />
-                  Edit order
-                </Link>
+                <div className="mt-4 flex gap-3">
+                  <Link
+                    href={`/dashboard/orders/${order.id}`}
+                    className="inline-flex flex-1 items-center justify-center rounded-2xl border border-[#dfe7e2] bg-[#f8fbf9] px-4 py-3 text-sm font-semibold text-[#173728]"
+                  >
+                    View details
+                  </Link>
+                  <Link
+                    href={`/dashboard/orders/${order.id}/edit`}
+                    className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-[#0f5d46] px-4 py-3 text-sm font-semibold text-white"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Edit
+                  </Link>
+                </div>
               </div>
             ))
           ) : (
-            <DashboardEmptyState title="No orders found" description="Your orders will appear here once you start tracking them." />
+            <DashboardEmptyState
+              title="No orders found"
+              description="Try a different filter or create a new order to start the board."
+            />
           )}
         </section>
 
-        <section className="mt-5 hidden overflow-hidden rounded-[22px] border border-border md:block">
+        <section className="mt-5 hidden overflow-hidden rounded-[24px] border border-[#dfe7e2] md:block">
           <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="border-b border-border bg-secondary/60">
+            <table className="min-w-full bg-white">
+              <thead className="border-b border-[#e9eeeb] bg-[#f8fbf9]">
                 <tr>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Customer</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Product</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Area</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Amount</th>
-                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Stage</th>
-                  {canTrackPayments ? (
-                    <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Payment</th>
-                  ) : null}
-                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Action</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-[#5e6461]">Order</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-[#5e6461]">Customer</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-[#5e6461]">Product</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-[#5e6461]">Status</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-[#5e6461]">Payment</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-[#5e6461]">Amount</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-[0.2em] text-[#5e6461]">Updated</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-[0.2em] text-[#5e6461]">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-card">
+              <tbody>
                 {orders.length ? (
                   orders.map((order) => (
-                    <tr key={order.id} className="border-b border-border last:border-0">
+                    <tr key={order.id} className="border-b border-[#eef2ef] last:border-0">
                       <td className="px-4 py-4">
-                        <div className="min-w-[150px]">
-                          <p className="font-semibold text-foreground">{order.customerName}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">{order.phone || "No phone"}</p>
+                        <div className="min-w-[120px]">
+                          <p className="font-semibold text-[#111111]">#{order.id.slice(0, 8)}</p>
+                          <p className="mt-1 text-xs text-[#5e6461]">{order.area || "No area"}</p>
                         </div>
                       </td>
-                      <td className="px-4 py-4 text-sm text-foreground/80">{order.product}</td>
-                      <td className="px-4 py-4 text-sm text-muted-foreground">{order.area || "—"}</td>
-                      <td className="px-4 py-4 text-sm font-bold text-primary">{formatTZS(order.amount)}</td>
+                      <td className="px-4 py-4">
+                        <div className="min-w-[150px]">
+                          <p className="font-semibold text-[#111111]">{order.customerName}</p>
+                          <p className="mt-1 text-xs text-[#5e6461]">{order.phone || "No phone"}</p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 text-sm text-[#42514a]">{order.product}</td>
                       <td className="px-4 py-4">
                         <DashboardBadge tone={badgeTone(order.stage)}>{order.stage.replaceAll("_", " ")}</DashboardBadge>
                       </td>
-                      {canTrackPayments ? (
-                        <td className="px-4 py-4">
-                          <DashboardBadge tone={order.paymentStatus === "paid" ? "success" : "danger"}>
-                            {order.paymentStatus}
-                          </DashboardBadge>
-                        </td>
-                      ) : null}
+                      <td className="px-4 py-4">
+                        {canTrackPayments ? (
+                          <DashboardBadge tone={paymentTone(order.paymentStatus)}>{order.paymentStatus}</DashboardBadge>
+                        ) : (
+                          <span className="text-sm text-[#5e6461]">Basic</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-4 text-sm font-bold text-[#0f5d46]">{formatTZS(order.amount)}</td>
+                      <td className="px-4 py-4 text-sm text-[#5e6461]">
+                        {order.updatedAt ? new Date(order.updatedAt).toLocaleDateString() : "—"}
+                      </td>
                       <td className="px-4 py-4 text-right">
-                        <Link
-                          href={`/dashboard/orders/${order.id}/edit`}
-                          className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground transition hover:border-primary/20 hover:bg-primary/5 hover:text-primary"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                          Edit
-                        </Link>
+                        <div className="flex justify-end gap-2">
+                          <Link
+                            href={`/dashboard/orders/${order.id}`}
+                            className="inline-flex items-center rounded-xl border border-[#dfe7e2] bg-[#f8fbf9] px-3 py-2 text-xs font-semibold text-[#173728]"
+                          >
+                            View
+                          </Link>
+                          <Link
+                            href={`/dashboard/orders/${order.id}/edit`}
+                            className="inline-flex items-center gap-2 rounded-xl bg-[#0f5d46] px-3 py-2 text-xs font-semibold text-white"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            Edit
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={canTrackPayments ? 7 : 6} className="px-4 py-12">
-                      <DashboardEmptyState title="No orders found" description="Your orders will appear here once you start tracking them." />
+                    <td colSpan={8} className="px-4 py-12">
+                      <DashboardEmptyState
+                        title="No orders found"
+                        description="Try a different filter or create a new order to start the board."
+                      />
                     </td>
                   </tr>
                 )}
