@@ -642,6 +642,81 @@ export async function createOrderAction(
   });
 }
 
+export async function createOrderForBusinessAction(
+  businessId: string,
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const normalizedBusinessId = businessId.trim();
+
+  if (!normalizedBusinessId) {
+    return { success: false, error: "Business not found." };
+  }
+
+  const { data: business, error: businessError } = await adminClient
+    .from("businesses")
+    .select("id, owner_id, name, phone, brand_color, currency, created_at, referral_code, referral_credit_days, referred_by_business_id, billing_provider, billing_plan, billing_status, billing_provider_reference, billing_provider_session_reference, billing_last_paid_at, billing_current_period_starts_at, billing_current_period_ends_at")
+    .eq("id", normalizedBusinessId)
+    .maybeSingle();
+
+  if (businessError || !business) {
+    return { success: false, error: "Business not found." };
+  }
+
+  const customerName = String(formData.get("customerName") || "").trim();
+  const phone = String(formData.get("phone") || "").trim();
+  const productName = String(formData.get("product") || "").trim();
+  const catalogProductId = String(formData.get("catalogProductId") || "").trim();
+  const amount = Number(formData.get("amount") || 0);
+  const deliveryArea = String(formData.get("area") || "").trim();
+  const stage = String(formData.get("stage") || "new_order").trim();
+  const paymentStatus = String(formData.get("paymentStatus") || "unpaid").trim();
+  const notes = String(formData.get("notes") || "").trim();
+  const addFollowUp = String(formData.get("addFollowUp") || "") === "on";
+  const followUpDateRaw = String(formData.get("followUpDate") || "").trim();
+  const followUpNote = String(formData.get("followUpNote") || "").trim();
+
+  const { count } = await adminClient
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("business_id", normalizedBusinessId)
+    .gte("created_at", getCurrentMonthWindow().start)
+    .lt("created_at", getCurrentMonthWindow().end);
+
+  if (!canCreateOrders(business, count ?? 0)) {
+    const monthlyOrderLimit = getMonthlyOrderLimit(business);
+    return {
+      success: false,
+      error: `Free includes ${monthlyOrderLimit ?? 30} orders per month. Upgrade to Starter for unlimited orders.`,
+    };
+  }
+
+  const validation = validateOrderFieldsForPlan(business, {
+    stage,
+    paymentStatus,
+    addFollowUp,
+  });
+
+  if (!validation.valid) {
+    return { success: false, error: validation.error };
+  }
+
+  return createOrderWithExistingFlow(adminClient as any, normalizedBusinessId, {
+    customerName,
+    phone,
+    productName,
+    catalogProductId,
+    amount,
+    deliveryArea,
+    stage,
+    paymentStatus,
+    notes,
+    addFollowUp,
+    followUpDateRaw,
+    followUpNote,
+  });
+}
+
 export async function updateOrderStageAction(id: string, stage: string) {
   const context = await getDashboardActionContext();
   if (!context) throw new Error("Business not found.");

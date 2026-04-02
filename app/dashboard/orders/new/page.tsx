@@ -1,5 +1,6 @@
 import { ArrowLeft, PackageCheck, ShoppingBag } from "lucide-react";
 import { OrderForm } from "@/components/forms/order-form";
+import { createOrderForBusinessAction } from "@/app/dashboard/actions";
 import { getDashboardWriteAccess } from "@/lib/dashboard-access";
 import {
   canUsePlanCapabilityForUser,
@@ -22,6 +23,8 @@ export const revalidate = 0;
 export default async function NewOrderPage() {
   const { business, businessId, isAdmin, canCreateOrders, monthlyOrderLimit, orderCountThisMonth, remainingMonthlyOrders } =
     await getDashboardWriteAccess();
+  const resolvedBusinessId = businessId ?? business?.id ?? "";
+  const createOrderForBusiness = createOrderForBusinessAction.bind(null, resolvedBusinessId);
   const catalogProducts = await getOrderCatalogOptions();
   const canUsePaymentTracking = canUsePlanCapabilityForUser("paymentTracking", business, isAdmin);
   const canUseFollowUps = canUsePlanCapabilityForUser("followUpReminders", business, isAdmin);
@@ -64,6 +67,7 @@ export default async function NewOrderPage() {
         />
         <div className="mt-5">
         <OrderForm
+          action={createOrderForBusiness}
           businessId={businessId}
           catalogProducts={catalogProducts}
           canManageRecords={canCreateOrders}

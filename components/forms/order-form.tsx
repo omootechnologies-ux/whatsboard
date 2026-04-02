@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useFormState, useFormStatus } from "react-dom";
 import { ORDER_STAGES } from "@/lib/constants";
 import type { OrderStage, PaymentStatus } from "@/lib/types";
-import type { FormEvent } from "react";
+
+type OrderFormState = {
+  error: string | null;
+  success: boolean;
+};
 
 type CatalogOption = {
   id: string;
@@ -15,7 +19,18 @@ type CatalogOption = {
   isActive: boolean;
 };
 
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button disabled={pending} className="form-submit w-full">
+      {pending ? "Saving..." : "Create order"}
+    </button>
+  );
+}
+
 export function OrderForm({
+  action,
   businessId,
   catalogProducts = [],
   canManageRecords = true,
@@ -27,6 +42,7 @@ export function OrderForm({
   orderCountThisMonth = 0,
   remainingMonthlyOrders = null,
 }: {
+  action: (state: OrderFormState, formData: FormData) => Promise<OrderFormState>;
   businessId?: string | null;
   catalogProducts?: CatalogOption[];
   canManageRecords?: boolean;
@@ -38,67 +54,18 @@ export function OrderForm({
   orderCountThisMonth?: number;
   remainingMonthlyOrders?: number | null;
 }) {
-  const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [state, formAction] = useFormState(action, {
+    error: null,
+    success: false,
+  });
   const [catalogProductId, setCatalogProductId] = useState("");
   const [customProduct, setCustomProduct] = useState("");
   const [customAmount, setCustomAmount] = useState("");
   const selectedCatalogProduct = catalogProducts.find((item) => item.id === catalogProductId) ?? null;
   const visibleStages = ORDER_STAGES.filter((stage) => allowedStages.includes(stage.key));
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setError(null);
-    setSuccess(false);
-    setIsSubmitting(true);
-
-    const formData = new FormData(event.currentTarget);
-    const payload = {
-      businessId: String(formData.get("businessId") || "").trim(),
-      customerName: String(formData.get("customerName") || "").trim(),
-      phone: String(formData.get("phone") || "").trim(),
-      area: String(formData.get("area") || "").trim(),
-      catalogProductId: String(formData.get("catalogProductId") || "").trim(),
-      product: String(formData.get("product") || "").trim(),
-      amount: Number(formData.get("amount") || 0),
-      stage: String(formData.get("stage") || "new_order").trim(),
-      paymentStatus: String(formData.get("paymentStatus") || "unpaid").trim(),
-      notes: String(formData.get("notes") || "").trim(),
-      addFollowUp: String(formData.get("addFollowUp") || "") === "on",
-      followUpDate: String(formData.get("followUpDate") || "").trim(),
-      followUpNote: String(formData.get("followUpNote") || "").trim(),
-    };
-
-    try {
-      const response = await fetch("/api/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        setError(result?.error || "Unable to create order.");
-        return;
-      }
-
-      setSuccess(true);
-      router.push("/dashboard/orders");
-      router.refresh();
-    } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : "Unable to create order.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="form-grid">
+    <form action={formAction} className="form-grid">
       {businessId ? <input type="hidden" name="businessId" value={businessId} /> : null}
       {monthlyOrderLimit !== null ? (
         <div className="form-note form-note-info md:col-span-2">
@@ -268,13 +235,11 @@ export function OrderForm({
         <textarea name="notes" placeholder="Notes" className="form-textarea min-h-28" />
       </label>
 
-      {error ? <p className="form-note form-note-error md:col-span-2">{error}</p> : null}
-      {success ? <p className="form-note form-note-success md:col-span-2">Order created successfully.</p> : null}
+      {state.error ? <p className="form-note form-note-error md:col-span-2">{state.error}</p> : null}
+      {state.success ? <p className="form-note form-note-success md:col-span-2">Order created successfully.</p> : null}
 
       <div className="md:col-span-2">
-        <button disabled={isSubmitting} className="form-submit w-full">
-          {isSubmitting ? "Saving..." : "Create order"}
-        </button>
+        <SubmitButton />
       </div>
       </fieldset>
     </form>
