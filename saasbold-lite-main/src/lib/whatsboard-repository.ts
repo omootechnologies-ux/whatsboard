@@ -160,9 +160,15 @@ let cachedRepository:
 function resolveDriver(): PersistenceDriver {
   const configured =
     process.env.WHATSBOARD_PERSISTENCE_DRIVER?.trim().toLowerCase();
+  const vercelEnvironment = process.env.VERCEL_ENV?.trim().toLowerCase();
 
   if (configured === "local") return "local";
   if (configured === "supabase") return "supabase";
+
+  // Safety default: Vercel production should not silently write to /tmp storage.
+  if (vercelEnvironment === "production") {
+    return "supabase";
+  }
 
   return isSupabaseServerConfigured() ? "supabase" : "local";
 }

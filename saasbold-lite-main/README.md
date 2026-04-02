@@ -79,6 +79,7 @@ Driver behavior:
 - If `WHATSBOARD_PERSISTENCE_DRIVER=supabase`, Supabase is used.
 - If `WHATSBOARD_PERSISTENCE_DRIVER=local`, file-backed fallback is used.
 - If unset, Supabase is auto-selected when server env vars are present; otherwise local fallback is used.
+- On Vercel production (`VERCEL_ENV=production`), driver defaults to `supabase` for durability safety.
 
 ## Supabase Migration + Data Backfill
 
