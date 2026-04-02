@@ -5,6 +5,7 @@ import {
   DataCell,
   DataRow,
   DataTable,
+  EmptyState,
   FilterToolbar,
   KpiCard,
   PageHeader,
@@ -24,6 +25,7 @@ type PaymentsPageSearchParams = Promise<{
   search?: string;
   status?: string;
   method?: string;
+  created?: string;
 }>;
 
 export default async function PaymentsPage({
@@ -51,6 +53,12 @@ export default async function PaymentsPage({
           </Link>
         }
       />
+
+      {query.created === "1" ? (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
+          Payment recorded successfully.
+        </div>
+      ) : null}
 
       <section className="grid gap-4 md:grid-cols-3">
         <KpiCard
@@ -102,37 +110,49 @@ export default async function PaymentsPage({
           title="Payment records"
           description="Clean ledger for payment state, amount, and reference."
         >
-          <DataTable
-            headers={[
-              "Customer",
-              "Order",
-              "Method",
-              "Amount",
-              "Status",
-              "Date",
-            ]}
-          >
-            {records.map((payment) => (
-              <DataRow key={payment.id}>
-                <DataCell>{payment.customerName}</DataCell>
-                <DataCell>{payment.orderId}</DataCell>
-                <DataCell>{payment.method}</DataCell>
-                <DataCell>
-                  <span className="font-semibold text-[var(--color-wb-primary)]">
-                    {formatCurrency(payment.amount)}
-                  </span>
-                </DataCell>
-                <DataCell>
-                  <PaymentBadge status={payment.status} />
-                </DataCell>
-                <DataCell>
-                  <span className="text-xs text-[var(--color-wb-text-muted)]">
-                    {formatDate(payment.createdAt)}
-                  </span>
-                </DataCell>
-              </DataRow>
-            ))}
-          </DataTable>
+          {records.length ? (
+            <DataTable
+              headers={[
+                "Customer",
+                "Order",
+                "Method",
+                "Amount",
+                "Status",
+                "Date",
+              ]}
+            >
+              {records.map((payment) => (
+                <DataRow key={payment.id}>
+                  <DataCell>{payment.customerName}</DataCell>
+                  <DataCell>{payment.orderId}</DataCell>
+                  <DataCell>{payment.method}</DataCell>
+                  <DataCell>
+                    <span className="font-semibold text-[var(--color-wb-primary)]">
+                      {formatCurrency(payment.amount)}
+                    </span>
+                  </DataCell>
+                  <DataCell>
+                    <PaymentBadge status={payment.status} />
+                  </DataCell>
+                  <DataCell>
+                    <span className="text-xs text-[var(--color-wb-text-muted)]">
+                      {formatDate(payment.createdAt)}
+                    </span>
+                  </DataCell>
+                </DataRow>
+              ))}
+            </DataTable>
+          ) : (
+            <EmptyState
+              title="No payments recorded"
+              detail="Record your first payment to start building the ledger."
+              action={
+                <Link href="/payments/new" className="wb-button-secondary">
+                  Record payment
+                </Link>
+              }
+            />
+          )}
         </SectionCard>
       </section>
     </div>

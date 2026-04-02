@@ -16,6 +16,7 @@ export async function POST(
   if (!customerName.trim() || !Number.isFinite(amount) || amount <= 0) {
     return NextResponse.redirect(
       new URL(`/orders/${id}/edit?error=invalid`, request.url),
+      303,
     );
   }
 
@@ -50,15 +51,18 @@ export async function POST(
     if (!record) {
       return NextResponse.redirect(
         new URL("/orders?error=not-found", request.url),
+        303,
       );
     }
 
     return NextResponse.redirect(
       new URL(`/orders/${id}?updated=1`, request.url),
+      303,
     );
   } catch {
     return NextResponse.redirect(
       new URL(`/orders/${id}/edit?error=persistence`, request.url),
+      303,
     );
   }
 }

@@ -14,18 +14,19 @@ export const dynamic = "force-dynamic";
 export default async function AnalyticsPage() {
   const { stats: dashboardStats, series: analyticsSeries } =
     await getAnalyticsSnapshot();
+  const maxRevenuePoint = [...analyticsSeries].sort(
+    (a, b) => b.revenue - a.revenue,
+  )[0];
+  const minRevenuePoint = [...analyticsSeries].sort(
+    (a, b) => a.revenue - b.revenue,
+  )[0];
+  const topOrderPoint = [...analyticsSeries].sort((a, b) => b.orders - a.orders)[0];
 
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
         title="Analytics"
         description="Practical seller metrics with clean charts and no dashboard noise."
-        primaryAction={
-          <button className="wb-button-primary">
-            <BarChart3 className="h-4 w-4" />
-            Export Report
-          </button>
-        }
       />
 
       <section className="grid gap-4 md:grid-cols-3">
@@ -59,19 +60,25 @@ export default async function AnalyticsPage() {
       <StatStrip
         items={[
           {
-            label: "Best conversion days",
-            value: "Fri / Sat",
+            label: "Highest revenue day",
+            value: maxRevenuePoint ? `${maxRevenuePoint.label}` : "N/A",
             tone: "success",
           },
-          { label: "Slowest day", value: "Mon", tone: "warning" },
           {
-            label: "Top operational risk",
-            value: "Late follow-up",
+            label: "Lowest revenue day",
+            value: minRevenuePoint ? `${minRevenuePoint.label}` : "N/A",
+            tone: "warning",
+          },
+          {
+            label: "Top order volume",
+            value: topOrderPoint
+              ? `${topOrderPoint.label} (${topOrderPoint.orders})`
+              : "N/A",
             tone: "danger",
           },
           {
-            label: "Priority action",
-            value: "Confirm pending pay",
+            label: "Payout pending",
+            value: formatCurrency(dashboardStats.payoutPending),
             tone: "neutral",
           },
         ]}
@@ -84,29 +91,26 @@ export default async function AnalyticsPage() {
         <div className="grid gap-3 md:grid-cols-3">
           <div className="wb-soft-card p-4">
             <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-              Protect conversion first
+              Revenue trend
             </p>
             <p className="mt-2 text-sm leading-6 text-[var(--color-wb-text-muted)]">
-              When conversion dips, check overdue follow-ups and waiting
-              payments before adding new campaigns.
+              Based on live payment records from your workspace.
             </p>
           </div>
           <div className="wb-soft-card p-4">
             <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-              Align dispatch rhythm
+              Conversion health
             </p>
             <p className="mt-2 text-sm leading-6 text-[var(--color-wb-text-muted)]">
-              Match packing and courier scheduling to peak order days so
-              deliveries stay predictable.
+              {dashboardStats.conversionRate}% of tracked orders have reached delivered.
             </p>
           </div>
           <div className="wb-soft-card p-4">
             <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-              Scale repeat buyers
+              Follow-up pressure
             </p>
             <p className="mt-2 text-sm leading-6 text-[var(--color-wb-text-muted)]">
-              Focus on high-spend customer segments and convert one-time buyers
-              into repeat order flows.
+              {dashboardStats.overdueFollowUps} overdue follow-ups currently need action.
             </p>
           </div>
         </div>

@@ -5,6 +5,7 @@ import {
   DataCell,
   DataRow,
   DataTable,
+  EmptyState,
   FilterToolbar,
   KpiCard,
   PageHeader,
@@ -19,6 +20,7 @@ import { listCustomers } from "@/lib/whatsboard-repository";
 type CustomersPageSearchParams = Promise<{
   search?: string;
   status?: string;
+  created?: string;
 }>;
 
 export default async function CustomersPage({
@@ -44,6 +46,12 @@ export default async function CustomersPage({
           </Link>
         }
       />
+
+      {query.created === "1" ? (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
+          Customer created successfully.
+        </div>
+      ) : null}
 
       <section className="grid gap-4 md:grid-cols-3">
         <KpiCard
@@ -84,59 +92,78 @@ export default async function CustomersPage({
         description="Desktop table with mobile cards for quick customer actions."
       >
         <div className="hidden lg:block">
-          <DataTable
-            headers={[
-              "Customer",
-              "Phone",
-              "Location",
-              "Last order",
-              "Total spend",
-              "Status",
-              "Action",
-            ]}
-          >
-            {customerRecords.map((customer) => (
-              <DataRow key={customer.id}>
-                <DataCell>
-                  <p className="font-semibold">{customer.name}</p>
-                  <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-                    {customer.totalOrders} total orders
-                  </p>
-                </DataCell>
-                <DataCell>{customer.phone}</DataCell>
-                <DataCell>{customer.location}</DataCell>
-                <DataCell>
-                  <span className="text-xs text-[var(--color-wb-text-muted)]">
-                    {formatDate(customer.lastOrderAt)}
-                  </span>
-                </DataCell>
-                <DataCell>
-                  <span className="font-semibold text-[var(--color-wb-primary)]">
-                    {formatCurrency(customer.totalSpend)}
-                  </span>
-                </DataCell>
-                <DataCell>
-                  <span className="rounded-full border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] px-3 py-1 text-xs font-semibold capitalize text-[var(--color-wb-text-muted)]">
-                    {customer.status}
-                  </span>
-                </DataCell>
-                <DataCell compact>
-                  <Link
-                    href="/orders/new"
-                    className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
-                  >
-                    Create order
-                  </Link>
-                </DataCell>
-              </DataRow>
-            ))}
-          </DataTable>
+          {customerRecords.length ? (
+            <DataTable
+              headers={[
+                "Customer",
+                "Phone",
+                "Location",
+                "Last order",
+                "Total spend",
+                "Status",
+                "Action",
+              ]}
+            >
+              {customerRecords.map((customer) => (
+                <DataRow key={customer.id}>
+                  <DataCell>
+                    <p className="font-semibold">{customer.name}</p>
+                    <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
+                      {customer.totalOrders} total orders
+                    </p>
+                  </DataCell>
+                  <DataCell>{customer.phone}</DataCell>
+                  <DataCell>{customer.location}</DataCell>
+                  <DataCell>
+                    <span className="text-xs text-[var(--color-wb-text-muted)]">
+                      {formatDate(customer.lastOrderAt)}
+                    </span>
+                  </DataCell>
+                  <DataCell>
+                    <span className="font-semibold text-[var(--color-wb-primary)]">
+                      {formatCurrency(customer.totalSpend)}
+                    </span>
+                  </DataCell>
+                  <DataCell>
+                    <span className="rounded-full border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] px-3 py-1 text-xs font-semibold capitalize text-[var(--color-wb-text-muted)]">
+                      {customer.status}
+                    </span>
+                  </DataCell>
+                  <DataCell compact>
+                    <Link
+                      href="/orders/new"
+                      className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
+                    >
+                      Create order
+                    </Link>
+                  </DataCell>
+                </DataRow>
+              ))}
+            </DataTable>
+          ) : (
+            <EmptyState
+              title="No customers yet"
+              detail="Start by adding your first customer or creating an order."
+              action={
+                <Link href="/customers/new" className="wb-button-secondary">
+                  Add customer
+                </Link>
+              }
+            />
+          )}
         </div>
 
         <div className="space-y-3 lg:hidden">
-          {customerRecords.map((customer) => (
-            <CustomerRow key={customer.id} customer={customer} />
-          ))}
+          {customerRecords.length ? (
+            customerRecords.map((customer) => (
+              <CustomerRow key={customer.id} customer={customer} />
+            ))
+          ) : (
+            <EmptyState
+              title="No customers yet"
+              detail="Start by adding your first customer or creating an order."
+            />
+          )}
         </div>
       </SectionCard>
     </div>

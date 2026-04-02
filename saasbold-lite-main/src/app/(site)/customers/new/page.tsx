@@ -5,7 +5,15 @@ import {
   SectionCard,
 } from "@/components/whatsboard-dashboard/dashboard-ui";
 
-export default function NewCustomerPage() {
+type NewCustomerSearchParams = Promise<{ error?: string }>;
+
+export default async function NewCustomerPage({
+  searchParams,
+}: {
+  searchParams: NewCustomerSearchParams;
+}) {
+  const query = await searchParams;
+
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
@@ -31,8 +39,15 @@ export default function NewCustomerPage() {
 
       <SectionCard
         title="Customer profile"
-        description="Reusable form structure ready for backend create-customer endpoints."
+        description="Create and save a customer profile in your active Supabase workspace."
       >
+        {query.error === "invalid" || query.error === "persistence" ? (
+          <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+            {query.error === "invalid"
+              ? "Please complete all required fields."
+              : "Could not save customer. Check your Supabase connection and try again."}
+          </div>
+        ) : null}
         <form
           id="create-customer-form"
           action="/api/customers"

@@ -17,6 +17,7 @@ export async function POST(request: Request) {
   ) {
     return NextResponse.redirect(
       new URL("/payments/new?error=invalid", request.url),
+      303,
     );
   }
 
@@ -33,10 +34,11 @@ export async function POST(request: Request) {
       reference,
     });
 
-    return NextResponse.redirect(new URL("/payments?created=1", request.url));
+    return NextResponse.redirect(new URL("/payments?created=1", request.url), 303);
   } catch {
     return NextResponse.redirect(
       new URL("/payments/new?error=persistence", request.url),
+      303,
     );
   }
 }

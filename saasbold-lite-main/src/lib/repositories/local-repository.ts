@@ -5,12 +5,12 @@ import {
   createOrder as createOrderInStore,
   createPayment as createPaymentInStore,
   getStoreState,
-  statusFromDueDate,
   updateCustomer as updateCustomerInStore,
   updateFollowUp as updateFollowUpInStore,
   updateOrder as updateOrderInStore,
   updatePayment as updatePaymentInStore,
 } from "@/lib/whatsboard-store";
+import { statusFromDueDate } from "@/lib/follow-up-status";
 import type {
   AnalyticsSnapshot,
   CreateCustomerInput,

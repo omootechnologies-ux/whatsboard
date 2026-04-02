@@ -4,7 +4,7 @@ import type {
   OrderRecord,
   PaymentRecord,
 } from "@/data/whatsboard";
-import { statusFromDueDate } from "@/lib/whatsboard-store";
+import { statusFromDueDate } from "@/lib/follow-up-status";
 import type {
   AnalyticsPoint,
   AnalyticsSnapshot,

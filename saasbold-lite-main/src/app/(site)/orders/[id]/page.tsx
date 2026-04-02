@@ -21,10 +21,13 @@ import {
 
 export default async function OrderDetailsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ created?: string; updated?: string }>;
 }) {
   const { id } = await params;
+  const query = await searchParams;
   const order = await getOrderById(id);
 
   if (!order) {
@@ -53,6 +56,14 @@ export default async function OrderDetailsPage({
           </Link>
         }
       />
+
+      {query.created === "1" || query.updated === "1" ? (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
+          {query.created === "1"
+            ? "Order created successfully."
+            : "Order updated successfully."}
+        </div>
+      ) : null}
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <SectionCard
@@ -195,7 +206,7 @@ export default async function OrderDetailsPage({
                   }))
                 : [
                     {
-                      title: "No follow-up set",
+                      title: "No follow-up logged",
                       detail: "This order has no next-action reminder yet.",
                     },
                   ]

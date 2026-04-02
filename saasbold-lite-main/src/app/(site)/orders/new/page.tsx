@@ -5,7 +5,16 @@ import {
   SectionCard,
 } from "@/components/whatsboard-dashboard/dashboard-ui";
 
-export default function NewOrderPage() {
+type NewOrderSearchParams = Promise<{ error?: string }>;
+
+export default async function NewOrderPage({
+  searchParams,
+}: {
+  searchParams: NewOrderSearchParams;
+}) {
+  const query = await searchParams;
+  const hasError = query.error === "invalid" || query.error === "persistence";
+
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
@@ -31,8 +40,16 @@ export default function NewOrderPage() {
 
       <SectionCard
         title="Order details"
-        description="This form is wired as a reusable UI flow and can be connected to backend create-order APIs."
+        description="Save directly to your active Supabase workspace."
       >
+        {hasError ? (
+          <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+            {query.error === "invalid"
+              ? "Please fill all required fields with valid values."
+              : "Could not create order. Check your Supabase connection and try again."}
+          </div>
+        ) : null}
+
         <form
           id="create-order-form"
           action="/api/orders"

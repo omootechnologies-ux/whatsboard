@@ -10,29 +10,15 @@ import {
   Truck,
   Users,
 } from "lucide-react";
+import { formatCurrency } from "@/components/whatsboard-dashboard/formatting";
 import { pricingPlans } from "@/data/pricing-plans";
 import { PricingCard } from "@/components/whatsboard-public/pricing-card";
+import {
+  getDashboardSnapshot,
+  listPayments,
+} from "@/lib/whatsboard-repository";
 
-const operationsCards = [
-  {
-    title: "New order captured",
-    detail: "Amina Mushi • WhatsApp • TZS 85,000",
-    badge: "Awaiting payment",
-    tone: "warning",
-  },
-  {
-    title: "Payment confirmed",
-    detail: "Kevin Otieno • M-Pesa ref MPESA-2201",
-    badge: "Paid",
-    tone: "success",
-  },
-  {
-    title: "Dispatch in motion",
-    detail: "Rashid Salum • Rider assigned • Dar es Salaam",
-    badge: "Dispatched",
-    tone: "neutral",
-  },
-] as const;
+export const dynamic = "force-dynamic";
 
 const struggleCards = [
   {
@@ -84,6 +70,40 @@ const featureFlow = [
 ] as const;
 
 export default function HomePage() {
+  return <HomePageContent />;
+}
+
+async function HomePageContent() {
+  const [{ stats, orders, followUps }, payments] = await Promise.all([
+    getDashboardSnapshot(),
+    listPayments(),
+  ]);
+
+  const operationsCards = [
+    ...orders.slice(0, 2).map((order) => ({
+      title: `Order ${order.id}`,
+      detail: `${order.customerName} • ${order.channel} • ${formatCurrency(order.amount)}`,
+      badge: order.stage.replaceAll("_", " "),
+      tone:
+        order.stage === "waiting_payment"
+          ? "warning"
+          : order.stage === "delivered"
+            ? "success"
+            : "neutral",
+    })),
+    ...payments.slice(0, 1).map((payment) => ({
+      title: `Payment ${payment.status}`,
+      detail: `${payment.customerName} • ${payment.method} • ${payment.reference}`,
+      badge: payment.status,
+      tone:
+        payment.status === "paid" || payment.status === "cod"
+          ? "success"
+          : payment.status === "partial"
+            ? "warning"
+            : "neutral",
+    })),
+  ].slice(0, 3);
+
   return (
     <main>
       <section className="relative overflow-hidden border-b border-[var(--color-wb-border)]">
@@ -119,26 +139,26 @@ export default function HomePage() {
             <div className="mt-7 grid max-w-lg grid-cols-2 gap-3 text-sm sm:grid-cols-3">
               <div className="wb-soft-card p-3">
                 <p className="text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
-                  2,500+
+                  {stats.activeOrders}
                 </p>
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                  Waiting sellers
+                  Active orders
                 </p>
               </div>
               <div className="wb-soft-card p-3">
                 <p className="text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
-                  50K+
+                  {stats.customersThisMonth}
                 </p>
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                  Orders to be tracked
+                  Customers tracked
                 </p>
               </div>
               <div className="wb-soft-card p-3 sm:col-span-1 col-span-2">
                 <p className="text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
-                  TZS-first
+                  {formatCurrency(stats.revenueMonth)}
                 </p>
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                  Built for local selling
+                  Revenue recorded
                 </p>
               </div>
             </div>
@@ -151,7 +171,7 @@ export default function HomePage() {
                   Today snapshot
                 </p>
                 <p className="mt-2 text-2xl font-black tracking-[-0.04em] text-[var(--color-wb-text)]">
-                  TZS 1,240,000
+                  {formatCurrency(stats.revenueMonth)}
                 </p>
                 <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
                   Payments tracked
@@ -162,7 +182,12 @@ export default function HomePage() {
                   Follow-ups due
                 </p>
                 <p className="mt-2 text-2xl font-black tracking-[-0.04em] text-[var(--color-wb-text)]">
-                  6
+                  {
+                    followUps.filter(
+                      (item) =>
+                        item.status === "overdue" || item.status === "today",
+                    ).length
+                  }
                 </p>
                 <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
                   Needs action now
@@ -171,32 +196,39 @@ export default function HomePage() {
             </div>
 
             <div className="mt-4 space-y-3">
-              {operationsCards.map((card) => (
-                <article
-                  key={card.title}
-                  className="rounded-2xl border border-[var(--color-wb-border)] bg-white p-4"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-                      {card.title}
+              {operationsCards.length ? (
+                operationsCards.map((card) => (
+                  <article
+                    key={`${card.title}-${card.detail}`}
+                    className="rounded-2xl border border-[var(--color-wb-border)] bg-white p-4"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-[var(--color-wb-text)]">
+                        {card.title}
+                      </p>
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${
+                          card.tone === "success"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : card.tone === "warning"
+                              ? "bg-amber-50 text-amber-700"
+                              : "bg-[var(--color-wb-primary-soft)] text-[var(--color-wb-primary)]"
+                        }`}
+                      >
+                        {card.badge}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
+                      {card.detail}
                     </p>
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${
-                        card.tone === "success"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : card.tone === "warning"
-                            ? "bg-amber-50 text-amber-700"
-                            : "bg-[var(--color-wb-primary-soft)] text-[var(--color-wb-primary)]"
-                      }`}
-                    >
-                      {card.badge}
-                    </span>
-                  </div>
-                  <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-                    {card.detail}
-                  </p>
+                  </article>
+                ))
+              ) : (
+                <article className="rounded-2xl border border-dashed border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 text-sm text-[var(--color-wb-text-muted)]">
+                  No live operational records yet. Create your first order to
+                  populate this preview.
                 </article>
-              ))}
+              )}
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { AuthPlaceholderForm } from "@/components/whatsboard-public/auth-placeholder-form";
+import { AuthForm } from "@/components/whatsboard-public/auth-placeholder-form";
 
 export const metadata = {
   title: "Login | WhatsBoard",
@@ -8,7 +8,7 @@ export const metadata = {
 export default function LoginPage() {
   return (
     <main className="mx-auto flex w-full max-w-[1240px] items-center px-4 py-10 sm:px-6 lg:min-h-[calc(100vh-14rem)] lg:px-8 lg:py-14">
-      <AuthPlaceholderForm mode="login" />
+      <AuthForm mode="login" />
     </main>
   );
 }

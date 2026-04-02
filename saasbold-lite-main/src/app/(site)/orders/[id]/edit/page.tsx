@@ -9,10 +9,13 @@ import { getOrderById } from "@/lib/whatsboard-repository";
 
 export default async function EditOrderPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
   const { id } = await params;
+  const query = await searchParams;
   const order = await getOrderById(id);
 
   if (!order) {
@@ -44,8 +47,15 @@ export default async function EditOrderPage({
 
       <SectionCard
         title="Edit order fields"
-        description="Production-ready structure for future backend patch endpoints."
+        description="Update this order directly in your active Supabase workspace."
       >
+        {query.error === "invalid" || query.error === "persistence" ? (
+          <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+            {query.error === "invalid"
+              ? "Please provide valid values before saving."
+              : "Could not update order. Check your Supabase connection and try again."}
+          </div>
+        ) : null}
         <form
           id="edit-order-form"
           action={`/api/orders/${order.id}`}

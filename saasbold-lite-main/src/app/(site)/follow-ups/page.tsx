@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Bell } from "lucide-react";
 import {
+  EmptyState,
   FilterToolbar,
   FollowUpCard,
   KpiCard,
@@ -12,6 +13,7 @@ import { listFollowUps } from "@/lib/whatsboard-repository";
 type FollowUpsPageSearchParams = Promise<{
   search?: string;
   status?: string;
+  created?: string;
 }>;
 
 export default async function FollowUpsPage({
@@ -41,6 +43,12 @@ export default async function FollowUpsPage({
           </Link>
         }
       />
+
+      {query.created === "1" ? (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
+          Follow-up created successfully.
+        </div>
+      ) : null}
 
       <section className="grid gap-4 md:grid-cols-4">
         <KpiCard
@@ -82,9 +90,16 @@ export default async function FollowUpsPage({
           description="Handle these first to protect conversion and trust."
         >
           <div className="space-y-3">
-            {[...overdue, ...today].map((item) => (
-              <FollowUpCard key={item.id} item={item} />
-            ))}
+            {[...overdue, ...today].length ? (
+              [...overdue, ...today].map((item) => (
+                <FollowUpCard key={item.id} item={item} />
+              ))
+            ) : (
+              <EmptyState
+                title="No urgent follow-ups"
+                detail="Nothing overdue or due today."
+              />
+            )}
           </div>
         </SectionCard>
 
@@ -93,9 +108,19 @@ export default async function FollowUpsPage({
           description="Planned reminders and scheduled customer callbacks."
         >
           <div className="space-y-3">
-            {upcoming.map((item) => (
-              <FollowUpCard key={item.id} item={item} />
-            ))}
+            {upcoming.length ? (
+              upcoming.map((item) => <FollowUpCard key={item.id} item={item} />)
+            ) : (
+              <EmptyState
+                title="No upcoming follow-ups"
+                detail="Create a follow-up to keep your pipeline warm."
+                action={
+                  <Link href="/follow-ups/new" className="wb-button-secondary">
+                    Add follow-up
+                  </Link>
+                }
+              />
+            )}
           </div>
         </SectionCard>
       </section>
@@ -105,32 +130,39 @@ export default async function FollowUpsPage({
         description="Recently completed reminders and outcomes."
       >
         <div className="space-y-3">
-          {completed.map((item) => (
-            <div
-              key={item.id}
-              className="rounded-[24px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-semibold text-[var(--color-wb-text)]">
-                    {item.title}
-                  </p>
-                  <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-                    {item.customerName}
-                  </p>
+          {completed.length ? (
+            completed.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-[24px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-[var(--color-wb-text)]">
+                      {item.title}
+                    </p>
+                    <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
+                      {item.customerName}
+                    </p>
+                  </div>
+                  <Link
+                    href={item.orderId ? `/orders/${item.orderId}` : "/orders"}
+                    className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
+                  >
+                    Open order
+                  </Link>
                 </div>
-                <Link
-                  href={item.orderId ? `/orders/${item.orderId}` : "/orders"}
-                  className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
-                >
-                  Open order
-                </Link>
+                <p className="mt-3 text-sm leading-6 text-[var(--color-wb-text-muted)]">
+                  {item.note}
+                </p>
               </div>
-              <p className="mt-3 text-sm leading-6 text-[var(--color-wb-text-muted)]">
-                {item.note}
-              </p>
-            </div>
-          ))}
+            ))
+          ) : (
+            <EmptyState
+              title="No completed follow-ups yet"
+              detail="Completed reminders will appear here."
+            />
+          )}
         </div>
       </SectionCard>
     </div>

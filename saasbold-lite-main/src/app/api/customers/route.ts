@@ -11,6 +11,7 @@ export async function POST(request: Request) {
   if (!name.trim() || !phone.trim() || !location.trim()) {
     return NextResponse.redirect(
       new URL("/customers/new?error=invalid", request.url),
+      303,
     );
   }
 
@@ -24,10 +25,11 @@ export async function POST(request: Request) {
         : "active") as "active" | "waiting" | "vip",
     });
 
-    return NextResponse.redirect(new URL("/customers?created=1", request.url));
+    return NextResponse.redirect(new URL("/customers?created=1", request.url), 303);
   } catch {
     return NextResponse.redirect(
       new URL("/customers/new?error=persistence", request.url),
+      303,
     );
   }
 }

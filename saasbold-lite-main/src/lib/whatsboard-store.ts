@@ -6,7 +6,7 @@ import type {
   OrderRecord,
   PaymentRecord,
 } from "@/data/whatsboard";
-import { customers, followUps, orders, payments } from "@/data/whatsboard";
+import { statusFromDueDate } from "@/lib/follow-up-status";
 
 export type StoreState = {
   orders: OrderRecord[];
@@ -78,10 +78,10 @@ function storeFilePath() {
 
 function cloneSeedState(): StoreState {
   return {
-    orders: JSON.parse(JSON.stringify(orders)),
-    customers: JSON.parse(JSON.stringify(customers)),
-    followUps: JSON.parse(JSON.stringify(followUps)),
-    payments: JSON.parse(JSON.stringify(payments)),
+    orders: [],
+    customers: [],
+    followUps: [],
+    payments: [],
   };
 }
 
@@ -150,24 +150,6 @@ function nextPaymentId(list: PaymentRecord[]) {
     return Number.isFinite(value) ? Math.max(highest, value) : highest;
   }, 0);
   return `pay-${max + 1}`;
-}
-
-export function statusFromDueDate(dueAt: string): FollowUpRecord["status"] {
-  const now = new Date();
-  const due = new Date(dueAt);
-  const nowStart = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-  ).getTime();
-  const dueStart = new Date(
-    due.getFullYear(),
-    due.getMonth(),
-    due.getDate(),
-  ).getTime();
-  if (dueStart < nowStart) return "overdue";
-  if (dueStart === nowStart) return "today";
-  return "upcoming";
 }
 
 export function recalculateCustomers(state: StoreState) {

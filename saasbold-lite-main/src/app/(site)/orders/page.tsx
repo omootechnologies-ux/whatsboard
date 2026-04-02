@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { Funnel, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import {
   DataCell,
   DataRow,
   DataTable,
+  EmptyState,
   FilterToolbar,
   OrderCard,
   OrderStageBoard,
@@ -46,12 +47,6 @@ export default async function OrdersPage({
             <Plus className="h-4 w-4" />
             Create Order
           </Link>
-        }
-        secondaryAction={
-          <button className="wb-button-secondary">
-            <Funnel className="h-4 w-4" />
-            Filters
-          </button>
         }
       />
 
@@ -107,66 +102,85 @@ export default async function OrdersPage({
         description="Desktop table + mobile cards for clean scanning and quick actions."
       >
         <div className="hidden lg:block">
-          <DataTable
-            headers={[
-              "Order",
-              "Customer",
-              "Stage",
-              "Payment",
-              "Amount",
-              "Updated",
-              "Action",
-            ]}
-          >
-            {filteredOrders.map((order) => (
-              <DataRow key={order.id}>
-                <DataCell>
-                  <p className="font-semibold">{order.id}</p>
-                  <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-                    {order.channel}
-                  </p>
-                </DataCell>
-                <DataCell>
-                  <p className="font-semibold">{order.customerName}</p>
-                  <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-                    {order.deliveryArea}
-                  </p>
-                </DataCell>
-                <DataCell>
-                  <StageBadge stage={order.stage} />
-                </DataCell>
-                <DataCell>
-                  <PaymentBadge status={order.paymentStatus} />
-                </DataCell>
-                <DataCell>
-                  <span className="font-semibold text-[var(--color-wb-primary)]">
-                    {formatCurrency(order.amount)}
-                  </span>
-                </DataCell>
-                <DataCell>
-                  <span className="text-xs text-[var(--color-wb-text-muted)]">
-                    {formatDate(order.updatedAt)}
-                  </span>
-                </DataCell>
-                <DataCell compact>
-                  <Link
-                    href={`/orders/${order.id}`}
-                    className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
-                  >
-                    View
-                  </Link>
-                </DataCell>
-              </DataRow>
-            ))}
-          </DataTable>
+          {filteredOrders.length ? (
+            <DataTable
+              headers={[
+                "Order",
+                "Customer",
+                "Stage",
+                "Payment",
+                "Amount",
+                "Updated",
+                "Action",
+              ]}
+            >
+              {filteredOrders.map((order) => (
+                <DataRow key={order.id}>
+                  <DataCell>
+                    <p className="font-semibold">{order.id}</p>
+                    <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
+                      {order.channel}
+                    </p>
+                  </DataCell>
+                  <DataCell>
+                    <p className="font-semibold">{order.customerName}</p>
+                    <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
+                      {order.deliveryArea}
+                    </p>
+                  </DataCell>
+                  <DataCell>
+                    <StageBadge stage={order.stage} />
+                  </DataCell>
+                  <DataCell>
+                    <PaymentBadge status={order.paymentStatus} />
+                  </DataCell>
+                  <DataCell>
+                    <span className="font-semibold text-[var(--color-wb-primary)]">
+                      {formatCurrency(order.amount)}
+                    </span>
+                  </DataCell>
+                  <DataCell>
+                    <span className="text-xs text-[var(--color-wb-text-muted)]">
+                      {formatDate(order.updatedAt)}
+                    </span>
+                  </DataCell>
+                  <DataCell compact>
+                    <Link
+                      href={`/orders/${order.id}`}
+                      className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
+                    >
+                      View
+                    </Link>
+                  </DataCell>
+                </DataRow>
+              ))}
+            </DataTable>
+          ) : (
+            <EmptyState
+              title="No orders found"
+              detail="No orders match your current filters yet."
+              action={
+                <Link href="/orders/new" className="wb-button-secondary">
+                  Create order
+                </Link>
+              }
+            />
+          )}
         </div>
 
         <div className="grid gap-3 lg:hidden">
-          {filteredOrders.map((order) => (
-            <Link key={order.id} href={`/orders/${order.id}`} className="block">
-              <OrderCard order={order} />
-            </Link>
-          ))}
+          {filteredOrders.length ? (
+            filteredOrders.map((order) => (
+              <Link key={order.id} href={`/orders/${order.id}`} className="block">
+                <OrderCard order={order} />
+              </Link>
+            ))
+          ) : (
+            <EmptyState
+              title="No orders found"
+              detail="No orders match your current filters yet."
+            />
+          )}
         </div>
       </SectionCard>
     </div>

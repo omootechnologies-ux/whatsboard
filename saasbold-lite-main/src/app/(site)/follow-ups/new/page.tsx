@@ -5,7 +5,15 @@ import {
   SectionCard,
 } from "@/components/whatsboard-dashboard/dashboard-ui";
 
-export default function NewFollowUpPage() {
+type NewFollowUpSearchParams = Promise<{ error?: string }>;
+
+export default async function NewFollowUpPage({
+  searchParams,
+}: {
+  searchParams: NewFollowUpSearchParams;
+}) {
+  const query = await searchParams;
+
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
@@ -31,8 +39,15 @@ export default function NewFollowUpPage() {
 
       <SectionCard
         title="Follow-up details"
-        description="Ready to connect with backend reminder scheduling."
+        description="Schedule and save reminders directly to your active Supabase workspace."
       >
+        {query.error === "invalid" || query.error === "persistence" ? (
+          <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+            {query.error === "invalid"
+              ? "Please provide customer name, due date, and note."
+              : "Could not save follow-up. Check your Supabase connection and try again."}
+          </div>
+        ) : null}
         <form
           id="create-followup-form"
           action="/api/follow-ups"
@@ -54,7 +69,11 @@ export default function NewFollowUpPage() {
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
               Order ID (optional)
             </label>
-            <input name="orderId" className="wb-input" placeholder="WB-3403" />
+            <input
+              name="orderId"
+              className="wb-input"
+              placeholder="Paste order ID from Orders page"
+            />
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">

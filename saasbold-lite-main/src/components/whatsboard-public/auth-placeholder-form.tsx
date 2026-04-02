@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, ShieldCheck } from "lucide-react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type AuthMode = "login" | "register";
 
-export function AuthPlaceholderForm({ mode }: { mode: AuthMode }) {
-  const [message, setMessage] = useState<string | null>(null);
+export function AuthForm({ mode }: { mode: AuthMode }) {
+  const router = useRouter();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isRegister = mode === "register";
 
@@ -27,11 +32,68 @@ export function AuthPlaceholderForm({ mode }: { mode: AuthMode }) {
 
       <form
         className="mt-6 space-y-4"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
-          setMessage(
-            "Authentication backend wiring is pending in this app build. UI route is active and ready for integration.",
-          );
+          setErrorMessage(null);
+          setInfoMessage(null);
+          setIsSubmitting(true);
+
+          try {
+            const formData = new FormData(event.currentTarget);
+            const email = String(formData.get("email") || "").trim();
+            const password = String(formData.get("password") || "");
+            const businessName = String(formData.get("businessName") || "").trim();
+
+            if (!email || !password) {
+              setErrorMessage("Email and password are required.");
+              return;
+            }
+
+            const supabase = createSupabaseBrowserClient();
+
+            if (isRegister) {
+              const { data, error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                  data: {
+                    business_name: businessName || undefined,
+                  },
+                },
+              });
+
+              if (error) {
+                setErrorMessage(error.message);
+                return;
+              }
+
+              if (!data.session) {
+                setInfoMessage(
+                  "Account created. Check your email to verify before signing in.",
+                );
+                return;
+              }
+
+              router.push("/dashboard");
+              router.refresh();
+              return;
+            }
+
+            const { error } = await supabase.auth.signInWithPassword({
+              email,
+              password,
+            });
+
+            if (error) {
+              setErrorMessage(error.message);
+              return;
+            }
+
+            router.push("/dashboard");
+            router.refresh();
+          } finally {
+            setIsSubmitting(false);
+          }
         }}
       >
         {isRegister ? (
@@ -74,22 +136,36 @@ export function AuthPlaceholderForm({ mode }: { mode: AuthMode }) {
           />
         </label>
 
-        <button type="submit" className="wb-button-primary w-full justify-center">
-          {isRegister ? "Create account" : "Login"}
+        <button
+          type="submit"
+          className="wb-button-primary w-full justify-center"
+          disabled={isSubmitting}
+        >
+          {isSubmitting
+            ? "Please wait..."
+            : isRegister
+              ? "Create account"
+              : "Login"}
           <ArrowRight className="h-4 w-4" />
         </button>
       </form>
 
-      {message ? (
+      {errorMessage ? (
+        <div className="mt-4 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+          {errorMessage}
+        </div>
+      ) : null}
+
+      {infoMessage ? (
         <div className="mt-4 rounded-2xl border border-[var(--color-wb-border)] bg-[var(--color-wb-primary-soft)] p-4 text-sm text-[var(--color-wb-primary)]">
-          {message}
+          {infoMessage}
         </div>
       ) : null}
 
       <div className="mt-6 flex flex-col gap-2 text-sm text-[var(--color-wb-text-muted)] sm:flex-row sm:items-center sm:justify-between">
         <p className="inline-flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-[var(--color-wb-primary)]" />
-          Ready for Supabase Auth integration
+          Powered by Supabase Auth
         </p>
         {isRegister ? (
           <Link href="/login" className="font-semibold text-[var(--color-wb-primary)]">
@@ -101,13 +177,6 @@ export function AuthPlaceholderForm({ mode }: { mode: AuthMode }) {
           </Link>
         )}
       </div>
-
-      <Link
-        href="/dashboard"
-        className="mt-4 inline-flex text-sm font-semibold text-[var(--color-wb-text)] underline underline-offset-4"
-      >
-        Continue to dashboard demo
-      </Link>
     </div>
   );
 }

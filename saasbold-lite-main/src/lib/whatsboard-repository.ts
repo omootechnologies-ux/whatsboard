@@ -161,12 +161,19 @@ function resolveDriver(): PersistenceDriver {
   const configured =
     process.env.WHATSBOARD_PERSISTENCE_DRIVER?.trim().toLowerCase();
   const vercelEnvironment = process.env.VERCEL_ENV?.trim().toLowerCase();
+  const isProduction = vercelEnvironment === "production";
+
+  if (isProduction && configured === "local") {
+    throw new Error(
+      "WHATSBOARD_PERSISTENCE_DRIVER=local is not allowed in production. Use supabase.",
+    );
+  }
 
   if (configured === "local") return "local";
   if (configured === "supabase") return "supabase";
 
   // Safety default: Vercel production should not silently write to /tmp storage.
-  if (vercelEnvironment === "production") {
+  if (isProduction) {
     return "supabase";
   }
 

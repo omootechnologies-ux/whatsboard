@@ -3,6 +3,7 @@ import { Bell, CreditCard, Package2, Plus, Users } from "lucide-react";
 import {
   ChartCard,
   CustomerRow,
+  EmptyState,
   KpiCard,
   OrderStageBoard,
   PageHeader,
@@ -14,17 +15,18 @@ import {
   formatCurrency,
   formatDate,
 } from "@/components/whatsboard-dashboard/formatting";
-import { getDashboardSnapshot } from "@/lib/whatsboard-repository";
+import {
+  getAnalyticsSnapshot,
+  getDashboardSnapshot,
+  listPayments,
+} from "@/lib/whatsboard-repository";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const {
-    stats: dashboardStats,
-    customers,
-    followUps,
-    orders,
-  } = await getDashboardSnapshot();
+  const [{ stats: dashboardStats, customers, followUps, orders }, analytics, payments] =
+    await Promise.all([getDashboardSnapshot(), getAnalyticsSnapshot(), listPayments()]);
+
   const stageGroups = {
     newOrder: orders.filter((order) => order.stage === "new_order"),
     waitingPayment: orders.filter((order) => order.stage === "waiting_payment"),
@@ -42,6 +44,30 @@ export default async function DashboardPage() {
   const urgentFollowUps = followUps.filter(
     (item) => item.status === "overdue" || item.status === "today",
   );
+  const recentActivity = [
+    ...orders.map((order) => ({
+      at: order.updatedAt,
+      title: `Order ${order.id} is ${order.stage.replaceAll("_", " ")}`,
+      detail: `${order.customerName} • ${formatCurrency(order.amount)}`,
+    })),
+    ...followUps.map((item) => ({
+      at: item.dueAt,
+      title: `${item.status.toUpperCase()} follow-up: ${item.title}`,
+      detail: `${item.customerName}${item.orderId ? ` • Order ${item.orderId}` : ""}`,
+    })),
+    ...payments.map((payment) => ({
+      at: payment.createdAt,
+      title: `Payment ${payment.status} • ${payment.orderId}`,
+      detail: `${payment.customerName} • ${formatCurrency(payment.amount)} via ${payment.method}`,
+    })),
+  ]
+    .sort((a, b) => (a.at < b.at ? 1 : -1))
+    .slice(0, 6)
+    .map((item) => ({
+      title: item.title,
+      detail: item.detail,
+      meta: formatDate(item.at),
+    }));
 
   return (
     <div className="space-y-5 lg:space-y-6">
@@ -123,29 +149,41 @@ export default async function DashboardPage() {
           description="Overdue and due-today customer actions."
         >
           <div className="space-y-3">
-            {urgentFollowUps.map((item) => (
-              <div
-                key={item.id}
-                className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-[var(--color-wb-text)]">
-                      {item.title}
-                    </p>
-                    <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-                      {item.customerName}
-                    </p>
+            {urgentFollowUps.length ? (
+              urgentFollowUps.map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-[var(--color-wb-text)]">
+                        {item.title}
+                      </p>
+                      <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
+                        {item.customerName}
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-rose-100 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
+                      {item.status}
+                    </span>
                   </div>
-                  <span className="rounded-full border border-rose-100 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
-                    {item.status}
-                  </span>
+                  <p className="mt-3 text-sm leading-6 text-[var(--color-wb-text-muted)]">
+                    {item.note}
+                  </p>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-[var(--color-wb-text-muted)]">
-                  {item.note}
-                </p>
-              </div>
-            ))}
+              ))
+            ) : (
+              <EmptyState
+                title="No urgent follow-ups"
+                detail="You have no overdue or due-today reminders right now."
+                action={
+                  <Link href="/follow-ups/new" className="wb-button-secondary">
+                    Add follow-up
+                  </Link>
+                }
+              />
+            )}
           </div>
         </SectionCard>
 
@@ -154,31 +192,43 @@ export default async function DashboardPage() {
           description="New or unpaid orders that can block daily cash flow."
         >
           <div className="space-y-3">
-            {ordersNeedingAction.map((order) => (
-              <Link
-                key={order.id}
-                href={`/orders/${order.id}`}
-                className="block rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 transition hover:bg-white"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-[var(--color-wb-text)]">
-                      {order.id}
-                    </p>
-                    <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-                      {order.customerName}
-                    </p>
+            {ordersNeedingAction.length ? (
+              ordersNeedingAction.map((order) => (
+                <Link
+                  key={order.id}
+                  href={`/orders/${order.id}`}
+                  className="block rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 transition hover:bg-white"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-[var(--color-wb-text)]">
+                        {order.id}
+                      </p>
+                      <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
+                        {order.customerName}
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold text-[var(--color-wb-primary)]">
+                      {formatCurrency(order.amount)}
+                    </span>
                   </div>
-                  <span className="text-sm font-semibold text-[var(--color-wb-primary)]">
-                    {formatCurrency(order.amount)}
-                  </span>
-                </div>
-                <p className="mt-2 text-xs uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
-                  {order.stage.replaceAll("_", " ")} • Updated{" "}
-                  {formatDate(order.updatedAt)}
-                </p>
-              </Link>
-            ))}
+                  <p className="mt-2 text-xs uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
+                    {order.stage.replaceAll("_", " ")} • Updated{" "}
+                    {formatDate(order.updatedAt)}
+                  </p>
+                </Link>
+              ))
+            ) : (
+              <EmptyState
+                title="No blocked orders"
+                detail="No new or awaiting-payment orders need immediate action."
+                action={
+                  <Link href="/orders/new" className="wb-button-secondary">
+                    Create order
+                  </Link>
+                }
+              />
+            )}
           </div>
         </SectionCard>
       </section>
@@ -212,44 +262,22 @@ export default async function DashboardPage() {
       <section className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
         <ChartCard
           title="Weekly order pulse"
-          description="One useful chart showing the rhythm of your order flow."
-          data={[
-            { label: "Mon", orders: 19 },
-            { label: "Tue", orders: 22 },
-            { label: "Wed", orders: 24 },
-            { label: "Thu", orders: 28 },
-            { label: "Fri", orders: 33 },
-            { label: "Sat", orders: 37 },
-            { label: "Sun", orders: 26 },
-          ]}
+          description="Live order volume based on your current workspace data."
+          data={analytics.series}
           dataKey="orders"
         />
         <SectionCard
           title="Recent activity"
           description="A clean operational timeline for the team."
         >
-          <TimelineList
-            items={[
-              {
-                title: "Order WB-3402 moved to paid",
-                detail:
-                  "Kevin Otieno completed payment and is waiting for packing.",
-                meta: "Today",
-              },
-              {
-                title: "Follow-up due for Neema Kileo",
-                detail:
-                  "Customer still needs pink bundle photos before confirming.",
-                meta: "14:00",
-              },
-              {
-                title: "Dispatch queued for Rashid Salum",
-                detail:
-                  "Courier requested a backup phone number before handoff.",
-                meta: "Tomorrow",
-              },
-            ]}
-          />
+          {recentActivity.length ? (
+            <TimelineList items={recentActivity} />
+          ) : (
+            <EmptyState
+              title="No activity yet"
+              detail="New orders, payments, and follow-ups will appear here as your team starts using the workspace."
+            />
+          )}
         </SectionCard>
       </section>
 
@@ -259,9 +287,23 @@ export default async function DashboardPage() {
           description="Living customer records instead of scattered chat names."
         >
           <div className="space-y-3">
-            {customers.slice(0, 4).map((customer) => (
-              <CustomerRow key={customer.id} customer={customer} />
-            ))}
+            {customers.length ? (
+              customers
+                .slice(0, 4)
+                .map((customer) => (
+                  <CustomerRow key={customer.id} customer={customer} />
+                ))
+            ) : (
+              <EmptyState
+                title="No customers yet"
+                detail="Add your first order or customer to start building buyer records."
+                action={
+                  <Link href="/customers/new" className="wb-button-secondary">
+                    Add customer
+                  </Link>
+                }
+              />
+            )}
           </div>
         </SectionCard>
 

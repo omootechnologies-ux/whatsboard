@@ -5,7 +5,15 @@ import {
   SectionCard,
 } from "@/components/whatsboard-dashboard/dashboard-ui";
 
-export default function NewPaymentPage() {
+type NewPaymentSearchParams = Promise<{ error?: string }>;
+
+export default async function NewPaymentPage({
+  searchParams,
+}: {
+  searchParams: NewPaymentSearchParams;
+}) {
+  const query = await searchParams;
+
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
@@ -31,8 +39,15 @@ export default function NewPaymentPage() {
 
       <SectionCard
         title="Payment details"
-        description="Designed to map directly to payment capture endpoints."
+        description="Record payment transactions directly in your active Supabase workspace."
       >
+        {query.error === "invalid" || query.error === "persistence" ? (
+          <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+            {query.error === "invalid"
+              ? "Please complete all required payment fields."
+              : "Could not save payment. Verify order ID and Supabase connection, then try again."}
+          </div>
+        ) : null}
         <form
           id="create-payment-form"
           action="/api/payments"
@@ -47,7 +62,7 @@ export default function NewPaymentPage() {
               name="orderId"
               required
               className="wb-input"
-              placeholder="WB-3401"
+              placeholder="Paste order ID from Orders page"
             />
           </div>
           <div>
