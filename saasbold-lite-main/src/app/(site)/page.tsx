@@ -16,13 +16,13 @@ import {
 } from "@/components/whatsboard-dashboard/formatting";
 import { getDashboardSnapshot } from "@/lib/whatsboard-repository";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
   const {
     stats: dashboardStats,
     customers,
     followUps,
     orders,
-  } = getDashboardSnapshot();
+  } = await getDashboardSnapshot();
   const stageGroups = {
     newOrder: orders.filter((order) => order.stage === "new_order"),
     waitingPayment: orders.filter((order) => order.stage === "waiting_payment"),

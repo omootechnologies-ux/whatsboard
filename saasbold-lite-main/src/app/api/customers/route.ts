@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createCustomer } from "@/lib/whatsboard-store";
+import { createCustomer } from "@/lib/whatsboard-repository";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -14,14 +14,20 @@ export async function POST(request: Request) {
     );
   }
 
-  createCustomer({
-    name,
-    phone,
-    location,
-    status: (["active", "waiting", "vip"].includes(status)
-      ? status
-      : "active") as "active" | "waiting" | "vip",
-  });
+  try {
+    await createCustomer({
+      name,
+      phone,
+      location,
+      status: (["active", "waiting", "vip"].includes(status)
+        ? status
+        : "active") as "active" | "waiting" | "vip",
+    });
 
-  return NextResponse.redirect(new URL("/customers?created=1", request.url));
+    return NextResponse.redirect(new URL("/customers?created=1", request.url));
+  } catch {
+    return NextResponse.redirect(
+      new URL("/customers/new?error=persistence", request.url),
+    );
+  }
 }

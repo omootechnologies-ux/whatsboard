@@ -25,15 +25,15 @@ export default async function OrderDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const order = getOrderById(id);
+  const order = await getOrderById(id);
 
   if (!order) {
     notFound();
   }
 
-  const customer = getCustomerById(order.customerId);
-  const orderPayments = listOrderPayments(order.id);
-  const orderFollowUps = listOrderFollowUps(order.id);
+  const customer = await getCustomerById(order.customerId);
+  const orderPayments = await listOrderPayments(order.id);
+  const orderFollowUps = await listOrderFollowUps(order.id);
 
   return (
     <div className="space-y-5 lg:space-y-6">

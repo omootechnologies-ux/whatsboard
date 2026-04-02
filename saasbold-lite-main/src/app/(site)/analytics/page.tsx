@@ -9,9 +9,9 @@ import {
 import { formatCurrency } from "@/components/whatsboard-dashboard/formatting";
 import { getAnalyticsSnapshot } from "@/lib/whatsboard-repository";
 
-export default function AnalyticsPage() {
+export default async function AnalyticsPage() {
   const { stats: dashboardStats, series: analyticsSeries } =
-    getAnalyticsSnapshot();
+    await getAnalyticsSnapshot();
 
   return (
     <div className="space-y-5 lg:space-y-6">

@@ -1,5 +1,14 @@
-import type { FollowUpRecord } from "@/data/whatsboard";
-import { getStoreState } from "@/lib/whatsboard-store";
+import type {
+  CustomerRecord,
+  FollowUpRecord,
+  OrderRecord,
+  PaymentRecord,
+} from "@/data/whatsboard";
+import { createLocalRepository } from "@/lib/repositories/local-repository";
+import {
+  createSupabaseRepository,
+  isSupabaseServerConfigured,
+} from "@/lib/repositories/supabase-repository";
 
 export type OrdersQuery = {
   search?: string;
@@ -23,212 +32,236 @@ export type PaymentsQuery = {
   method?: string;
 };
 
-function includesText(value: string, search: string) {
-  return value.toLowerCase().includes(search.toLowerCase());
+export type DashboardStats = {
+  revenueMonth: number;
+  activeOrders: number;
+  overdueFollowUps: number;
+  customersThisMonth: number;
+  conversionRate: number;
+  payoutPending: number;
+};
+
+export type AnalyticsPoint = {
+  label: string;
+  revenue: number;
+  orders: number;
+};
+
+export type AnalyticsSnapshot = {
+  stats: DashboardStats;
+  series: AnalyticsPoint[];
+};
+
+export type DashboardSnapshot = {
+  stats: DashboardStats;
+  orders: OrderRecord[];
+  customers: CustomerRecord[];
+  followUps: FollowUpRecord[];
+};
+
+export type CreateOrderInput = {
+  customerName: string;
+  customerPhone?: string;
+  channel: OrderRecord["channel"];
+  stage: OrderRecord["stage"];
+  paymentStatus: OrderRecord["paymentStatus"];
+  amount: number;
+  deliveryArea: string;
+  notes: string;
+  items: string[];
+};
+
+export type UpdateOrderInput = {
+  customerName: string;
+  stage: OrderRecord["stage"];
+  paymentStatus: OrderRecord["paymentStatus"];
+  amount: number;
+  notes: string;
+};
+
+export type CreateCustomerInput = {
+  name: string;
+  phone: string;
+  location: string;
+  status: CustomerRecord["status"];
+};
+
+export type UpdateCustomerInput = Partial<CreateCustomerInput>;
+
+export type CreateFollowUpInput = {
+  customerName: string;
+  orderId?: string;
+  dueAt: string;
+  priority: FollowUpRecord["priority"];
+  note: string;
+};
+
+export type UpdateFollowUpInput = {
+  title?: string;
+  note?: string;
+  dueAt?: string;
+  status?: FollowUpRecord["status"];
+  priority?: FollowUpRecord["priority"];
+};
+
+export type CreatePaymentInput = {
+  orderId: string;
+  amount: number;
+  method: PaymentRecord["method"];
+  status: PaymentRecord["status"];
+  reference: string;
+};
+
+export type UpdatePaymentInput = Partial<CreatePaymentInput>;
+
+export interface WhatsboardRepository {
+  listOrders(query?: OrdersQuery): Promise<OrderRecord[]>;
+  getOrderById(id: string): Promise<OrderRecord | null>;
+  createOrder(input: CreateOrderInput): Promise<OrderRecord>;
+  updateOrder(id: string, input: UpdateOrderInput): Promise<OrderRecord | null>;
+
+  listCustomers(query?: CustomersQuery): Promise<CustomerRecord[]>;
+  getCustomerById(id: string): Promise<CustomerRecord | null>;
+  createCustomer(input: CreateCustomerInput): Promise<CustomerRecord>;
+  updateCustomer(
+    id: string,
+    input: UpdateCustomerInput,
+  ): Promise<CustomerRecord | null>;
+
+  listFollowUps(query?: FollowUpsQuery): Promise<FollowUpRecord[]>;
+  createFollowUp(input: CreateFollowUpInput): Promise<FollowUpRecord>;
+  updateFollowUp(
+    id: string,
+    input: UpdateFollowUpInput,
+  ): Promise<FollowUpRecord | null>;
+  listOrderFollowUps(orderId: string): Promise<FollowUpRecord[]>;
+
+  listPayments(query?: PaymentsQuery): Promise<PaymentRecord[]>;
+  createPayment(input: CreatePaymentInput): Promise<PaymentRecord>;
+  updatePayment(
+    id: string,
+    input: UpdatePaymentInput,
+  ): Promise<PaymentRecord | null>;
+  listOrderPayments(orderId: string): Promise<PaymentRecord[]>;
+
+  getAnalyticsSnapshot(): Promise<AnalyticsSnapshot>;
+  getDashboardSnapshot(): Promise<DashboardSnapshot>;
 }
 
-function computeFollowUpStatus(
-  record: FollowUpRecord,
-): FollowUpRecord["status"] {
-  if (record.status === "completed") return "completed";
-  const now = new Date();
-  const due = new Date(record.dueAt);
-  const today = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-  ).getTime();
-  const dueDay = new Date(
-    due.getFullYear(),
-    due.getMonth(),
-    due.getDate(),
-  ).getTime();
-  if (dueDay < today) return "overdue";
-  if (dueDay === today) return "today";
-  return "upcoming";
-}
+type PersistenceDriver = "local" | "supabase";
 
-function computeDashboardStats() {
-  const state = getStoreState();
-  const activeOrders = state.orders.filter(
-    (order) => order.stage !== "delivered",
-  ).length;
-  const overdueFollowUps = state.followUps.filter(
-    (followUp) => computeFollowUpStatus(followUp) === "overdue",
-  ).length;
-  const revenueMonth = state.payments
-    .filter((payment) => payment.status === "paid" || payment.status === "cod")
-    .reduce((sum, payment) => sum + payment.amount, 0);
-  const payoutPending = state.orders
-    .filter(
-      (order) =>
-        order.paymentStatus === "unpaid" || order.paymentStatus === "partial",
-    )
-    .reduce((sum, order) => sum + order.amount, 0);
-  const delivered = state.orders.filter(
-    (order) => order.stage === "delivered",
-  ).length;
-  const conversionRate = state.orders.length
-    ? Math.round((delivered / state.orders.length) * 100)
-    : 0;
-  const customersThisMonth = state.customers.length;
-
-  return {
-    revenueMonth,
-    activeOrders,
-    overdueFollowUps,
-    customersThisMonth,
-    conversionRate,
-    payoutPending,
-  };
-}
-
-function computeAnalyticsSeries() {
-  const state = getStoreState();
-  const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const buckets = labels.map((label) => ({ label, revenue: 0, orders: 0 }));
-
-  state.orders.forEach((order) => {
-    const day = new Date(order.createdAt).getDay();
-    const mapped = day === 0 ? 6 : day - 1;
-    buckets[mapped].orders += 1;
-  });
-
-  state.payments.forEach((payment) => {
-    const day = new Date(payment.createdAt).getDay();
-    const mapped = day === 0 ? 6 : day - 1;
-    if (payment.status === "paid" || payment.status === "cod") {
-      buckets[mapped].revenue += payment.amount;
+let cachedRepository:
+  | {
+      driver: PersistenceDriver;
+      repository: WhatsboardRepository;
     }
-  });
+  | undefined;
 
-  return buckets;
+function resolveDriver(): PersistenceDriver {
+  const configured =
+    process.env.WHATSBOARD_PERSISTENCE_DRIVER?.trim().toLowerCase();
+
+  if (configured === "local") return "local";
+  if (configured === "supabase") return "supabase";
+
+  return isSupabaseServerConfigured() ? "supabase" : "local";
 }
 
-export function listOrders(query: OrdersQuery = {}) {
-  const state = getStoreState();
-  const search = query.search?.trim() ?? "";
-  return state.orders
-    .filter((order) => (query.stage ? order.stage === query.stage : true))
-    .filter((order) =>
-      query.payment ? order.paymentStatus === query.payment : true,
-    )
-    .filter((order) => {
-      if (!search) return true;
-      const haystack = [
-        order.id,
-        order.customerName,
-        order.channel,
-        order.deliveryArea,
-        order.items.join(" "),
-      ].join(" ");
-      return includesText(haystack, search);
-    })
-    .sort((a, b) => (a.updatedAt > b.updatedAt ? -1 : 1));
-}
+function getRepository(): WhatsboardRepository {
+  const driver = resolveDriver();
 
-export function getOrderById(id: string) {
-  const state = getStoreState();
-  return state.orders.find((order) => order.id === id) || null;
-}
+  if (cachedRepository && cachedRepository.driver === driver) {
+    return cachedRepository.repository;
+  }
 
-export function getCustomerById(id: string) {
-  const state = getStoreState();
-  return state.customers.find((customer) => customer.id === id) || null;
-}
-
-export function listCustomers(query: CustomersQuery = {}) {
-  const state = getStoreState();
-  const search = query.search?.trim() ?? "";
-  return state.customers
-    .filter((customer) =>
-      query.status ? customer.status === query.status : true,
-    )
-    .filter((customer) => {
-      if (!search) return true;
-      const haystack = [customer.name, customer.phone, customer.location].join(
-        " ",
+  if (driver === "supabase") {
+    if (!isSupabaseServerConfigured()) {
+      throw new Error(
+        "Supabase persistence selected but required server env vars are missing.",
       );
-      return includesText(haystack, search);
-    })
-    .sort((a, b) => (a.lastOrderAt > b.lastOrderAt ? -1 : 1));
+    }
+    const repository = createSupabaseRepository();
+    cachedRepository = { driver, repository };
+    return repository;
+  }
+
+  const repository = createLocalRepository();
+  cachedRepository = { driver, repository };
+  return repository;
 }
 
-export function listFollowUps(query: FollowUpsQuery = {}) {
-  const state = getStoreState();
-  const search = query.search?.trim() ?? "";
-  return state.followUps
-    .map((item) => ({ ...item, status: computeFollowUpStatus(item) }))
-    .filter((followUp) =>
-      query.status ? followUp.status === query.status : true,
-    )
-    .filter((followUp) => {
-      if (!search) return true;
-      const haystack = [
-        followUp.title,
-        followUp.customerName,
-        followUp.note,
-        followUp.orderId || "",
-      ].join(" ");
-      return includesText(haystack, search);
-    })
-    .sort((a, b) => (a.dueAt > b.dueAt ? 1 : -1));
+export function resetRepositoryCacheForTests() {
+  cachedRepository = undefined;
 }
 
-export function listPayments(query: PaymentsQuery = {}) {
-  const state = getStoreState();
-  const search = query.search?.trim() ?? "";
-  return state.payments
-    .filter((payment) =>
-      query.status ? payment.status === query.status : true,
-    )
-    .filter((payment) =>
-      query.method ? payment.method === query.method : true,
-    )
-    .filter((payment) => {
-      if (!search) return true;
-      const haystack = [
-        payment.orderId,
-        payment.customerName,
-        payment.reference,
-        payment.method,
-      ].join(" ");
-      return includesText(haystack, search);
-    })
-    .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
+export async function listOrders(query: OrdersQuery = {}) {
+  return getRepository().listOrders(query);
 }
 
-export function listOrderFollowUps(orderId: string) {
-  const state = getStoreState();
-  return state.followUps
-    .filter((item) => item.orderId === orderId)
-    .map((item) => ({ ...item, status: computeFollowUpStatus(item) }))
-    .sort((a, b) => (a.dueAt > b.dueAt ? 1 : -1));
+export async function getOrderById(id: string) {
+  return getRepository().getOrderById(id);
 }
 
-export function listOrderPayments(orderId: string) {
-  const state = getStoreState();
-  return state.payments
-    .filter((item) => item.orderId === orderId)
-    .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
+export async function createOrder(input: CreateOrderInput) {
+  return getRepository().createOrder(input);
 }
 
-export function getAnalyticsSnapshot() {
-  return {
-    stats: computeDashboardStats(),
-    series: computeAnalyticsSeries(),
-  };
+export async function updateOrder(id: string, input: UpdateOrderInput) {
+  return getRepository().updateOrder(id, input);
 }
 
-export function getDashboardSnapshot() {
-  const state = getStoreState();
-  return {
-    stats: computeDashboardStats(),
-    orders: state.orders,
-    customers: state.customers,
-    followUps: state.followUps.map((item) => ({
-      ...item,
-      status: computeFollowUpStatus(item),
-    })),
-  };
+export async function listCustomers(query: CustomersQuery = {}) {
+  return getRepository().listCustomers(query);
+}
+
+export async function getCustomerById(id: string) {
+  return getRepository().getCustomerById(id);
+}
+
+export async function createCustomer(input: CreateCustomerInput) {
+  return getRepository().createCustomer(input);
+}
+
+export async function updateCustomer(id: string, input: UpdateCustomerInput) {
+  return getRepository().updateCustomer(id, input);
+}
+
+export async function listFollowUps(query: FollowUpsQuery = {}) {
+  return getRepository().listFollowUps(query);
+}
+
+export async function createFollowUp(input: CreateFollowUpInput) {
+  return getRepository().createFollowUp(input);
+}
+
+export async function updateFollowUp(id: string, input: UpdateFollowUpInput) {
+  return getRepository().updateFollowUp(id, input);
+}
+
+export async function listOrderFollowUps(orderId: string) {
+  return getRepository().listOrderFollowUps(orderId);
+}
+
+export async function listPayments(query: PaymentsQuery = {}) {
+  return getRepository().listPayments(query);
+}
+
+export async function createPayment(input: CreatePaymentInput) {
+  return getRepository().createPayment(input);
+}
+
+export async function updatePayment(id: string, input: UpdatePaymentInput) {
+  return getRepository().updatePayment(id, input);
+}
+
+export async function listOrderPayments(orderId: string) {
+  return getRepository().listOrderPayments(orderId);
+}
+
+export async function getAnalyticsSnapshot() {
+  return getRepository().getAnalyticsSnapshot();
+}
+
+export async function getDashboardSnapshot() {
+  return getRepository().getDashboardSnapshot();
 }

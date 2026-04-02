@@ -9,6 +9,7 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
+    "migrate:local-to-supabase": "node scripts/migrate-local-to-supabase.mjs",
     "stripe:listen": "stripe listen --forward-to http://localhost:3000/api/stripe/webhook",
     "check-format": "prettier --check .",
     "check-lint": "eslint . --ext ts --ext tsx --ext js",
@@ -19,6 +20,7 @@
     "test-build": "npm run check-style && npm run build"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.101.1",
     "lucide-react": "^1.7.0",
     "next": "16.0.10",
     "next-themes": "^0.2.1",

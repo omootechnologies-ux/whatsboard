@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createPayment } from "@/lib/whatsboard-store";
+import { createPayment } from "@/lib/whatsboard-repository";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -20,17 +20,23 @@ export async function POST(request: Request) {
     );
   }
 
-  createPayment({
-    orderId,
-    amount,
-    method: (["M-Pesa", "Bank", "Cash"].includes(method)
-      ? method
-      : "M-Pesa") as "M-Pesa" | "Bank" | "Cash",
-    status: (["unpaid", "partial", "paid", "cod"].includes(status)
-      ? status
-      : "paid") as "unpaid" | "partial" | "paid" | "cod",
-    reference,
-  });
+  try {
+    await createPayment({
+      orderId,
+      amount,
+      method: (["M-Pesa", "Bank", "Cash"].includes(method)
+        ? method
+        : "M-Pesa") as "M-Pesa" | "Bank" | "Cash",
+      status: (["unpaid", "partial", "paid", "cod"].includes(status)
+        ? status
+        : "paid") as "unpaid" | "partial" | "paid" | "cod",
+      reference,
+    });
 
-  return NextResponse.redirect(new URL("/payments?created=1", request.url));
+    return NextResponse.redirect(new URL("/payments?created=1", request.url));
+  } catch {
+    return NextResponse.redirect(
+      new URL("/payments/new?error=persistence", request.url),
+    );
+  }
 }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createFollowUp } from "@/lib/whatsboard-store";
+import { createFollowUp } from "@/lib/whatsboard-repository";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -15,15 +15,21 @@ export async function POST(request: Request) {
     );
   }
 
-  createFollowUp({
-    customerName,
-    orderId,
-    dueAt,
-    priority: (["high", "medium", "low"].includes(priority)
-      ? priority
-      : "medium") as "high" | "medium" | "low",
-    note,
-  });
+  try {
+    await createFollowUp({
+      customerName,
+      orderId,
+      dueAt,
+      priority: (["high", "medium", "low"].includes(priority)
+        ? priority
+        : "medium") as "high" | "medium" | "low",
+      note,
+    });
 
-  return NextResponse.redirect(new URL("/follow-ups?created=1", request.url));
+    return NextResponse.redirect(new URL("/follow-ups?created=1", request.url));
+  } catch {
+    return NextResponse.redirect(
+      new URL("/follow-ups/new?error=persistence", request.url),
+    );
+  }
 }

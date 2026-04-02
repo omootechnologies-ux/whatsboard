@@ -32,12 +32,12 @@ export default async function PaymentsPage({
   searchParams: PaymentsPageSearchParams;
 }) {
   const query = await searchParams;
-  const records = listPayments({
+  const records = await listPayments({
     search: query.search,
     status: query.status,
     method: query.method,
   });
-  const { stats, series } = getAnalyticsSnapshot();
+  const { stats, series } = await getAnalyticsSnapshot();
 
   return (
     <div className="space-y-5 lg:space-y-6">

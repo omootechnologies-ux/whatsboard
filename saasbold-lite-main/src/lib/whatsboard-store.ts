@@ -8,14 +8,14 @@ import type {
 } from "@/data/whatsboard";
 import { customers, followUps, orders, payments } from "@/data/whatsboard";
 
-type StoreState = {
+export type StoreState = {
   orders: OrderRecord[];
   customers: CustomerRecord[];
   followUps: FollowUpRecord[];
   payments: PaymentRecord[];
 };
 
-type CreateOrderInput = {
+export type CreateOrderInput = {
   customerName: string;
   customerPhone?: string;
   channel: OrderRecord["channel"];
@@ -27,7 +27,7 @@ type CreateOrderInput = {
   items: string[];
 };
 
-type UpdateOrderInput = {
+export type UpdateOrderInput = {
   customerName: string;
   stage: OrderRecord["stage"];
   paymentStatus: OrderRecord["paymentStatus"];
@@ -35,14 +35,16 @@ type UpdateOrderInput = {
   notes: string;
 };
 
-type CreateCustomerInput = {
+export type CreateCustomerInput = {
   name: string;
   phone: string;
   location: string;
   status: CustomerRecord["status"];
 };
 
-type CreateFollowUpInput = {
+export type UpdateCustomerInput = Partial<CreateCustomerInput>;
+
+export type CreateFollowUpInput = {
   customerName: string;
   orderId?: string;
   dueAt: string;
@@ -50,7 +52,15 @@ type CreateFollowUpInput = {
   note: string;
 };
 
-type CreatePaymentInput = {
+export type UpdateFollowUpInput = {
+  title?: string;
+  note?: string;
+  dueAt?: string;
+  status?: FollowUpRecord["status"];
+  priority?: FollowUpRecord["priority"];
+};
+
+export type CreatePaymentInput = {
   orderId: string;
   amount: number;
   method: PaymentRecord["method"];
@@ -58,9 +68,13 @@ type CreatePaymentInput = {
   reference: string;
 };
 
-const STORE_FILE =
-  process.env.WHATSBOARD_STORE_PATH ||
-  path.join("/tmp", "whatsboard-store.json");
+export type UpdatePaymentInput = Partial<CreatePaymentInput>;
+
+export const DEFAULT_STORE_FILE = path.join("/tmp", "whatsboard-store.json");
+
+function storeFilePath() {
+  return process.env.WHATSBOARD_STORE_PATH || DEFAULT_STORE_FILE;
+}
 
 function cloneSeedState(): StoreState {
   return {
@@ -71,15 +85,16 @@ function cloneSeedState(): StoreState {
   };
 }
 
-function ensureStore(): StoreState {
+export function ensureStore(): StoreState {
+  const file = storeFilePath();
   try {
-    if (!fs.existsSync(STORE_FILE)) {
+    if (!fs.existsSync(file)) {
       const initial = cloneSeedState();
-      fs.writeFileSync(STORE_FILE, JSON.stringify(initial, null, 2), "utf8");
+      fs.writeFileSync(file, JSON.stringify(initial, null, 2), "utf8");
       return initial;
     }
 
-    const raw = fs.readFileSync(STORE_FILE, "utf8");
+    const raw = fs.readFileSync(file, "utf8");
     const parsed = JSON.parse(raw) as Partial<StoreState>;
     return {
       orders: parsed.orders ?? [],
@@ -92,11 +107,12 @@ function ensureStore(): StoreState {
   }
 }
 
-function persistStore(state: StoreState) {
+export function persistStore(state: StoreState) {
+  const file = storeFilePath();
   try {
-    fs.writeFileSync(STORE_FILE, JSON.stringify(state, null, 2), "utf8");
+    fs.writeFileSync(file, JSON.stringify(state, null, 2), "utf8");
   } catch {
-    // If persistence fails in restricted environments, keep app runtime-safe.
+    // Keep runtime-safe behavior in restricted environments.
   }
 }
 
@@ -136,7 +152,7 @@ function nextPaymentId(list: PaymentRecord[]) {
   return `pay-${max + 1}`;
 }
 
-function statusFromDueDate(dueAt: string): FollowUpRecord["status"] {
+export function statusFromDueDate(dueAt: string): FollowUpRecord["status"] {
   const now = new Date();
   const due = new Date(dueAt);
   const nowStart = new Date(
@@ -154,7 +170,7 @@ function statusFromDueDate(dueAt: string): FollowUpRecord["status"] {
   return "upcoming";
 }
 
-function recalculateCustomers(state: StoreState) {
+export function recalculateCustomers(state: StoreState) {
   const ordersByCustomer = new Map<string, OrderRecord[]>();
 
   state.orders.forEach((order) => {
@@ -269,6 +285,41 @@ export function createCustomer(input: CreateCustomerInput) {
   return customer;
 }
 
+export function updateCustomer(id: string, input: UpdateCustomerInput) {
+  const state = ensureStore();
+  const index = state.customers.findIndex((customer) => customer.id === id);
+  if (index < 0) return null;
+
+  const current = state.customers[index];
+  const nextName = input.name?.trim() || current.name;
+  const updated: CustomerRecord = {
+    ...current,
+    name: nextName,
+    phone: input.phone?.trim() || current.phone,
+    location: input.location?.trim() || current.location,
+    status: input.status || current.status,
+    lastOrderAt: current.lastOrderAt,
+  };
+
+  state.customers[index] = updated;
+
+  state.orders = state.orders.map((order) =>
+    order.customerId === id ? { ...order, customerName: nextName } : order,
+  );
+  state.followUps = state.followUps.map((item) =>
+    item.customerId === id ? { ...item, customerName: nextName } : item,
+  );
+  state.payments = state.payments.map((payment) =>
+    payment.customerName === current.name
+      ? { ...payment, customerName: nextName }
+      : payment,
+  );
+
+  recalculateCustomers(state);
+  persistStore(state);
+  return updated;
+}
+
 export function createFollowUp(input: CreateFollowUpInput) {
   const state = ensureStore();
   const customer =
@@ -293,6 +344,27 @@ export function createFollowUp(input: CreateFollowUpInput) {
   state.followUps.push(followUp);
   persistStore(state);
   return followUp;
+}
+
+export function updateFollowUp(id: string, input: UpdateFollowUpInput) {
+  const state = ensureStore();
+  const index = state.followUps.findIndex((item) => item.id === id);
+  if (index < 0) return null;
+
+  const current = state.followUps[index];
+  const nextDueAt = input.dueAt || current.dueAt;
+  const updated: FollowUpRecord = {
+    ...current,
+    title: input.title?.trim() || current.title,
+    note: input.note?.trim() || current.note,
+    dueAt: nextDueAt,
+    status: input.status || statusFromDueDate(nextDueAt),
+    priority: input.priority || current.priority,
+  };
+
+  state.followUps[index] = updated;
+  persistStore(state);
+  return updated;
 }
 
 export function createPayment(input: CreatePaymentInput) {
@@ -320,4 +392,36 @@ export function createPayment(input: CreatePaymentInput) {
   recalculateCustomers(state);
   persistStore(state);
   return payment;
+}
+
+export function updatePayment(id: string, input: UpdatePaymentInput) {
+  const state = ensureStore();
+  const index = state.payments.findIndex((item) => item.id === id);
+  if (index < 0) return null;
+
+  const current = state.payments[index];
+  const nextOrderId = input.orderId?.trim() || current.orderId;
+  const updated: PaymentRecord = {
+    ...current,
+    orderId: nextOrderId,
+    amount: Number.isFinite(input.amount)
+      ? Number(input.amount)
+      : current.amount,
+    method: input.method || current.method,
+    status: input.status || current.status,
+    reference: input.reference?.trim() || current.reference,
+  };
+
+  state.payments[index] = updated;
+
+  const order = state.orders.find((item) => item.id === updated.orderId);
+  if (order) {
+    order.paymentStatus = updated.status;
+    order.paymentReference = updated.reference;
+    order.updatedAt = new Date().toISOString();
+  }
+
+  recalculateCustomers(state);
+  persistStore(state);
+  return updated;
 }

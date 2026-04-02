@@ -30,7 +30,7 @@ export default async function OrdersPage({
   searchParams: OrdersPageSearchParams;
 }) {
   const query = await searchParams;
-  const filteredOrders = listOrders({
+  const filteredOrders = await listOrders({
     search: query.search,
     stage: query.stage,
     payment: query.payment,

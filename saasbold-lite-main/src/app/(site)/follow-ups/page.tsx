@@ -20,7 +20,7 @@ export default async function FollowUpsPage({
   searchParams: FollowUpsPageSearchParams;
 }) {
   const query = await searchParams;
-  const records = listFollowUps({
+  const records = await listFollowUps({
     search: query.search,
     status: query.status,
   });

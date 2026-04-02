@@ -27,7 +27,7 @@ export default async function CustomersPage({
   searchParams: CustomersPageSearchParams;
 }) {
   const query = await searchParams;
-  const customerRecords = listCustomers({
+  const customerRecords = await listCustomers({
     search: query.search,
     status: query.status,
   });

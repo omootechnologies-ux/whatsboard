@@ -48,16 +48,61 @@ npm run build
 
 ## Data and API
 
-The current build uses local store-backed API routes under `src/app/api/*` and a typed repository layer.
+The app uses a repository abstraction with two persistence drivers:
+
+- `local` file-backed fallback (development-safe)
+- `supabase` production-grade persistence
 
 - Seed/models: `src/data/whatsboard.ts`
-- Store/persistence: `src/lib/whatsboard-store.ts`
-- Query layer: `src/lib/whatsboard-repository.ts`
+- Repository interface + driver switch: `src/lib/whatsboard-repository.ts`
+- Local driver: `src/lib/repositories/local-repository.ts`
+- Supabase driver: `src/lib/repositories/supabase-repository.ts`
+- Supabase server client: `src/lib/supabase/server.ts`
+- API routes: `src/app/api/*`
 
 Default local data file:
 
 - `/tmp/whatsboard-store.json`
 - Override with `WHATSBOARD_STORE_PATH` if needed
+
+## Environment Variables
+
+Required for Supabase persistence:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `WHATSBOARD_PERSISTENCE_DRIVER=local|supabase`
+
+Driver behavior:
+
+- If `WHATSBOARD_PERSISTENCE_DRIVER=supabase`, Supabase is used.
+- If `WHATSBOARD_PERSISTENCE_DRIVER=local`, file-backed fallback is used.
+- If unset, Supabase is auto-selected when server env vars are present; otherwise local fallback is used.
+
+## Supabase Migration + Data Backfill
+
+1. Apply schema migration:
+
+```bash
+supabase db push
+```
+
+Migration file:
+
+- `supabase/migrations/20260402_whatsboard_persistence.sql`
+
+2. Backfill local data into Supabase:
+
+```bash
+npm run migrate:local-to-supabase
+```
+
+Optional local export path override:
+
+```bash
+WHATSBOARD_STORE_PATH=/path/to/whatsboard-store.json npm run migrate:local-to-supabase
+```
 
 ## Notes
 

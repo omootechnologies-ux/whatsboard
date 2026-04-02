@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { updateOrder } from "@/lib/whatsboard-store";
+import { updateOrder } from "@/lib/whatsboard-repository";
 
 export async function POST(
   request: Request,
@@ -19,36 +19,46 @@ export async function POST(
     );
   }
 
-  const record = updateOrder(id, {
-    customerName,
-    stage: ([
-      "new_order",
-      "waiting_payment",
-      "paid",
-      "packing",
-      "dispatched",
-      "delivered",
-    ].includes(stage)
-      ? stage
-      : "new_order") as
-      | "new_order"
-      | "waiting_payment"
-      | "paid"
-      | "packing"
-      | "dispatched"
-      | "delivered",
-    paymentStatus: (["unpaid", "partial", "paid", "cod"].includes(paymentStatus)
-      ? paymentStatus
-      : "unpaid") as "unpaid" | "partial" | "paid" | "cod",
-    amount,
-    notes,
-  });
+  try {
+    const record = await updateOrder(id, {
+      customerName,
+      stage: ([
+        "new_order",
+        "waiting_payment",
+        "paid",
+        "packing",
+        "dispatched",
+        "delivered",
+      ].includes(stage)
+        ? stage
+        : "new_order") as
+        | "new_order"
+        | "waiting_payment"
+        | "paid"
+        | "packing"
+        | "dispatched"
+        | "delivered",
+      paymentStatus: (["unpaid", "partial", "paid", "cod"].includes(
+        paymentStatus,
+      )
+        ? paymentStatus
+        : "unpaid") as "unpaid" | "partial" | "paid" | "cod",
+      amount,
+      notes,
+    });
 
-  if (!record) {
+    if (!record) {
+      return NextResponse.redirect(
+        new URL("/orders?error=not-found", request.url),
+      );
+    }
+
     return NextResponse.redirect(
-      new URL("/orders?error=not-found", request.url),
+      new URL(`/orders/${id}?updated=1`, request.url),
+    );
+  } catch {
+    return NextResponse.redirect(
+      new URL(`/orders/${id}/edit?error=persistence`, request.url),
     );
   }
-
-  return NextResponse.redirect(new URL(`/orders/${id}?updated=1`, request.url));
 }
