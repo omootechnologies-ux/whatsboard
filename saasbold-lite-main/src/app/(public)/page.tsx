@@ -6,21 +6,17 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-import type { OrderRecord, PaymentRecord } from "@/data/whatsboard";
+import type { FollowUpRecord, OrderRecord, PaymentRecord } from "@/data/whatsboard";
 import { formatCurrency } from "@/components/whatsboard-dashboard/formatting";
 import { pricingPlans } from "@/data/pricing-plans";
 import { PricingCard } from "@/components/whatsboard-public/pricing-card";
-import {
-  getDashboardSnapshot,
-  listPayments,
-} from "@/lib/whatsboard-repository";
 import {
   formatOrderReference,
   formatPaymentStatusLabel,
   getPrimaryOrderLabel,
 } from "@/lib/display-labels";
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-static";
 
 const painPoints = [
   "Orders buried in chats",
@@ -120,6 +116,154 @@ const faqs = [
   },
 ] as const;
 
+const demoStats = {
+  activeOrders: 27,
+  payoutPending: 1860000,
+  followUpsDue: 11,
+} as const;
+
+const demoOrders: OrderRecord[] = [
+  {
+    id: "WB-01562",
+    customerId: "demo-customer-1",
+    customerName: "Neema Juma",
+    customerPhone: "+255 743 901 118",
+    channel: "WhatsApp",
+    stage: "waiting_payment",
+    paymentStatus: "partial",
+    amount: 85000,
+    deliveryArea: "Mikocheni",
+    createdAt: "2026-03-31T08:12:00.000Z",
+    updatedAt: "2026-03-31T09:45:00.000Z",
+    notes: "2x Linen Dress",
+    items: ["Linen Dress x2"],
+  },
+  {
+    id: "WB-01561",
+    customerId: "demo-customer-2",
+    customerName: "Asha Mrema",
+    customerPhone: "+255 712 445 901",
+    channel: "Instagram",
+    stage: "packing",
+    paymentStatus: "paid",
+    amount: 120000,
+    deliveryArea: "Sinza",
+    createdAt: "2026-03-31T07:20:00.000Z",
+    updatedAt: "2026-03-31T08:40:00.000Z",
+    notes: "Blender + warranty card",
+    items: ["Smart Blender"],
+    paymentReference: "TZN-482119",
+  },
+  {
+    id: "WB-01560",
+    customerId: "demo-customer-3",
+    customerName: "Kevin Ouma",
+    customerPhone: "+254 701 110 733",
+    channel: "WhatsApp",
+    stage: "new_order",
+    paymentStatus: "unpaid",
+    amount: 46000,
+    deliveryArea: "Westlands",
+    createdAt: "2026-03-31T06:55:00.000Z",
+    updatedAt: "2026-03-31T07:10:00.000Z",
+    notes: "1x Office Lamp",
+    items: ["Office Lamp"],
+  },
+  {
+    id: "WB-01559",
+    customerId: "demo-customer-4",
+    customerName: "Faridah Nansubuga",
+    customerPhone: "+256 778 554 099",
+    channel: "Facebook",
+    stage: "dispatched",
+    paymentStatus: "cod",
+    amount: 73000,
+    deliveryArea: "Ntinda",
+    createdAt: "2026-03-30T16:12:00.000Z",
+    updatedAt: "2026-03-31T06:15:00.000Z",
+    notes: "2x Sneakers",
+    items: ["Sneakers x2"],
+  },
+];
+
+const demoPayments: PaymentRecord[] = [
+  {
+    id: "pay-demo-1",
+    orderId: "WB-01561",
+    customerName: "Asha Mrema",
+    amount: 120000,
+    status: "paid",
+    method: "M-Pesa",
+    reference: "TZN-482119",
+    createdAt: "2026-03-31T08:40:00.000Z",
+  },
+  {
+    id: "pay-demo-2",
+    orderId: "WB-01558",
+    customerName: "Irene Atieno",
+    amount: 59000,
+    status: "partial",
+    method: "Bank",
+    reference: "CRB-110245",
+    createdAt: "2026-03-31T07:35:00.000Z",
+  },
+  {
+    id: "pay-demo-3",
+    orderId: "WB-01557",
+    customerName: "Musa Kato",
+    amount: 42000,
+    status: "cod",
+    method: "Cash",
+    reference: "COD-97531",
+    createdAt: "2026-03-30T18:10:00.000Z",
+  },
+];
+
+const demoFollowUps: FollowUpRecord[] = [
+  {
+    id: "fu-demo-1",
+    customerId: "demo-customer-1",
+    customerName: "Neema Juma",
+    orderId: "WB-01562",
+    title: "Confirm transfer screenshot",
+    note: "Customer said payment will clear before noon.",
+    dueAt: "2026-03-31T11:00:00.000Z",
+    status: "today",
+    priority: "high",
+  },
+  {
+    id: "fu-demo-2",
+    customerId: "demo-customer-3",
+    customerName: "Kevin Ouma",
+    orderId: "WB-01560",
+    title: "Check delivery location pin",
+    note: "Send rider landmark confirmation.",
+    dueAt: "2026-03-31T13:00:00.000Z",
+    status: "upcoming",
+    priority: "medium",
+  },
+  {
+    id: "fu-demo-3",
+    customerId: "demo-customer-5",
+    customerName: "Agnes Njeri",
+    orderId: "WB-01556",
+    title: "Repeat order upsell",
+    note: "Offer bundle discount for second purchase.",
+    dueAt: "2026-03-30T15:00:00.000Z",
+    status: "overdue",
+    priority: "high",
+  },
+];
+
+const demoBoardColumns = [
+  { name: "New", count: 12, hint: "Incoming requests" },
+  { name: "Confirmed", count: 18, hint: "Confirmed in process" },
+  { name: "Packed", count: 9, hint: "Ready to dispatch" },
+  { name: "Delivered", count: 44, hint: "Closed successfully" },
+  { name: "Paid", count: 38, hint: "Payment confirmed" },
+  { name: "Pending follow-up", count: 7, hint: "Needs action" },
+] as const;
+
 type BadgeTone = "danger" | "warning" | "success" | "neutral";
 
 function stageLabel(stage: OrderRecord["stage"]) {
@@ -156,62 +300,12 @@ function paymentTone(status: PaymentRecord["status"]) {
 }
 
 export default function HomePage() {
-  return <HomePageContent />;
-}
-
-async function HomePageContent() {
-  const [{ stats, orders, followUps }, payments] = await Promise.all([
-    getDashboardSnapshot(),
-    listPayments(),
-  ]);
-
-  const orderedByUpdate = [...orders]
+  const orderedByUpdate = [...demoOrders]
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     .slice(0, 4);
 
-  const followUpsPending = followUps.filter(
-    (item) => item.status !== "completed",
-  ).length;
-
-  const boardColumns = [
-    {
-      name: "New",
-      count: orders.filter((order) => order.stage === "new_order").length,
-      hint: "Incoming requests",
-    },
-    {
-      name: "Confirmed",
-      count: orders.filter((order) =>
-        ["waiting_payment", "paid"].includes(order.stage),
-      ).length,
-      hint: "Confirmed in process",
-    },
-    {
-      name: "Packed",
-      count: orders.filter((order) => order.stage === "packing").length,
-      hint: "Ready to dispatch",
-    },
-    {
-      name: "Delivered",
-      count: orders.filter((order) => order.stage === "delivered").length,
-      hint: "Closed successfully",
-    },
-    {
-      name: "Paid",
-      count: orders.filter((order) =>
-        ["paid", "cod"].includes(order.paymentStatus),
-      ).length,
-      hint: "Payment confirmed",
-    },
-    {
-      name: "Pending follow-up",
-      count: followUpsPending,
-      hint: "Needs action",
-    },
-  ];
-
   const activityItems = [
-    ...payments.slice(0, 2).map((payment) => ({
+    ...demoPayments.slice(0, 2).map((payment) => ({
       title: `${getPrimaryOrderLabel({
         customerName: payment.customerName,
         orderId: payment.orderId,
@@ -221,7 +315,7 @@ async function HomePageContent() {
       badge: payment.status,
       tone: paymentTone(payment.status),
     })),
-    ...followUps.slice(0, 2).map((item) => ({
+    ...demoFollowUps.slice(0, 2).map((item) => ({
       title: `${getPrimaryOrderLabel({
         customerName: item.customerName,
         orderId: item.orderId,
@@ -283,10 +377,10 @@ async function HomePageContent() {
           <div className="wb-shell-card p-5 sm:p-6" id="product">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-                Live operations board
+                Product preview
               </p>
-              <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-emerald-700">
-                Live status
+              <span className="rounded-full bg-[var(--color-wb-primary-soft)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-primary)]">
+                Demo sample
               </span>
             </div>
 
@@ -296,7 +390,7 @@ async function HomePageContent() {
                   Active orders
                 </p>
                 <p className="mt-2 text-2xl font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
-                  {stats.activeOrders}
+                  {demoStats.activeOrders}
                 </p>
               </article>
               <article className="wb-soft-card p-3">
@@ -304,7 +398,7 @@ async function HomePageContent() {
                   Pending payments
                 </p>
                 <p className="mt-2 text-2xl font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
-                  {formatCurrency(stats.payoutPending)}
+                  {formatCurrency(demoStats.payoutPending)}
                 </p>
               </article>
               <article className="wb-soft-card p-3">
@@ -312,7 +406,7 @@ async function HomePageContent() {
                   Follow-ups due
                 </p>
                 <p className="mt-2 text-2xl font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
-                  {followUpsPending}
+                  {demoStats.followUpsDue}
                 </p>
               </article>
             </div>
@@ -349,7 +443,7 @@ async function HomePageContent() {
                 ))
               ) : (
                 <article className="rounded-2xl border border-dashed border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 text-sm text-[var(--color-wb-text-muted)]">
-                  No orders tracked yet. Start Free to populate your board.
+                  Demo preview cards appear here. Start Free to track your own real orders.
                 </article>
               )}
             </div>
@@ -378,7 +472,7 @@ async function HomePageContent() {
                 ))
               ) : (
                 <article className="rounded-2xl border border-dashed border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 text-sm text-[var(--color-wb-text-muted)]">
-                  Your first payment and follow-up updates will appear here.
+                  Demo activity appears here. Your real updates start after signup.
                 </article>
               )}
             </div>
@@ -452,7 +546,7 @@ async function HomePageContent() {
 
           <div className="wb-shell-card p-5 sm:p-6">
             <div className="grid gap-3 sm:grid-cols-2">
-              {boardColumns.map((column) => (
+              {demoBoardColumns.map((column) => (
                 <article key={column.name} className="wb-soft-card p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-wb-text-muted)]">
                     {column.name}

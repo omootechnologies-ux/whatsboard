@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bell, CreditCard, Package2, Plus, Users } from "lucide-react";
+import { Bell, CreditCard, Package2, Users } from "lucide-react";
 import {
   ChartCard,
   CustomerRow,
@@ -91,12 +91,6 @@ export default async function DashboardPage() {
       <PageHeader
         title="Dashboard"
         description="Your daily control room for orders, payments, customers, and follow-ups across WhatsApp and social channels."
-        primaryAction={
-          <Link href="/orders/new" className="wb-button-primary">
-            <Plus className="h-4 w-4" />
-            Create Order
-          </Link>
-        }
         secondaryAction={
           <Link href="/orders" className="wb-button-secondary">
             Open Orders Board
