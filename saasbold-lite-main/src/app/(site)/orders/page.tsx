@@ -12,7 +12,10 @@ import {
   SectionCard,
   StageBadge,
 } from "@/components/whatsboard-dashboard/dashboard-ui";
-import { formatCurrency, formatDate } from "@/components/whatsboard-dashboard/formatting";
+import {
+  formatCurrency,
+  formatDate,
+} from "@/components/whatsboard-dashboard/formatting";
 import { listOrders } from "@/lib/whatsboard-repository";
 
 type OrdersPageSearchParams = Promise<{
@@ -65,29 +68,69 @@ export default async function OrdersPage({
         ]}
       />
 
-      <SectionCard title="Orders Board" description="Stage-by-stage workflow with touch-friendly cards.">
+      <SectionCard
+        title="Orders Board"
+        description="Stage-by-stage workflow with touch-friendly cards."
+      >
         <div className="-mx-1 overflow-x-auto pb-1">
           <div className="grid min-w-[960px] gap-4 xl:min-w-0 xl:grid-cols-4">
-            <OrderStageBoard title="New order" orders={filteredOrders.filter((order) => order.stage === "new_order")} />
-            <OrderStageBoard title="Awaiting payment" orders={filteredOrders.filter((order) => order.stage === "waiting_payment")} />
-            <OrderStageBoard title="Paid / Packing" orders={filteredOrders.filter((order) => ["paid", "packing"].includes(order.stage))} />
-            <OrderStageBoard title="Dispatch / Delivered" orders={filteredOrders.filter((order) => ["dispatched", "delivered"].includes(order.stage))} />
+            <OrderStageBoard
+              title="New order"
+              orders={filteredOrders.filter(
+                (order) => order.stage === "new_order",
+              )}
+            />
+            <OrderStageBoard
+              title="Awaiting payment"
+              orders={filteredOrders.filter(
+                (order) => order.stage === "waiting_payment",
+              )}
+            />
+            <OrderStageBoard
+              title="Paid / Packing"
+              orders={filteredOrders.filter((order) =>
+                ["paid", "packing"].includes(order.stage),
+              )}
+            />
+            <OrderStageBoard
+              title="Dispatch / Delivered"
+              orders={filteredOrders.filter((order) =>
+                ["dispatched", "delivered"].includes(order.stage),
+              )}
+            />
           </div>
         </div>
       </SectionCard>
 
-      <SectionCard title="Order ledger" description="Desktop table + mobile cards for clean scanning and quick actions.">
+      <SectionCard
+        title="Order ledger"
+        description="Desktop table + mobile cards for clean scanning and quick actions."
+      >
         <div className="hidden lg:block">
-          <DataTable headers={["Order", "Customer", "Stage", "Payment", "Amount", "Updated", "Action"]}>
+          <DataTable
+            headers={[
+              "Order",
+              "Customer",
+              "Stage",
+              "Payment",
+              "Amount",
+              "Updated",
+              "Action",
+            ]}
+          >
             {filteredOrders.map((order) => (
               <DataRow key={order.id}>
                 <DataCell>
                   <p className="font-semibold">{order.id}</p>
-                  <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">{order.channel}</p>
+                  <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
+                    {order.channel}
+                  </p>
                 </DataCell>
                 <DataCell>
                   <p className="font-semibold">{order.customerName}</p>
-                  <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">{order.deliveryArea}</p>
+                  <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
+                    {order.deliveryArea}
+                  </p>
                 </DataCell>
                 <DataCell>
                   <StageBadge stage={order.stage} />
@@ -96,13 +139,20 @@ export default async function OrdersPage({
                   <PaymentBadge status={order.paymentStatus} />
                 </DataCell>
                 <DataCell>
-                  <span className="font-semibold text-[var(--color-wb-primary)]">{formatCurrency(order.amount)}</span>
+                  <span className="font-semibold text-[var(--color-wb-primary)]">
+                    {formatCurrency(order.amount)}
+                  </span>
                 </DataCell>
                 <DataCell>
-                  <span className="text-xs text-[var(--color-wb-text-muted)]">{formatDate(order.updatedAt)}</span>
+                  <span className="text-xs text-[var(--color-wb-text-muted)]">
+                    {formatDate(order.updatedAt)}
+                  </span>
                 </DataCell>
                 <DataCell compact>
-                  <Link href={`/orders/${order.id}`} className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline">
+                  <Link
+                    href={`/orders/${order.id}`}
+                    className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
+                  >
                     View
                   </Link>
                 </DataCell>

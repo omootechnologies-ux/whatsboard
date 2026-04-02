@@ -10,14 +10,18 @@ export async function POST(request: Request) {
   const note = String(formData.get("note") || "");
 
   if (!customerName.trim() || !dueAt || !note.trim()) {
-    return NextResponse.redirect(new URL("/follow-ups/new?error=invalid", request.url));
+    return NextResponse.redirect(
+      new URL("/follow-ups/new?error=invalid", request.url),
+    );
   }
 
   createFollowUp({
     customerName,
     orderId,
     dueAt,
-    priority: (["high", "medium", "low"].includes(priority) ? priority : "medium") as "high" | "medium" | "low",
+    priority: (["high", "medium", "low"].includes(priority)
+      ? priority
+      : "medium") as "high" | "medium" | "low",
     note,
   });
 

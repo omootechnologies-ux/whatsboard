@@ -3,7 +3,7 @@ import { updateOrder } from "@/lib/whatsboard-store";
 
 export async function POST(
   request: Request,
-  context: { params: Promise<{ id: string }> }
+  context: { params: Promise<{ id: string }> },
 ) {
   const { id } = await context.params;
   const formData = await request.formData();
@@ -14,27 +14,40 @@ export async function POST(
   const notes = String(formData.get("notes") || "");
 
   if (!customerName.trim() || !Number.isFinite(amount) || amount <= 0) {
-    return NextResponse.redirect(new URL(`/orders/${id}/edit?error=invalid`, request.url));
+    return NextResponse.redirect(
+      new URL(`/orders/${id}/edit?error=invalid`, request.url),
+    );
   }
 
   const record = updateOrder(id, {
     customerName,
-    stage: (
-      ["new_order", "waiting_payment", "paid", "packing", "dispatched", "delivered"].includes(stage)
-        ? stage
-        : "new_order"
-    ) as "new_order" | "waiting_payment" | "paid" | "packing" | "dispatched" | "delivered",
-    paymentStatus: (["unpaid", "partial", "paid", "cod"].includes(paymentStatus) ? paymentStatus : "unpaid") as
-      | "unpaid"
-      | "partial"
+    stage: ([
+      "new_order",
+      "waiting_payment",
+      "paid",
+      "packing",
+      "dispatched",
+      "delivered",
+    ].includes(stage)
+      ? stage
+      : "new_order") as
+      | "new_order"
+      | "waiting_payment"
       | "paid"
-      | "cod",
+      | "packing"
+      | "dispatched"
+      | "delivered",
+    paymentStatus: (["unpaid", "partial", "paid", "cod"].includes(paymentStatus)
+      ? paymentStatus
+      : "unpaid") as "unpaid" | "partial" | "paid" | "cod",
     amount,
     notes,
   });
 
   if (!record) {
-    return NextResponse.redirect(new URL("/orders?error=not-found", request.url));
+    return NextResponse.redirect(
+      new URL("/orders?error=not-found", request.url),
+    );
   }
 
   return NextResponse.redirect(new URL(`/orders/${id}?updated=1`, request.url));

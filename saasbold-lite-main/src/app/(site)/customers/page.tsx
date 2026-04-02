@@ -10,7 +10,10 @@ import {
   PageHeader,
   SectionCard,
 } from "@/components/whatsboard-dashboard/dashboard-ui";
-import { formatCurrency, formatDate } from "@/components/whatsboard-dashboard/formatting";
+import {
+  formatCurrency,
+  formatDate,
+} from "@/components/whatsboard-dashboard/formatting";
 import { listCustomers } from "@/lib/whatsboard-repository";
 
 type CustomersPageSearchParams = Promise<{
@@ -43,9 +46,27 @@ export default async function CustomersPage({
       />
 
       <section className="grid gap-4 md:grid-cols-3">
-        <KpiCard label="Tracked customers" value={String(customerRecords.length)} detail="Records captured from daily selling activity." />
-        <KpiCard label="VIP buyers" value={String(customerRecords.filter((customer) => customer.status === "vip").length)} detail="High-value customers worth active follow-up." />
-        <KpiCard label="Waiting sellers" value={String(customerRecords.filter((customer) => customer.status === "waiting").length)} detail="Customers still waiting for next action." />
+        <KpiCard
+          label="Tracked customers"
+          value={String(customerRecords.length)}
+          detail="Records captured from daily selling activity."
+        />
+        <KpiCard
+          label="VIP buyers"
+          value={String(
+            customerRecords.filter((customer) => customer.status === "vip")
+              .length,
+          )}
+          detail="High-value customers worth active follow-up."
+        />
+        <KpiCard
+          label="Waiting sellers"
+          value={String(
+            customerRecords.filter((customer) => customer.status === "waiting")
+              .length,
+          )}
+          detail="Customers still waiting for next action."
+        />
       </section>
 
       <FilterToolbar
@@ -58,22 +79,41 @@ export default async function CustomersPage({
         ]}
       />
 
-      <SectionCard title="Customer records" description="Desktop table with mobile cards for quick customer actions.">
+      <SectionCard
+        title="Customer records"
+        description="Desktop table with mobile cards for quick customer actions."
+      >
         <div className="hidden lg:block">
-          <DataTable headers={["Customer", "Phone", "Location", "Last order", "Total spend", "Status", "Action"]}>
+          <DataTable
+            headers={[
+              "Customer",
+              "Phone",
+              "Location",
+              "Last order",
+              "Total spend",
+              "Status",
+              "Action",
+            ]}
+          >
             {customerRecords.map((customer) => (
               <DataRow key={customer.id}>
                 <DataCell>
                   <p className="font-semibold">{customer.name}</p>
-                  <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">{customer.totalOrders} total orders</p>
+                  <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
+                    {customer.totalOrders} total orders
+                  </p>
                 </DataCell>
                 <DataCell>{customer.phone}</DataCell>
                 <DataCell>{customer.location}</DataCell>
                 <DataCell>
-                  <span className="text-xs text-[var(--color-wb-text-muted)]">{formatDate(customer.lastOrderAt)}</span>
+                  <span className="text-xs text-[var(--color-wb-text-muted)]">
+                    {formatDate(customer.lastOrderAt)}
+                  </span>
                 </DataCell>
                 <DataCell>
-                  <span className="font-semibold text-[var(--color-wb-primary)]">{formatCurrency(customer.totalSpend)}</span>
+                  <span className="font-semibold text-[var(--color-wb-primary)]">
+                    {formatCurrency(customer.totalSpend)}
+                  </span>
                 </DataCell>
                 <DataCell>
                   <span className="rounded-full border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] px-3 py-1 text-xs font-semibold capitalize text-[var(--color-wb-text-muted)]">
@@ -81,7 +121,10 @@ export default async function CustomersPage({
                   </span>
                 </DataCell>
                 <DataCell compact>
-                  <Link href="/orders/new" className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline">
+                  <Link
+                    href="/orders/new"
+                    className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
+                  >
                     Create order
                   </Link>
                 </DataCell>

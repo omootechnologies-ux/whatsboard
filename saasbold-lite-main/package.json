@@ -1,5 +1,5 @@
 {
-  "name": "saasbold-lite",
+  "name": "whatsboard-dashboard",
   "version": "1.2.1",
   "private": true,
   "engines": {
@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
     "stripe:listen": "stripe listen --forward-to http://localhost:3000/api/stripe/webhook",
     "check-format": "prettier --check .",

@@ -1,6 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
-import type { CustomerRecord, FollowUpRecord, OrderRecord, PaymentRecord } from "@/data/whatsboard";
+import type {
+  CustomerRecord,
+  FollowUpRecord,
+  OrderRecord,
+  PaymentRecord,
+} from "@/data/whatsboard";
 import { customers, followUps, orders, payments } from "@/data/whatsboard";
 
 type StoreState = {
@@ -134,8 +139,16 @@ function nextPaymentId(list: PaymentRecord[]) {
 function statusFromDueDate(dueAt: string): FollowUpRecord["status"] {
   const now = new Date();
   const due = new Date(dueAt);
-  const nowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const dueStart = new Date(due.getFullYear(), due.getMonth(), due.getDate()).getTime();
+  const nowStart = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).getTime();
+  const dueStart = new Date(
+    due.getFullYear(),
+    due.getMonth(),
+    due.getDate(),
+  ).getTime();
   if (dueStart < nowStart) return "overdue";
   if (dueStart === nowStart) return "today";
   return "upcoming";
@@ -155,7 +168,10 @@ function recalculateCustomers(state: StoreState) {
     const totalOrders = list.length;
     const totalSpend = list.reduce((sum, order) => sum + order.amount, 0);
     const lastOrderAt = list.length
-      ? list.reduce((latest, item) => (item.updatedAt > latest ? item.updatedAt : latest), list[0].updatedAt)
+      ? list.reduce(
+          (latest, item) => (item.updatedAt > latest ? item.updatedAt : latest),
+          list[0].updatedAt,
+        )
       : customer.lastOrderAt;
     return {
       ...customer,
@@ -175,7 +191,9 @@ export function createOrder(input: CreateOrderInput) {
   const now = new Date().toISOString();
   const normalizedName = input.customerName.trim().toLowerCase();
 
-  let customer = state.customers.find((item) => item.name.trim().toLowerCase() === normalizedName);
+  let customer = state.customers.find(
+    (item) => item.name.trim().toLowerCase() === normalizedName,
+  );
   if (!customer) {
     customer = {
       id: nextCustomerId(state.customers),
@@ -254,7 +272,11 @@ export function createCustomer(input: CreateCustomerInput) {
 export function createFollowUp(input: CreateFollowUpInput) {
   const state = ensureStore();
   const customer =
-    state.customers.find((item) => item.name.trim().toLowerCase() === input.customerName.trim().toLowerCase()) ?? null;
+    state.customers.find(
+      (item) =>
+        item.name.trim().toLowerCase() ===
+        input.customerName.trim().toLowerCase(),
+    ) ?? null;
 
   const followUp: FollowUpRecord = {
     id: nextFollowUpId(state.followUps),

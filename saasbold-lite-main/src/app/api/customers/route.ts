@@ -9,14 +9,18 @@ export async function POST(request: Request) {
   const status = String(formData.get("status") || "active");
 
   if (!name.trim() || !phone.trim() || !location.trim()) {
-    return NextResponse.redirect(new URL("/customers/new?error=invalid", request.url));
+    return NextResponse.redirect(
+      new URL("/customers/new?error=invalid", request.url),
+    );
   }
 
   createCustomer({
     name,
     phone,
     location,
-    status: (["active", "waiting", "vip"].includes(status) ? status : "active") as "active" | "waiting" | "vip",
+    status: (["active", "waiting", "vip"].includes(status)
+      ? status
+      : "active") as "active" | "waiting" | "vip",
   });
 
   return NextResponse.redirect(new URL("/customers?created=1", request.url));

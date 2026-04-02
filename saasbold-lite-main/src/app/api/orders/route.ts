@@ -13,28 +13,42 @@ export async function POST(request: Request) {
   const notes = String(formData.get("notes") || "");
   const itemsInput = String(formData.get("items") || "");
 
-  if (!customerName.trim() || !deliveryArea.trim() || !Number.isFinite(amount) || amount <= 0) {
-    return NextResponse.redirect(new URL("/orders/new?error=invalid", request.url));
+  if (
+    !customerName.trim() ||
+    !deliveryArea.trim() ||
+    !Number.isFinite(amount) ||
+    amount <= 0
+  ) {
+    return NextResponse.redirect(
+      new URL("/orders/new?error=invalid", request.url),
+    );
   }
 
   const record = createOrder({
     customerName,
     customerPhone,
-    channel: (["WhatsApp", "Instagram", "TikTok", "Facebook"].includes(channel) ? channel : "WhatsApp") as
-      | "WhatsApp"
-      | "Instagram"
-      | "TikTok"
-      | "Facebook",
-    stage: (
-      ["new_order", "waiting_payment", "paid", "packing", "dispatched", "delivered"].includes(stage)
-        ? stage
-        : "new_order"
-    ) as "new_order" | "waiting_payment" | "paid" | "packing" | "dispatched" | "delivered",
-    paymentStatus: (["unpaid", "partial", "paid", "cod"].includes(paymentStatus) ? paymentStatus : "unpaid") as
-      | "unpaid"
-      | "partial"
+    channel: (["WhatsApp", "Instagram", "TikTok", "Facebook"].includes(channel)
+      ? channel
+      : "WhatsApp") as "WhatsApp" | "Instagram" | "TikTok" | "Facebook",
+    stage: ([
+      "new_order",
+      "waiting_payment",
+      "paid",
+      "packing",
+      "dispatched",
+      "delivered",
+    ].includes(stage)
+      ? stage
+      : "new_order") as
+      | "new_order"
+      | "waiting_payment"
       | "paid"
-      | "cod",
+      | "packing"
+      | "dispatched"
+      | "delivered",
+    paymentStatus: (["unpaid", "partial", "paid", "cod"].includes(paymentStatus)
+      ? paymentStatus
+      : "unpaid") as "unpaid" | "partial" | "paid" | "cod",
     amount,
     deliveryArea,
     notes,
@@ -44,5 +58,7 @@ export async function POST(request: Request) {
       .filter(Boolean),
   });
 
-  return NextResponse.redirect(new URL(`/orders/${record.id}?created=1`, request.url));
+  return NextResponse.redirect(
+    new URL(`/orders/${record.id}?created=1`, request.url),
+  );
 }

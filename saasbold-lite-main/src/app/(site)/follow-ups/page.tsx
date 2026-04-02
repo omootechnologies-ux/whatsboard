@@ -1,6 +1,12 @@
 import Link from "next/link";
 import { Bell } from "lucide-react";
-import { FilterToolbar, FollowUpCard, KpiCard, PageHeader, SectionCard } from "@/components/whatsboard-dashboard/dashboard-ui";
+import {
+  FilterToolbar,
+  FollowUpCard,
+  KpiCard,
+  PageHeader,
+  SectionCard,
+} from "@/components/whatsboard-dashboard/dashboard-ui";
 import { listFollowUps } from "@/lib/whatsboard-repository";
 
 type FollowUpsPageSearchParams = Promise<{
@@ -37,10 +43,26 @@ export default async function FollowUpsPage({
       />
 
       <section className="grid gap-4 md:grid-cols-4">
-        <KpiCard label="Overdue" value={String(overdue.length)} detail="Urgent tasks likely leaking revenue." />
-        <KpiCard label="Today" value={String(today.length)} detail="Follow-ups that should close today." />
-        <KpiCard label="Upcoming" value={String(upcoming.length)} detail="Next queued reminders in the pipeline." />
-        <KpiCard label="Completed" value={String(completed.length)} detail="Tasks already closed and logged." />
+        <KpiCard
+          label="Overdue"
+          value={String(overdue.length)}
+          detail="Urgent tasks likely leaking revenue."
+        />
+        <KpiCard
+          label="Today"
+          value={String(today.length)}
+          detail="Follow-ups that should close today."
+        />
+        <KpiCard
+          label="Upcoming"
+          value={String(upcoming.length)}
+          detail="Next queued reminders in the pipeline."
+        />
+        <KpiCard
+          label="Completed"
+          value={String(completed.length)}
+          detail="Tasks already closed and logged."
+        />
       </section>
 
       <FilterToolbar
@@ -55,7 +77,10 @@ export default async function FollowUpsPage({
       />
 
       <section className="grid gap-4 xl:grid-cols-2">
-        <SectionCard title="Overdue + Today" description="Handle these first to protect conversion and trust.">
+        <SectionCard
+          title="Overdue + Today"
+          description="Handle these first to protect conversion and trust."
+        >
           <div className="space-y-3">
             {[...overdue, ...today].map((item) => (
               <FollowUpCard key={item.id} item={item} />
@@ -63,7 +88,10 @@ export default async function FollowUpsPage({
           </div>
         </SectionCard>
 
-        <SectionCard title="Upcoming queue" description="Planned reminders and scheduled customer callbacks.">
+        <SectionCard
+          title="Upcoming queue"
+          description="Planned reminders and scheduled customer callbacks."
+        >
           <div className="space-y-3">
             {upcoming.map((item) => (
               <FollowUpCard key={item.id} item={item} />
@@ -72,20 +100,35 @@ export default async function FollowUpsPage({
         </SectionCard>
       </section>
 
-      <SectionCard title="Completed follow-ups" description="Recently completed reminders and outcomes.">
+      <SectionCard
+        title="Completed follow-ups"
+        description="Recently completed reminders and outcomes."
+      >
         <div className="space-y-3">
           {completed.map((item) => (
-            <div key={item.id} className="rounded-[24px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4">
+            <div
+              key={item.id}
+              className="rounded-[24px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4"
+            >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-[var(--color-wb-text)]">{item.title}</p>
-                  <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">{item.customerName}</p>
+                  <p className="font-semibold text-[var(--color-wb-text)]">
+                    {item.title}
+                  </p>
+                  <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
+                    {item.customerName}
+                  </p>
                 </div>
-                <Link href={item.orderId ? `/orders/${item.orderId}` : "/orders"} className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline">
+                <Link
+                  href={item.orderId ? `/orders/${item.orderId}` : "/orders"}
+                  className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
+                >
                   Open order
                 </Link>
               </div>
-              <p className="mt-3 text-sm leading-6 text-[var(--color-wb-text-muted)]">{item.note}</p>
+              <p className="mt-3 text-sm leading-6 text-[var(--color-wb-text-muted)]">
+                {item.note}
+              </p>
             </div>
           ))}
         </div>
