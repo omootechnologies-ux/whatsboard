@@ -17,7 +17,7 @@ export const pricingPlans: PricingPlan[] = [
     name: "Free",
     priceLabel: "TZS 0",
     cadence: "/forever",
-    badge: "Start here",
+    badge: "Try it first",
     description:
       "Track your first orders and see how structured selling feels without paying upfront.",
     ctaLabel: "Start Free",
@@ -34,12 +34,11 @@ export const pricingPlans: PricingPlan[] = [
     name: "Starter",
     priceLabel: "TZS 15,000",
     cadence: "/month",
-    badge: "Most active sellers",
+    badge: "Solo seller",
     description:
-      "For sellers who need daily control over payments, follow-ups, and delivery updates.",
-    ctaLabel: "Choose Starter",
+      "For one-person sellers who need daily control over payments, follow-ups, and delivery updates.",
+    ctaLabel: "Get Started Today",
     ctaHref: "/register",
-    highlight: true,
     features: [
       "Unlimited orders",
       "Payment tracking",
@@ -53,11 +52,12 @@ export const pricingPlans: PricingPlan[] = [
     name: "Growth",
     priceLabel: "TZS 35,000",
     cadence: "/month",
-    badge: "Scaling teams",
+    badge: "Growing business",
     description:
-      "Built for fast-growing social commerce teams with shared workflows and tighter operations.",
-    ctaLabel: "Choose Growth",
+      "Built for growing social commerce teams that need shared workflows and tighter operations.",
+    ctaLabel: "Get Started Today",
     ctaHref: "/register",
+    highlight: true,
     features: [
       "Everything in Starter",
       "2 team members included",
@@ -70,10 +70,10 @@ export const pricingPlans: PricingPlan[] = [
     name: "Business",
     priceLabel: "TZS 70,000",
     cadence: "/month",
-    badge: "For serious operations",
+    badge: "Team workflow",
     description:
       "For established East African sellers running multi-channel teams and higher daily volume.",
-    ctaLabel: "Choose Business",
+    ctaLabel: "Get Started Today",
     ctaHref: "/register",
     features: [
       "Everything in Growth",

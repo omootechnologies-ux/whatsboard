@@ -71,7 +71,7 @@ export function PublicNav() {
 
         <div className="hidden items-center gap-2 md:flex">
           <Link href="/dashboard" className="wb-button-secondary">
-            Open App
+            Watch Demo
           </Link>
           <Link href="/register" className="wb-button-primary">
             Start Free
@@ -108,7 +108,7 @@ export function PublicNav() {
             })}
             <div className="mt-2 grid grid-cols-2 gap-2">
               <Link href="/dashboard" className="wb-button-secondary">
-                Open App
+                Watch Demo
               </Link>
               <Link href="/register" className="wb-button-primary">
                 Start Free
