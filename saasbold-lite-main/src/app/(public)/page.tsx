@@ -365,7 +365,7 @@ export default function HomePage() {
                 Start Free
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="/dashboard" className="wb-button-secondary">
+              <Link href="/login?next=%2Fdashboard" className="wb-button-secondary">
                 Watch Demo
               </Link>
             </div>
@@ -736,7 +736,7 @@ export default function HomePage() {
           <Link href="/register" className="wb-button-primary">
             Get Started Today
           </Link>
-          <Link href="/dashboard" className="wb-button-secondary">
+          <Link href="/login?next=%2Fdashboard" className="wb-button-secondary">
             Watch Demo
           </Link>
         </div>
@@ -789,7 +789,7 @@ export default function HomePage() {
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/dashboard"
+              href="/login?next=%2Fdashboard"
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/40 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
             >
               Watch Demo

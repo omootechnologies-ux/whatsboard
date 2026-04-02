@@ -30,7 +30,7 @@ export function PublicFooter() {
             Pricing
           </Link>
           <Link
-            href="/dashboard"
+            href="/login?next=%2Fdashboard"
             className="rounded-xl px-3 py-2 text-[var(--color-wb-text-muted)] transition hover:bg-[var(--color-wb-primary-soft)] hover:text-[var(--color-wb-primary)]"
           >
             Demo

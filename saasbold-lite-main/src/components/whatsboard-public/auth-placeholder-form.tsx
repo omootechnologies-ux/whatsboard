@@ -5,6 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import {
+  clearAuthSessionCookies,
+  persistAuthSessionCookies,
+} from "@/lib/auth/cookies";
 
 type AuthMode = "login" | "register";
 
@@ -71,10 +75,12 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         }
 
         if (data.session) {
+          persistAuthSessionCookies(data.session);
           router.replace(redirectPath);
           router.refresh();
           return;
         }
+        clearAuthSessionCookies();
       } catch (error) {
         setErrorMessage(resolveAuthErrorMessage(error));
       } finally {
@@ -164,7 +170,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               });
 
               if (error) {
-                setErrorMessage(error.message);
+                setErrorMessage(resolveAuthErrorMessage(error));
                 return;
               }
 
@@ -172,9 +178,11 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 setInfoMessage(
                   "Account created. Check your email to verify before signing in.",
                 );
+                clearAuthSessionCookies();
                 return;
               }
 
+              persistAuthSessionCookies(data.session);
               router.push(redirectPath);
               router.refresh();
               return;
@@ -186,7 +194,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             });
 
             if (error) {
-              setErrorMessage(error.message);
+              setErrorMessage(resolveAuthErrorMessage(error));
               return;
             }
 
@@ -196,8 +204,12 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 setErrorMessage(
                   "Login succeeded but session is not active yet. Refresh and try again.",
                 );
+                clearAuthSessionCookies();
                 return;
               }
+              persistAuthSessionCookies(sessionData.session);
+            } else {
+              persistAuthSessionCookies(data.session);
             }
 
             router.push(redirectPath);

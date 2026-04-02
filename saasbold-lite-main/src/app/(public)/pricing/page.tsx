@@ -17,8 +17,8 @@ export default function PricingPage() {
           <ArrowLeft className="h-4 w-4" />
           Back to home
         </Link>
-        <Link href="/dashboard" className="wb-button-secondary">
-          Open dashboard
+        <Link href="/login?next=%2Fdashboard" className="wb-button-secondary">
+          Watch Demo
         </Link>
       </div>
 
