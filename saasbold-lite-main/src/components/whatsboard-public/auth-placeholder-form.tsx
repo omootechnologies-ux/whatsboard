@@ -141,8 +141,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               setErrorMessage("Enter a valid email address.");
               return;
             }
-            if (password.length < 8) {
-              setErrorMessage("Password must be at least 8 characters.");
+            if (isRegister && password.length < 6) {
+              setErrorMessage("Password must be at least 6 characters.");
               return;
             }
             if (isRegister && password !== confirmPassword) {
@@ -180,7 +180,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               return;
             }
 
-            const { error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await supabase.auth.signInWithPassword({
               email,
               password,
             });
@@ -188,6 +188,16 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             if (error) {
               setErrorMessage(error.message);
               return;
+            }
+
+            if (!data.session) {
+              const { data: sessionData } = await supabase.auth.getSession();
+              if (!sessionData.session) {
+                setErrorMessage(
+                  "Login succeeded but session is not active yet. Refresh and try again.",
+                );
+                return;
+              }
             }
 
             router.push(redirectPath);
