@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme {
+  --font-satoshi: "Satoshi", sans-serif;
+  --font-inter: "Inter", sans-serif;
+
+  --color-wb-background: #f7faf8;
+  --color-wb-surface: #ffffff;
+  --color-wb-surface-alt: #f2f7f4;
+  --color-wb-border: #dbe7df;
+  --color-wb-border-strong: #cbd9d1;
+  --color-wb-text: #111111;
+  --color-wb-text-muted: #5b655f;
+  --color-wb-primary: #0f5d46;
+  --color-wb-primary-dark: #0a3d2e;
+  --color-wb-primary-soft: #edf7f2;
+  --color-wb-success: #0d8f58;
+  --color-wb-warning: #d28b1f;
+  --color-wb-danger: #c7675d;
+}
+
+@layer base {
+  * {
+    @apply border-transparent;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-[var(--color-wb-background)] font-sans text-[var(--color-wb-text)] antialiased;
+    font-family: var(--font-satoshi), var(--font-inter), sans-serif;
+  }
+
+  a,
+  button,
+  input,
+  select,
+  textarea {
+    @apply outline-none;
+  }
+
+  ::selection {
+    @apply bg-[var(--color-wb-primary)] text-white;
+  }
+}
+
+@layer components {
+  .wb-shell-card {
+    @apply rounded-[28px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface)] shadow-[0_18px_44px_rgba(17,17,17,0.05)];
+  }
+
+  .wb-soft-card {
+    @apply rounded-[24px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)];
+  }
+
+  .wb-button-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--color-wb-primary)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-wb-primary-dark)];
+  }
+
+  .wb-button-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-wb-border)] bg-white px-4 py-3 text-sm font-semibold text-[var(--color-wb-primary)] transition hover:bg-[var(--color-wb-primary-soft)];
+  }
+
+  .wb-input {
+    @apply h-12 w-full rounded-2xl border border-[var(--color-wb-border)] bg-white px-4 text-sm text-[var(--color-wb-text)] placeholder:text-[var(--color-wb-text-muted)] focus:border-[color:rgba(15,93,70,0.35)];
+  }
+}
