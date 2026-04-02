@@ -20,6 +20,10 @@ import {
   getAnalyticsSnapshot,
   listPayments,
 } from "@/lib/whatsboard-repository";
+import {
+  formatOrderReference,
+  getPrimaryOrderLabel,
+} from "@/lib/display-labels";
 
 type PaymentsPageSearchParams = Promise<{
   search?: string;
@@ -123,8 +127,16 @@ export default async function PaymentsPage({
             >
               {records.map((payment) => (
                 <DataRow key={payment.id}>
-                  <DataCell>{payment.customerName}</DataCell>
-                  <DataCell>{payment.orderId}</DataCell>
+                  <DataCell>
+                    {getPrimaryOrderLabel({
+                      customerName: payment.customerName,
+                      orderId: payment.orderId,
+                      kind: "customer",
+                    })}
+                  </DataCell>
+                  <DataCell>
+                    Order #{formatOrderReference(payment.orderId) || "WB-00000"}
+                  </DataCell>
                   <DataCell>{payment.method}</DataCell>
                   <DataCell>
                     <span className="font-semibold text-[var(--color-wb-primary)]">

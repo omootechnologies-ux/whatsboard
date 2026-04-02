@@ -20,6 +20,11 @@ import {
   getDashboardSnapshot,
   listPayments,
 } from "@/lib/whatsboard-repository";
+import {
+  formatOrderReference,
+  formatPaymentStatusLabel,
+  getPrimaryOrderLabel,
+} from "@/lib/display-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -47,18 +52,30 @@ export default async function DashboardPage() {
   const recentActivity = [
     ...orders.map((order) => ({
       at: order.updatedAt,
-      title: `Order ${order.id} is ${order.stage.replaceAll("_", " ")}`,
-      detail: `${order.customerName} • ${formatCurrency(order.amount)}`,
+      title: `Order #${formatOrderReference(order.id) || "WB-00000"} is ${order.stage.replaceAll("_", " ")}`,
+      detail: `${getPrimaryOrderLabel({
+        customerName: order.customerName,
+        customerPhone: order.customerPhone,
+        orderId: order.id,
+      })} • ${formatCurrency(order.amount)}`,
     })),
     ...followUps.map((item) => ({
       at: item.dueAt,
       title: `${item.status.toUpperCase()} follow-up: ${item.title}`,
-      detail: `${item.customerName}${item.orderId ? ` • Order ${item.orderId}` : ""}`,
+      detail: `${getPrimaryOrderLabel({
+        customerName: item.customerName,
+        orderId: item.orderId,
+        kind: "customer",
+      })}${item.orderId ? ` • Order #${formatOrderReference(item.orderId) || "WB-00000"}` : ""}`,
     })),
     ...payments.map((payment) => ({
       at: payment.createdAt,
-      title: `Payment ${payment.status} • ${payment.orderId}`,
-      detail: `${payment.customerName} • ${formatCurrency(payment.amount)} via ${payment.method}`,
+      title: `Payment ${formatPaymentStatusLabel(payment.status)} • ${formatOrderReference(payment.orderId) || "WB-00000"}`,
+      detail: `${getPrimaryOrderLabel({
+        customerName: payment.customerName,
+        orderId: payment.orderId,
+        kind: "customer",
+      })} • ${formatCurrency(payment.amount)} via ${payment.method}`,
     })),
   ]
     .sort((a, b) => (a.at < b.at ? 1 : -1))
@@ -202,10 +219,14 @@ export default async function DashboardPage() {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="font-semibold text-[var(--color-wb-text)]">
-                        {order.id}
+                        {getPrimaryOrderLabel({
+                          customerName: order.customerName,
+                          customerPhone: order.customerPhone,
+                          orderId: order.id,
+                        })}
                       </p>
                       <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-                        {order.customerName}
+                        {order.channel} • {formatPaymentStatusLabel(order.paymentStatus)}
                       </p>
                     </div>
                     <span className="text-sm font-semibold text-[var(--color-wb-primary)]">
@@ -213,7 +234,8 @@ export default async function DashboardPage() {
                     </span>
                   </div>
                   <p className="mt-2 text-xs uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
-                    {order.stage.replaceAll("_", " ")} • Updated{" "}
+                    {order.stage.replaceAll("_", " ")} • Order #
+                    {formatOrderReference(order.id) || "WB-00000"} • Updated{" "}
                     {formatDate(order.updatedAt)}
                   </p>
                 </Link>

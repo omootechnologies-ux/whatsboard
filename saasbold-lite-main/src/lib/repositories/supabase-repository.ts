@@ -334,6 +334,7 @@ function mapOrderRecord(
     id: row.order_number,
     customerId: row.customer_id || customer?.id || "unknown-customer",
     customerName: customer?.name || "Unknown customer",
+    customerPhone: customer?.phone || undefined,
     channel: asChannel(row.source),
     stage: asOrderStage(row.status),
     paymentStatus: asPaymentStatus(row.payment_status),

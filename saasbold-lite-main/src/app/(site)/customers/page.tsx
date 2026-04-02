@@ -16,6 +16,7 @@ import {
   formatDate,
 } from "@/components/whatsboard-dashboard/formatting";
 import { listCustomers } from "@/lib/whatsboard-repository";
+import { getPrimaryOrderLabel } from "@/lib/display-labels";
 
 type CustomersPageSearchParams = Promise<{
   search?: string;
@@ -107,7 +108,13 @@ export default async function CustomersPage({
               {customerRecords.map((customer) => (
                 <DataRow key={customer.id}>
                   <DataCell>
-                    <p className="font-semibold">{customer.name}</p>
+                    <p className="font-semibold">
+                      {getPrimaryOrderLabel({
+                        customerName: customer.name,
+                        customerPhone: customer.phone,
+                        kind: "customer",
+                      })}
+                    </p>
                     <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
                       {customer.totalOrders} total orders
                     </p>

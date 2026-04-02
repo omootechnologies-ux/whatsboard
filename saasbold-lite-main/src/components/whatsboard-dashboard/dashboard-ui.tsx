@@ -31,6 +31,12 @@ import {
   formatCurrency,
   formatDate,
 } from "@/components/whatsboard-dashboard/formatting";
+import {
+  formatOrderReference,
+  getPrimaryOrderLabel,
+  formatPaymentStatusLabel,
+  formatStageLabel,
+} from "@/lib/display-labels";
 
 type NavItem = {
   href: string;
@@ -723,39 +729,37 @@ export function StageBadge({ stage }: { stage: OrderRecord["stage"] }) {
     <span
       className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold capitalize ${tones[tone]}`}
     >
-      {stage.replaceAll("_", " ")}
+      {formatStageLabel(stage)}
     </span>
   );
 }
 
 export function OrderCard({ order }: { order: OrderRecord }) {
+  const primaryLabel = getPrimaryOrderLabel({
+    customerName: order.customerName,
+    customerPhone: order.customerPhone,
+    orderId: order.id,
+  });
+  const reference = formatOrderReference(order.id);
+
   return (
     <div className="rounded-[24px] border border-[var(--color-wb-border)] bg-white p-4 shadow-[0_14px_28px_rgba(17,17,17,0.04)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate font-semibold text-[var(--color-wb-text)]">
-            {order.customerName}
+            {primaryLabel}
           </p>
-          <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-            {order.channel} • {order.deliveryArea}
+          <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
+            {order.channel} • {formatCurrency(order.amount)} •{" "}
+            {formatPaymentStatusLabel(order.paymentStatus)}
           </p>
         </div>
         <StageBadge stage={order.stage} />
       </div>
-      <div className="mt-4">
-        <p className="text-sm font-medium text-[var(--color-wb-text)]">
-          {order.items[0]}
-        </p>
-        <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-          {order.items.length > 1
-            ? `${order.items.length} items total`
-            : "1 item total"}
-        </p>
-      </div>
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <div>
-          <p className="text-lg font-black tracking-[-0.03em] text-[var(--color-wb-primary)]">
-            {formatCurrency(order.amount)}
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--color-wb-border)] pt-3">
+        <div className="min-w-0">
+          <p className="truncate text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
+            {reference ? `Order #${reference}` : "Untitled order"}
           </p>
           <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
             Updated {formatDate(order.updatedAt)}
@@ -902,11 +906,16 @@ export function SearchBar({
 }
 
 export function CustomerRow({ customer }: { customer: CustomerRecord }) {
+  const customerLabel = getPrimaryOrderLabel({
+    customerName: customer.name,
+    customerPhone: customer.phone,
+    kind: "customer",
+  });
   return (
     <div className="flex flex-col gap-3 rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <p className="font-semibold text-[var(--color-wb-text)]">
-          {customer.name}
+          {customerLabel}
         </p>
         <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
           {customer.phone} • {customer.location}
@@ -925,6 +934,11 @@ export function CustomerRow({ customer }: { customer: CustomerRecord }) {
 }
 
 export function FollowUpCard({ item }: { item: FollowUpRecord }) {
+  const customerLabel = getPrimaryOrderLabel({
+    customerName: item.customerName,
+    orderId: item.orderId,
+    kind: "customer",
+  });
   const tone =
     item.status === "overdue"
       ? "border-rose-100 bg-rose-50 text-rose-700"
@@ -942,7 +956,7 @@ export function FollowUpCard({ item }: { item: FollowUpRecord }) {
             {item.title}
           </p>
           <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-            {item.customerName}
+            {customerLabel}
           </p>
         </div>
         <span

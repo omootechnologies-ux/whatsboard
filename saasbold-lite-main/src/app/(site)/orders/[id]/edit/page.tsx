@@ -6,6 +6,7 @@ import {
   SectionCard,
 } from "@/components/whatsboard-dashboard/dashboard-ui";
 import { getOrderById } from "@/lib/whatsboard-repository";
+import { formatOrderReference } from "@/lib/display-labels";
 
 export default async function EditOrderPage({
   params,
@@ -25,7 +26,7 @@ export default async function EditOrderPage({
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
-        title={`Edit ${order.id}`}
+        title={`Edit Order #${formatOrderReference(order.id) || "WB-00000"}`}
         description="Update order stage, payment state, and dispatch details from one consistent editor."
         primaryAction={
           <button

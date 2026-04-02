@@ -210,6 +210,7 @@ export function createOrder(input: CreateOrderInput) {
     id: nextOrderId(state.orders),
     customerId: customer.id,
     customerName: customer.name,
+    customerPhone: customer.phone,
     channel: input.channel,
     stage: input.stage,
     paymentStatus: input.paymentStatus,

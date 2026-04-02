@@ -18,6 +18,10 @@ import {
   formatDate,
 } from "@/components/whatsboard-dashboard/formatting";
 import { listOrders } from "@/lib/whatsboard-repository";
+import {
+  formatOrderReference,
+  getPrimaryOrderLabel,
+} from "@/lib/display-labels";
 
 type OrdersPageSearchParams = Promise<{
   search?: string;
@@ -117,13 +121,21 @@ export default async function OrdersPage({
               {filteredOrders.map((order) => (
                 <DataRow key={order.id}>
                   <DataCell>
-                    <p className="font-semibold">{order.id}</p>
+                    <p className="font-semibold">
+                      Order #{formatOrderReference(order.id) || "WB-00000"}
+                    </p>
                     <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
                       {order.channel}
                     </p>
                   </DataCell>
                   <DataCell>
-                    <p className="font-semibold">{order.customerName}</p>
+                    <p className="font-semibold">
+                      {getPrimaryOrderLabel({
+                        customerName: order.customerName,
+                        customerPhone: order.customerPhone,
+                        orderId: order.id,
+                      })}
+                    </p>
                     <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
                       {order.deliveryArea}
                     </p>

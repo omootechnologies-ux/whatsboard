@@ -9,6 +9,10 @@ import {
   SectionCard,
 } from "@/components/whatsboard-dashboard/dashboard-ui";
 import { listFollowUps } from "@/lib/whatsboard-repository";
+import {
+  formatOrderReference,
+  getPrimaryOrderLabel,
+} from "@/lib/display-labels";
 
 type FollowUpsPageSearchParams = Promise<{
   search?: string;
@@ -142,14 +146,20 @@ export default async function FollowUpsPage({
                       {item.title}
                     </p>
                     <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-                      {item.customerName}
+                      {getPrimaryOrderLabel({
+                        customerName: item.customerName,
+                        orderId: item.orderId,
+                        kind: "customer",
+                      })}
                     </p>
                   </div>
                   <Link
                     href={item.orderId ? `/orders/${item.orderId}` : "/orders"}
                     className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
                   >
-                    Open order
+                    {item.orderId
+                      ? `Open order #${formatOrderReference(item.orderId) || "WB-00000"}`
+                      : "Open orders"}
                   </Link>
                 </div>
                 <p className="mt-3 text-sm leading-6 text-[var(--color-wb-text-muted)]">

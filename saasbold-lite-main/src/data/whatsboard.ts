@@ -12,6 +12,7 @@ export type OrderRecord = {
   id: string;
   customerId: string;
   customerName: string;
+  customerPhone?: string;
   channel: "WhatsApp" | "Instagram" | "TikTok" | "Facebook";
   stage: OrderStage;
   paymentStatus: PaymentStatus;

@@ -18,6 +18,10 @@ import {
   listOrderFollowUps,
   listOrderPayments,
 } from "@/lib/whatsboard-repository";
+import {
+  formatOrderReference,
+  getPrimaryOrderLabel,
+} from "@/lib/display-labels";
 
 export default async function OrderDetailsPage({
   params,
@@ -41,7 +45,7 @@ export default async function OrderDetailsPage({
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
-        title={`Order ${order.id}`}
+        title={`Order #${formatOrderReference(order.id) || "WB-00000"}`}
         description="Complete order context: customer, payment trail, dispatch status, and next follow-up actions."
         primaryAction={
           <Link href={`/orders/${order.id}/edit`} className="wb-button-primary">
@@ -76,7 +80,12 @@ export default async function OrderDetailsPage({
                 Customer
               </p>
               <p className="mt-3 text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
-                {order.customerName}
+                {getPrimaryOrderLabel({
+                  customerName: order.customerName,
+                  customerPhone: customer?.phone || order.customerPhone,
+                  orderId: order.id,
+                  kind: "customer",
+                })}
               </p>
               <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
                 {customer?.phone || "No phone"} • {order.deliveryArea}

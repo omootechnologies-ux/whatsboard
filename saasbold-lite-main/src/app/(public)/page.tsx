@@ -14,6 +14,11 @@ import {
   getDashboardSnapshot,
   listPayments,
 } from "@/lib/whatsboard-repository";
+import {
+  formatOrderReference,
+  formatPaymentStatusLabel,
+  getPrimaryOrderLabel,
+} from "@/lib/display-labels";
 
 export const dynamic = "force-dynamic";
 
@@ -207,13 +212,21 @@ async function HomePageContent() {
 
   const activityItems = [
     ...payments.slice(0, 2).map((payment) => ({
-      title: `${payment.customerName} • ${formatCurrency(payment.amount)}`,
+      title: `${getPrimaryOrderLabel({
+        customerName: payment.customerName,
+        orderId: payment.orderId,
+        kind: "customer",
+      })} • ${formatCurrency(payment.amount)}`,
       subtitle: `${payment.method} • ${payment.reference}`,
       badge: payment.status,
       tone: paymentTone(payment.status),
     })),
     ...followUps.slice(0, 2).map((item) => ({
-      title: `${item.customerName} follow-up`,
+      title: `${getPrimaryOrderLabel({
+        customerName: item.customerName,
+        orderId: item.orderId,
+        kind: "customer",
+      })} follow-up`,
       subtitle: item.note,
       badge: item.status,
       tone:
@@ -313,7 +326,11 @@ async function HomePageContent() {
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-                        {order.id} • {order.customerName}
+                        {getPrimaryOrderLabel({
+                          customerName: order.customerName,
+                          customerPhone: order.customerPhone,
+                          orderId: order.id,
+                        })}
                       </p>
                       <span className="rounded-full bg-[var(--color-wb-primary-soft)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-primary)]">
                         {stageLabel(order.stage)}
@@ -321,7 +338,12 @@ async function HomePageContent() {
                     </div>
                     <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
                       {order.channel} • {formatCurrency(order.amount)} •{" "}
-                      {order.paymentStatus}
+                      {formatPaymentStatusLabel(order.paymentStatus)}
+                    </p>
+                    <p className="mt-1 text-xs uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
+                      {formatOrderReference(order.id)
+                        ? `Order #${formatOrderReference(order.id)}`
+                        : "Untitled order"}
                     </p>
                   </article>
                 ))
