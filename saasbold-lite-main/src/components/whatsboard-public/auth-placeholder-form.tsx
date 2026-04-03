@@ -8,6 +8,7 @@ import {
   clearAuthSessionCookies,
   persistAuthSessionCookies,
 } from "@/lib/auth/cookies";
+import { WHATSBOARD_ACCESS_TOKEN_COOKIE } from "@/lib/auth/constants";
 
 type AuthMode = "login" | "register";
 
@@ -28,6 +29,12 @@ function resolveAuthErrorMessage(error: unknown) {
     }
     if (message.includes("missing required env var")) {
       return "Authentication is not configured correctly. Contact support.";
+    }
+    if (
+      message.includes("blocked session cookie") ||
+      message.includes("could not persist session")
+    ) {
+      return "Login could not be completed because session cookies were blocked. Enable cookies for this site and try again.";
     }
     return error.message;
   }
@@ -66,6 +73,23 @@ async function bootstrapBusinessContext(options: {
     error?: string;
   };
   throw new Error(payload.error || "Failed to prepare your business profile.");
+}
+
+function hasCookie(name: string) {
+  if (typeof document === "undefined") return false;
+  return document.cookie
+    .split(";")
+    .some((entry) => entry.trim().startsWith(`${name}=`));
+}
+
+async function persistSessionCookiesOrThrow(
+  session: Parameters<typeof persistAuthSessionCookies>[0],
+) {
+  persistAuthSessionCookies(session);
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  if (!hasCookie(WHATSBOARD_ACCESS_TOKEN_COOKIE)) {
+    throw new Error("Could not persist session cookie.");
+  }
 }
 
 export function AuthForm({ mode }: { mode: AuthMode }) {
@@ -119,7 +143,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         }
 
         if (data.session) {
-          persistAuthSessionCookies(data.session);
+          await persistSessionCookiesOrThrow(data.session);
           await bootstrapBusinessContext({
             accessToken: data.session.access_token,
           });
@@ -238,7 +262,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 return;
               }
 
-              persistAuthSessionCookies(data.session);
+              await persistSessionCookiesOrThrow(data.session);
               await bootstrapBusinessContext({
                 accessToken: data.session.access_token,
                 businessName,
@@ -266,12 +290,12 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 clearAuthSessionCookies();
                 return;
               }
-              persistAuthSessionCookies(sessionData.session);
+              await persistSessionCookiesOrThrow(sessionData.session);
               await bootstrapBusinessContext({
                 accessToken: sessionData.session.access_token,
               });
             } else {
-              persistAuthSessionCookies(data.session);
+              await persistSessionCookiesOrThrow(data.session);
               await bootstrapBusinessContext({
                 accessToken: data.session.access_token,
               });
