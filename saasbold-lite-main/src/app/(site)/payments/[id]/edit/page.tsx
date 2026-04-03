@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ArrowLeft, Save } from "lucide-react";
 import {
   PageHeader,
@@ -9,31 +10,42 @@ import {
   formatOrderReference,
   getPrimaryOrderLabel,
 } from "@/lib/display-labels";
-import { listOrders } from "@/lib/whatsboard-repository";
+import { listOrders, listPayments } from "@/lib/whatsboard-repository";
 
-type NewPaymentSearchParams = Promise<{ error?: string }>;
-
-export default async function NewPaymentPage({
+export default async function EditPaymentPage({
+  params,
   searchParams,
 }: {
-  searchParams: NewPaymentSearchParams;
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
+  const { id } = await params;
   const query = await searchParams;
-  const orderOptions = (await listOrders()).slice(0, 200);
+  const [payments, orders] = await Promise.all([listPayments(), listOrders()]);
+  const payment = payments.find((item) => item.id === id);
+
+  if (!payment) {
+    notFound();
+  }
+
+  const orderOptions = orders.slice(0, 200);
+  const hasCurrentOrder = orderOptions.some(
+    (order) => order.id === payment.orderId,
+  );
 
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
-        title="Record payment"
-        description="Capture payment confirmation against an order in a clean, auditable flow."
+        title="Edit payment"
+        description="Update payment method, reference, amount, and status."
         primaryAction={
           <button
             className="wb-button-primary"
             type="submit"
-            form="create-payment-form"
+            form="edit-payment-form"
           >
             <Save className="h-4 w-4" />
-            Save payment
+            Save changes
           </button>
         }
         secondaryAction={
@@ -46,18 +58,19 @@ export default async function NewPaymentPage({
 
       <SectionCard
         title="Payment details"
-        description="Record payment transactions directly in your active Supabase workspace."
+        description="Keep transaction records clean and traceable."
       >
         {query.error === "invalid" || query.error === "persistence" ? (
           <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
             {query.error === "invalid"
               ? "Please complete all required payment fields."
-              : "Could not save payment. Verify the selected order and Supabase connection, then try again."}
+              : "Could not update payment. Check your Supabase connection and try again."}
           </div>
         ) : null}
+
         <form
-          id="create-payment-form"
-          action="/api/payments"
+          id="edit-payment-form"
+          action={`/api/payments/${payment.id}`}
           method="post"
           className="grid gap-4 sm:grid-cols-2"
         >
@@ -65,8 +78,18 @@ export default async function NewPaymentPage({
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
               Order
             </label>
-            <select name="orderId" required className="wb-input">
-              <option value="">Select order</option>
+            <select
+              name="orderId"
+              required
+              className="wb-input"
+              defaultValue={payment.orderId}
+            >
+              {!hasCurrentOrder ? (
+                <option value={payment.orderId}>
+                  #{formatOrderReference(payment.orderId) || "WB-00000"} •
+                  Current linked
+                </option>
+              ) : null}
               {orderOptions.map((order) => (
                 <option key={order.id} value={order.id}>
                   #{formatOrderReference(order.id) || "WB-00000"} •{" "}
@@ -90,14 +113,18 @@ export default async function NewPaymentPage({
               type="number"
               min="1"
               className="wb-input"
-              placeholder="85000"
+              defaultValue={String(payment.amount)}
             />
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
               Method
             </label>
-            <select name="method" className="wb-input" defaultValue="M-Pesa">
+            <select
+              name="method"
+              className="wb-input"
+              defaultValue={payment.method}
+            >
               <option value="M-Pesa">M-Pesa</option>
               <option value="Bank">Bank</option>
               <option value="Cash">Cash</option>
@@ -107,7 +134,11 @@ export default async function NewPaymentPage({
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
               Status
             </label>
-            <select name="status" className="wb-input" defaultValue="paid">
+            <select
+              name="status"
+              className="wb-input"
+              defaultValue={payment.status}
+            >
               <option value="paid">Paid</option>
               <option value="partial">Partial</option>
               <option value="unpaid">Unpaid</option>
@@ -122,7 +153,7 @@ export default async function NewPaymentPage({
               name="reference"
               required
               className="wb-input"
-              placeholder="MPESA-8831"
+              defaultValue={payment.reference}
             />
           </div>
         </form>

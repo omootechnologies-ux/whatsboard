@@ -183,7 +183,11 @@ export default async function OrdersPage({
         <div className="grid gap-3 lg:hidden">
           {filteredOrders.length ? (
             filteredOrders.map((order) => (
-              <Link key={order.id} href={`/orders/${order.id}`} className="block">
+              <Link
+                key={order.id}
+                href={`/orders/${order.id}`}
+                className="block"
+              >
                 <OrderCard order={order} />
               </Link>
             ))

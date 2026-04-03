@@ -30,6 +30,8 @@ type PaymentsPageSearchParams = Promise<{
   status?: string;
   method?: string;
   created?: string;
+  updated?: string;
+  error?: string;
 }>;
 
 export default async function PaymentsPage({
@@ -58,9 +60,17 @@ export default async function PaymentsPage({
         }
       />
 
-      {query.created === "1" ? (
+      {query.created === "1" || query.updated === "1" ? (
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
-          Payment recorded successfully.
+          {query.created === "1"
+            ? "Payment recorded successfully."
+            : "Payment updated successfully."}
+        </div>
+      ) : null}
+
+      {query.error === "not-found" ? (
+        <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+          Payment record was not found.
         </div>
       ) : null}
 
@@ -115,45 +125,102 @@ export default async function PaymentsPage({
           description="Clean ledger for payment state, amount, and reference."
         >
           {records.length ? (
-            <DataTable
-              headers={[
-                "Customer",
-                "Order",
-                "Method",
-                "Amount",
-                "Status",
-                "Date",
-              ]}
-            >
-              {records.map((payment) => (
-                <DataRow key={payment.id}>
-                  <DataCell>
-                    {getPrimaryOrderLabel({
-                      customerName: payment.customerName,
-                      orderId: payment.orderId,
-                      kind: "customer",
-                    })}
-                  </DataCell>
-                  <DataCell>
-                    Order #{formatOrderReference(payment.orderId) || "WB-00000"}
-                  </DataCell>
-                  <DataCell>{payment.method}</DataCell>
-                  <DataCell>
-                    <span className="font-semibold text-[var(--color-wb-primary)]">
-                      {formatCurrency(payment.amount)}
-                    </span>
-                  </DataCell>
-                  <DataCell>
-                    <PaymentBadge status={payment.status} />
-                  </DataCell>
-                  <DataCell>
-                    <span className="text-xs text-[var(--color-wb-text-muted)]">
-                      {formatDate(payment.createdAt)}
-                    </span>
-                  </DataCell>
-                </DataRow>
-              ))}
-            </DataTable>
+            <>
+              <div className="hidden md:block">
+                <DataTable
+                  headers={[
+                    "Customer",
+                    "Order",
+                    "Method",
+                    "Amount",
+                    "Status",
+                    "Date",
+                    "Action",
+                  ]}
+                >
+                  {records.map((payment) => (
+                    <DataRow key={payment.id}>
+                      <DataCell>
+                        {getPrimaryOrderLabel({
+                          customerName: payment.customerName,
+                          orderId: payment.orderId,
+                          kind: "customer",
+                        })}
+                      </DataCell>
+                      <DataCell>
+                        Order #
+                        {formatOrderReference(payment.orderId) || "WB-00000"}
+                      </DataCell>
+                      <DataCell>{payment.method}</DataCell>
+                      <DataCell>
+                        <span className="font-semibold text-[var(--color-wb-primary)]">
+                          {formatCurrency(payment.amount)}
+                        </span>
+                      </DataCell>
+                      <DataCell>
+                        <PaymentBadge status={payment.status} />
+                      </DataCell>
+                      <DataCell>
+                        <span className="text-xs text-[var(--color-wb-text-muted)]">
+                          {formatDate(payment.createdAt)}
+                        </span>
+                      </DataCell>
+                      <DataCell compact>
+                        <Link
+                          href={`/payments/${payment.id}/edit`}
+                          className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
+                        >
+                          Edit
+                        </Link>
+                      </DataCell>
+                    </DataRow>
+                  ))}
+                </DataTable>
+              </div>
+
+              <div className="space-y-3 md:hidden">
+                {records.map((payment) => (
+                  <article
+                    key={payment.id}
+                    className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-[var(--color-wb-text)]">
+                          {getPrimaryOrderLabel({
+                            customerName: payment.customerName,
+                            orderId: payment.orderId,
+                            kind: "customer",
+                          })}
+                        </p>
+                        <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
+                          Order #
+                          {formatOrderReference(payment.orderId) || "WB-00000"}
+                        </p>
+                      </div>
+                      <PaymentBadge status={payment.status} />
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-3 text-sm">
+                      <span className="font-semibold text-[var(--color-wb-primary)]">
+                        {formatCurrency(payment.amount)}
+                      </span>
+                      <span className="text-[var(--color-wb-text-muted)]">
+                        {payment.method}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between gap-3 text-xs text-[var(--color-wb-text-muted)]">
+                      <span>{formatDate(payment.createdAt)}</span>
+                      <Link
+                        href={`/payments/${payment.id}/edit`}
+                        className="font-semibold text-[var(--color-wb-primary)]"
+                      >
+                        Edit
+                      </Link>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </>
           ) : (
             <EmptyState
               title="No payments recorded"

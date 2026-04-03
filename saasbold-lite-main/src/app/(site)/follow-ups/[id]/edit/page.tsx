@@ -1,38 +1,40 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { ArrowLeft, Save } from "lucide-react";
 import {
   PageHeader,
   SectionCard,
 } from "@/components/whatsboard-dashboard/dashboard-ui";
-import {
-  formatOrderReference,
-  getPrimaryOrderLabel,
-} from "@/lib/display-labels";
-import { listOrders } from "@/lib/whatsboard-repository";
+import { listFollowUps } from "@/lib/whatsboard-repository";
 
-type NewFollowUpSearchParams = Promise<{ error?: string }>;
-
-export default async function NewFollowUpPage({
+export default async function EditFollowUpPage({
+  params,
   searchParams,
 }: {
-  searchParams: NewFollowUpSearchParams;
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
 }) {
+  const { id } = await params;
   const query = await searchParams;
-  const orderOptions = (await listOrders()).slice(0, 200);
+  const followUp = (await listFollowUps()).find((item) => item.id === id);
+
+  if (!followUp) {
+    notFound();
+  }
 
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
-        title="Create follow-up"
-        description="Schedule a reminder so no customer slips through chat noise."
+        title="Edit follow-up"
+        description="Update due date, status, priority, and notes for this reminder."
         primaryAction={
           <button
             className="wb-button-primary"
             type="submit"
-            form="create-followup-form"
+            form="edit-followup-form"
           >
             <Save className="h-4 w-4" />
-            Save follow-up
+            Save changes
           </button>
         }
         secondaryAction={
@@ -45,64 +47,72 @@ export default async function NewFollowUpPage({
 
       <SectionCard
         title="Follow-up details"
-        description="Schedule and save reminders directly to your active Supabase workspace."
+        description="Keep this reminder accurate so no customer drops off."
       >
         {query.error === "invalid" || query.error === "persistence" ? (
           <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
             {query.error === "invalid"
-              ? "Please provide customer name, due date, and note."
-              : "Could not save follow-up. Check your Supabase connection and try again."}
+              ? "Please provide title, due date, and note."
+              : "Could not update follow-up. Check your Supabase connection and try again."}
           </div>
         ) : null}
+
         <form
-          id="create-followup-form"
-          action="/api/follow-ups"
+          id="edit-followup-form"
+          action={`/api/follow-ups/${followUp.id}`}
           method="post"
           className="grid gap-4 sm:grid-cols-2"
         >
-          <div>
+          <div className="sm:col-span-2">
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Customer name
+              Title
             </label>
             <input
-              name="customerName"
+              name="title"
               required
               className="wb-input"
-              placeholder="Neema Kileo"
+              defaultValue={followUp.title}
             />
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Link order (optional)
-            </label>
-            <select name="orderId" className="wb-input" defaultValue="">
-              <option value="">No linked order</option>
-              {orderOptions.map((order) => (
-                <option key={order.id} value={order.id}>
-                  #{formatOrderReference(order.id) || "WB-00000"} •{" "}
-                  {getPrimaryOrderLabel({
-                    customerName: order.customerName,
-                    customerPhone: order.customerPhone,
-                    orderId: order.id,
-                  })}
-                </option>
-              ))}
-            </select>
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
               Due date
             </label>
-            <input name="dueAt" required className="wb-input" type="date" />
+            <input
+              name="dueAt"
+              required
+              className="wb-input"
+              type="date"
+              defaultValue={followUp.dueAt.slice(0, 10)}
+            />
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
               Priority
             </label>
-            <select name="priority" className="wb-input" defaultValue="medium">
+            <select
+              name="priority"
+              className="wb-input"
+              defaultValue={followUp.priority}
+            >
               <option value="high">High</option>
               <option value="medium">Medium</option>
               <option value="low">Low</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
+              Status
+            </label>
+            <select
+              name="status"
+              className="wb-input"
+              defaultValue={followUp.status}
+            >
+              <option value="overdue">Overdue</option>
+              <option value="today">Today</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="completed">Completed</option>
             </select>
           </div>
           <div className="sm:col-span-2">
@@ -113,7 +123,7 @@ export default async function NewFollowUpPage({
               name="note"
               required
               className="min-h-[120px] w-full rounded-2xl border border-[var(--color-wb-border)] bg-white px-4 py-3 text-sm text-[var(--color-wb-text)]"
-              placeholder="Send pink bundle photos before payment confirmation."
+              defaultValue={followUp.note}
             />
           </div>
         </form>

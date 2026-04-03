@@ -32,19 +32,36 @@ npm run build
 
 ## App Routes
 
-- `/` Dashboard overview
-- `/orders` Orders board and ledger
-- `/orders/new` Create order
-- `/orders/[id]` Order details
-- `/orders/[id]/edit` Edit order
-- `/customers` Customers
-- `/customers/new` Add customer
-- `/follow-ups` Follow-ups action center
-- `/follow-ups/new` Add follow-up
-- `/payments` Payments
-- `/payments/new` Record payment
-- `/analytics` Analytics
-- `/settings` Settings
+Public pages:
+
+- `/` Homepage (sample/demo marketing data only)
+- `/pricing`
+- `/login`
+- `/register`
+- `/privacy`
+- `/terms`
+
+Authenticated app pages:
+
+- `/dashboard`
+- `/orders`
+- `/orders/new`
+- `/orders/[id]`
+- `/orders/[id]/edit`
+- `/products`
+- `/customers`
+- `/customers/new`
+- `/customers/[id]/edit`
+- `/follow-ups`
+- `/follow-ups/new`
+- `/follow-ups/[id]/edit`
+- `/payments`
+- `/payments/new`
+- `/payments/[id]/edit`
+- `/team`
+- `/billing`
+- `/analytics`
+- `/settings`
 
 ## Data and API
 
@@ -70,7 +87,7 @@ Default local data file:
 Required for Supabase persistence:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` (or `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`)
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `WHATSBOARD_PERSISTENCE_DRIVER=local|supabase`
 
@@ -92,6 +109,7 @@ supabase db push
 Migration file:
 
 - `supabase/migrations/20260402_whatsboard_persistence.sql`
+- `supabase/migrations/20260403_legacy_business_compat.sql`
 
 2. Backfill local data into Supabase:
 

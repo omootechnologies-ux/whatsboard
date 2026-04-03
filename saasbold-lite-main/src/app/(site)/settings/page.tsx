@@ -49,7 +49,11 @@ export default async function SettingsPage() {
   const totalRevenue = payments
     .filter((payment) => payment.status === "paid" || payment.status === "cod")
     .reduce((sum, payment) => sum + payment.amount, 0);
-  const lastActivityAt = [orders[0]?.updatedAt, payments[0]?.createdAt, followUps[0]?.dueAt]
+  const lastActivityAt = [
+    orders[0]?.updatedAt,
+    payments[0]?.createdAt,
+    followUps[0]?.dueAt,
+  ]
     .filter(Boolean)
     .sort()
     .at(-1);
@@ -107,7 +111,9 @@ export default async function SettingsPage() {
                   Latest activity
                 </p>
                 <p className="mt-2 text-sm font-semibold text-[var(--color-wb-text)]">
-                  {lastActivityAt ? formatDate(lastActivityAt) : "No activity yet"}
+                  {lastActivityAt
+                    ? formatDate(lastActivityAt)
+                    : "No activity yet"}
                 </p>
               </div>
             </div>

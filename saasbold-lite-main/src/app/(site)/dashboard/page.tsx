@@ -29,8 +29,15 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [{ stats: dashboardStats, customers, followUps, orders }, analytics, payments] =
-    await Promise.all([getDashboardSnapshot(), getAnalyticsSnapshot(), listPayments()]);
+  const [
+    { stats: dashboardStats, customers, followUps, orders },
+    analytics,
+    payments,
+  ] = await Promise.all([
+    getDashboardSnapshot(),
+    getAnalyticsSnapshot(),
+    listPayments(),
+  ]);
 
   const stageGroups = {
     newOrder: orders.filter((order) => order.stage === "new_order"),
@@ -220,7 +227,8 @@ export default async function DashboardPage() {
                         })}
                       </p>
                       <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-                        {order.channel} • {formatPaymentStatusLabel(order.paymentStatus)}
+                        {order.channel} •{" "}
+                        {formatPaymentStatusLabel(order.paymentStatus)}
                       </p>
                     </div>
                     <span className="text-sm font-semibold text-[var(--color-wb-primary)]">

@@ -11,9 +11,11 @@ function cookieSecureSuffix() {
 }
 
 function setCookie(name: string, value: string, maxAgeSeconds: number) {
+  const maxAge =
+    maxAgeSeconds <= 0 ? 0 : Math.max(1, Math.floor(maxAgeSeconds));
   document.cookie = `${name}=${encodeURIComponent(value)}; Path=/; Max-Age=${Math.max(
-    1,
-    Math.floor(maxAgeSeconds),
+    0,
+    maxAge,
   )}; SameSite=Lax${cookieSecureSuffix()}`;
 }
 
@@ -26,7 +28,11 @@ export function persistAuthSessionCookies(session: Session) {
     setCookie(WHATSBOARD_ACCESS_TOKEN_COOKIE, session.access_token, maxAge);
   }
   if (session.refresh_token) {
-    setCookie(WHATSBOARD_REFRESH_TOKEN_COOKIE, session.refresh_token, 60 * 60 * 24 * 30);
+    setCookie(
+      WHATSBOARD_REFRESH_TOKEN_COOKIE,
+      session.refresh_token,
+      60 * 60 * 24 * 30,
+    );
   }
   setCookie(WHATSBOARD_EXPIRES_AT_COOKIE, String(expiresAt), maxAge);
 }

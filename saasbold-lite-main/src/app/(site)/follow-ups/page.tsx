@@ -18,6 +18,8 @@ type FollowUpsPageSearchParams = Promise<{
   search?: string;
   status?: string;
   created?: string;
+  updated?: string;
+  error?: string;
 }>;
 
 export default async function FollowUpsPage({
@@ -48,9 +50,17 @@ export default async function FollowUpsPage({
         }
       />
 
-      {query.created === "1" ? (
+      {query.created === "1" || query.updated === "1" ? (
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
-          Follow-up created successfully.
+          {query.created === "1"
+            ? "Follow-up created successfully."
+            : "Follow-up updated successfully."}
+        </div>
+      ) : null}
+
+      {query.error === "not-found" ? (
+        <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+          Follow-up was not found.
         </div>
       ) : null}
 
@@ -96,7 +106,11 @@ export default async function FollowUpsPage({
           <div className="space-y-3">
             {[...overdue, ...today].length ? (
               [...overdue, ...today].map((item) => (
-                <FollowUpCard key={item.id} item={item} />
+                <FollowUpCard
+                  key={item.id}
+                  item={item}
+                  actionHref={`/follow-ups/${item.id}/edit`}
+                />
               ))
             ) : (
               <EmptyState
@@ -113,7 +127,13 @@ export default async function FollowUpsPage({
         >
           <div className="space-y-3">
             {upcoming.length ? (
-              upcoming.map((item) => <FollowUpCard key={item.id} item={item} />)
+              upcoming.map((item) => (
+                <FollowUpCard
+                  key={item.id}
+                  item={item}
+                  actionHref={`/follow-ups/${item.id}/edit`}
+                />
+              ))
             ) : (
               <EmptyState
                 title="No upcoming follow-ups"
@@ -153,14 +173,24 @@ export default async function FollowUpsPage({
                       })}
                     </p>
                   </div>
-                  <Link
-                    href={item.orderId ? `/orders/${item.orderId}` : "/orders"}
-                    className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
-                  >
-                    {item.orderId
-                      ? `Open order #${formatOrderReference(item.orderId) || "WB-00000"}`
-                      : "Open orders"}
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href={
+                        item.orderId ? `/orders/${item.orderId}` : "/orders"
+                      }
+                      className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
+                    >
+                      {item.orderId
+                        ? `Open order #${formatOrderReference(item.orderId) || "WB-00000"}`
+                        : "Open orders"}
+                    </Link>
+                    <Link
+                      href={`/follow-ups/${item.id}/edit`}
+                      className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
+                    >
+                      Edit
+                    </Link>
+                  </div>
                 </div>
                 <p className="mt-3 text-sm leading-6 text-[var(--color-wb-text-muted)]">
                   {item.note}

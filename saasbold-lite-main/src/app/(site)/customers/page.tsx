@@ -22,6 +22,8 @@ type CustomersPageSearchParams = Promise<{
   search?: string;
   status?: string;
   created?: string;
+  updated?: string;
+  error?: string;
 }>;
 
 export default async function CustomersPage({
@@ -48,9 +50,17 @@ export default async function CustomersPage({
         }
       />
 
-      {query.created === "1" ? (
+      {query.created === "1" || query.updated === "1" ? (
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
-          Customer created successfully.
+          {query.created === "1"
+            ? "Customer created successfully."
+            : "Customer updated successfully."}
+        </div>
+      ) : null}
+
+      {query.error === "not-found" ? (
+        <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+          Customer was not found.
         </div>
       ) : null}
 
@@ -138,10 +148,10 @@ export default async function CustomersPage({
                   </DataCell>
                   <DataCell compact>
                     <Link
-                      href="/orders/new"
+                      href={`/customers/${customer.id}/edit`}
                       className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
                     >
-                      Create order
+                      Edit
                     </Link>
                   </DataCell>
                 </DataRow>
@@ -163,7 +173,11 @@ export default async function CustomersPage({
         <div className="space-y-3 lg:hidden">
           {customerRecords.length ? (
             customerRecords.map((customer) => (
-              <CustomerRow key={customer.id} customer={customer} />
+              <CustomerRow
+                key={customer.id}
+                customer={customer}
+                actionHref={`/customers/${customer.id}/edit`}
+              />
             ))
           ) : (
             <EmptyState

@@ -12,6 +12,7 @@ import {
   CreditCard,
   Home,
   LayoutGrid,
+  LogOut,
   Menu,
   Package2,
   Plus,
@@ -33,10 +34,12 @@ import {
 } from "@/components/whatsboard-dashboard/formatting";
 import {
   formatOrderReference,
-  getPrimaryOrderLabel,
   formatPaymentStatusLabel,
   formatStageLabel,
+  getPrimaryOrderLabel,
 } from "@/lib/display-labels";
+import { clearAuthSessionCookies } from "@/lib/auth/cookies";
+import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 
 type NavItem = {
   href: string;
@@ -54,9 +57,17 @@ type ToolbarChip = {
 const desktopNav: NavItem[] = [
   { href: "/dashboard", label: "Overview", group: "Operations", icon: Home },
   { href: "/orders", label: "Orders", group: "Operations", icon: Package2 },
+  {
+    href: "/products",
+    label: "Products",
+    group: "Operations",
+    icon: LayoutGrid,
+  },
   { href: "/customers", label: "Customers", group: "Operations", icon: Users },
   { href: "/follow-ups", label: "Follow-ups", group: "Operations", icon: Bell },
   { href: "/payments", label: "Payments", group: "Control", icon: Wallet },
+  { href: "/team", label: "Team", group: "Control", icon: Users },
+  { href: "/billing", label: "Billing", group: "Control", icon: CreditCard },
   { href: "/analytics", label: "Analytics", group: "Control", icon: BarChart3 },
   { href: "/settings", label: "Settings", group: "Control", icon: Settings },
 ];
@@ -94,8 +105,10 @@ export function DashboardShellFrame({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const currentLabel =
     desktopNav.find((item) => pathname.startsWith(item.href))?.label ??
     "Overview";
@@ -107,6 +120,22 @@ export function DashboardShellFrame({
       })),
     [],
   );
+
+  const onSignOut = async () => {
+    if (isSigningOut) return;
+    setIsSigningOut(true);
+    try {
+      const supabase = createSupabaseBrowserClient();
+      await supabase.auth.signOut();
+    } catch {
+      // If sign-out request fails, still clear local auth state.
+    } finally {
+      clearAuthSessionCookies();
+      router.push("/login");
+      router.refresh();
+      setIsSigningOut(false);
+    }
+  };
 
   return (
     <div className="min-h-screen">
@@ -218,23 +247,21 @@ export function DashboardShellFrame({
                 </div>
               </div>
 
-              <label className="relative hidden max-w-md flex-1 md:block">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-wb-text-muted)]" />
-                <input
-                  className="wb-input pl-11"
-                  placeholder="Search orders, customers, payments..."
-                />
-              </label>
-
               <div className="flex items-center gap-2 sm:gap-3">
                 <span className="hidden items-center gap-2 rounded-full border border-[var(--color-wb-border)] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-primary)] xl:inline-flex">
                   <LayoutGrid className="h-3.5 w-3.5" />
                   Live workspace
                 </span>
-                <Link href="/orders/new" className="wb-button-primary">
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">Add Order</span>
-                </Link>
+                <button
+                  onClick={onSignOut}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-[var(--color-wb-border)] bg-white px-3 text-sm font-semibold text-[var(--color-wb-text-muted)] transition hover:text-[var(--color-wb-text)]"
+                  disabled={isSigningOut}
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline">
+                    {isSigningOut ? "Signing out..." : "Sign out"}
+                  </span>
+                </button>
               </div>
             </div>
           </header>
@@ -280,6 +307,16 @@ export function DashboardShellFrame({
                       </div>
                     </section>
                   ))}
+                </div>
+                <div className="mt-5 border-t border-[var(--color-wb-border)] pt-4">
+                  <button
+                    onClick={onSignOut}
+                    className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[var(--color-wb-border)] bg-white text-sm font-semibold text-[var(--color-wb-text-muted)]"
+                    disabled={isSigningOut}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    {isSigningOut ? "Signing out..." : "Sign out"}
+                  </button>
                 </div>
               </div>
             </div>
@@ -905,7 +942,15 @@ export function SearchBar({
   );
 }
 
-export function CustomerRow({ customer }: { customer: CustomerRecord }) {
+export function CustomerRow({
+  customer,
+  actionHref,
+  actionLabel = "Edit",
+}: {
+  customer: CustomerRecord;
+  actionHref?: string;
+  actionLabel?: string;
+}) {
   const customerLabel = getPrimaryOrderLabel({
     customerName: customer.name,
     customerPhone: customer.phone,
@@ -928,12 +973,28 @@ export function CustomerRow({ customer }: { customer: CustomerRecord }) {
         <span className="rounded-full border border-[var(--color-wb-border)] bg-white px-3 py-1 text-xs font-semibold capitalize text-[var(--color-wb-text-muted)]">
           {customer.status}
         </span>
+        {actionHref ? (
+          <Link
+            href={actionHref}
+            className="rounded-full border border-[var(--color-wb-border)] bg-white px-3 py-1 text-xs font-semibold text-[var(--color-wb-primary)] transition hover:bg-[var(--color-wb-primary-soft)]"
+          >
+            {actionLabel}
+          </Link>
+        ) : null}
       </div>
     </div>
   );
 }
 
-export function FollowUpCard({ item }: { item: FollowUpRecord }) {
+export function FollowUpCard({
+  item,
+  actionHref,
+  actionLabel = "Edit",
+}: {
+  item: FollowUpRecord;
+  actionHref?: string;
+  actionLabel?: string;
+}) {
   const customerLabel = getPrimaryOrderLabel({
     customerName: item.customerName,
     orderId: item.orderId,
@@ -972,9 +1033,19 @@ export function FollowUpCard({ item }: { item: FollowUpRecord }) {
         <span className="font-semibold text-[var(--color-wb-text)]">
           {formatDate(item.dueAt)}
         </span>
-        <span className="rounded-full bg-[var(--color-wb-surface-alt)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-primary)]">
-          {item.priority}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-[var(--color-wb-surface-alt)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-primary)]">
+            {item.priority}
+          </span>
+          {actionHref ? (
+            <Link
+              href={actionHref}
+              className="rounded-full border border-[var(--color-wb-border)] bg-white px-3 py-1 text-xs font-semibold text-[var(--color-wb-primary)] transition hover:bg-[var(--color-wb-primary-soft)]"
+            >
+              {actionLabel}
+            </Link>
+          ) : null}
+        </div>
       </div>
     </div>
   );

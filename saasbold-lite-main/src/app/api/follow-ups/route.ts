@@ -27,7 +27,10 @@ export async function POST(request: Request) {
       note,
     });
 
-    return NextResponse.redirect(new URL("/follow-ups?created=1", request.url), 303);
+    return NextResponse.redirect(
+      new URL("/follow-ups?created=1", request.url),
+      303,
+    );
   } catch {
     return NextResponse.redirect(
       new URL("/follow-ups/new?error=persistence", request.url),

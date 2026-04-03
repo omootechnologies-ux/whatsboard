@@ -7,7 +7,8 @@ const INTERNAL_IDENTIFIER_PATTERN =
   /^(?:id|order[_\s-]?id|customer[_\s-]?id|uuid|record[_\s-]?id|pk|fk)\b[:\s#_-]*[a-z0-9-]{4,}$/i;
 const DEV_PLACEHOLDER_PATTERN =
   /\b(?:crud|deploy|seed(?:ed)?|dummy|placeholder|demo\s*data|sample\s*data|test\s*data)\b/i;
-const EMPTY_PATTERN = /^(?:unknown(?: customer)?|not provided|n\/a|null|undefined)$/i;
+const EMPTY_PATTERN =
+  /^(?:unknown(?: customer)?|not provided|n\/a|null|undefined)$/i;
 const ORDER_REF_PATTERN = /\b(?:WB|ORD|ORDER)[-#\s]?(\d{1,8})\b/i;
 
 function normalize(value?: string | null) {

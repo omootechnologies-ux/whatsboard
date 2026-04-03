@@ -107,7 +107,10 @@ export function PublicNav() {
               );
             })}
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <Link href="/login?next=%2Fdashboard" className="wb-button-secondary">
+              <Link
+                href="/login?next=%2Fdashboard"
+                className="wb-button-secondary"
+              >
                 Watch Demo
               </Link>
               <Link href="/register" className="wb-button-primary">

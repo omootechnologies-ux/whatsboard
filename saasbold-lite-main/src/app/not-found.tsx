@@ -11,9 +11,9 @@ export default function NotFoundPage() {
           Page not found
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[var(--color-wb-text-muted)] sm:text-base">
-          This page does not exist or was moved. Go back to the homepage or
-          open your dashboard workspace to continue managing orders, payments,
-          and follow-ups.
+          This page does not exist or was moved. Go back to the homepage or open
+          your dashboard workspace to continue managing orders, payments, and
+          follow-ups.
         </p>
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link href="/dashboard" className="wb-button-primary">

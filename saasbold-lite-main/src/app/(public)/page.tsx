@@ -6,7 +6,11 @@ import {
   ShieldCheck,
   Users,
 } from "lucide-react";
-import type { FollowUpRecord, OrderRecord, PaymentRecord } from "@/data/whatsboard";
+import type {
+  FollowUpRecord,
+  OrderRecord,
+  PaymentRecord,
+} from "@/data/whatsboard";
 import { formatCurrency } from "@/components/whatsboard-dashboard/formatting";
 import { pricingPlans } from "@/data/pricing-plans";
 import { PricingCard } from "@/components/whatsboard-public/pricing-card";
@@ -365,7 +369,10 @@ export default function HomePage() {
                 Start Free
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="/login?next=%2Fdashboard" className="wb-button-secondary">
+              <Link
+                href="/login?next=%2Fdashboard"
+                className="wb-button-secondary"
+              >
                 Watch Demo
               </Link>
             </div>
@@ -443,7 +450,8 @@ export default function HomePage() {
                 ))
               ) : (
                 <article className="rounded-2xl border border-dashed border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 text-sm text-[var(--color-wb-text-muted)]">
-                  Demo preview cards appear here. Start Free to track your own real orders.
+                  Demo preview cards appear here. Start Free to track your own
+                  real orders.
                 </article>
               )}
             </div>
@@ -472,7 +480,8 @@ export default function HomePage() {
                 ))
               ) : (
                 <article className="rounded-2xl border border-dashed border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 text-sm text-[var(--color-wb-text-muted)]">
-                  Demo activity appears here. Your real updates start after signup.
+                  Demo activity appears here. Your real updates start after
+                  signup.
                 </article>
               )}
             </div>

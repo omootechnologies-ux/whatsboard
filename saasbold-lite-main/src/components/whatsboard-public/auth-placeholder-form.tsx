@@ -102,7 +102,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       <div className="wb-shell-card w-full max-w-lg p-8">
         <div className="flex items-center gap-3 text-[var(--color-wb-text-muted)]">
           <Loader2 className="h-5 w-5 animate-spin text-[var(--color-wb-primary)]" />
-          <span className="text-sm font-semibold">Checking your session...</span>
+          <span className="text-sm font-semibold">
+            Checking your session...
+          </span>
         </div>
       </div>
     );
@@ -114,7 +116,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         {isRegister ? "Create account" : "Welcome back"}
       </p>
       <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-4xl">
-        {isRegister ? "Open your WhatsBoard workspace" : "Sign in to WhatsBoard"}
+        {isRegister
+          ? "Open your WhatsBoard workspace"
+          : "Sign in to WhatsBoard"}
       </h1>
       <p className="mt-3 text-sm leading-7 text-[var(--color-wb-text-muted)] sm:text-base">
         {isRegister
@@ -137,7 +141,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             const confirmPassword = String(
               formData.get("confirmPassword") || "",
             );
-            const businessName = String(formData.get("businessName") || "").trim();
+            const businessName = String(
+              formData.get("businessName") || "",
+            ).trim();
 
             if (!email || !password) {
               setErrorMessage("Email and password are required.");
@@ -147,8 +153,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               setErrorMessage("Enter a valid email address.");
               return;
             }
-            if (isRegister && password.length < 6) {
-              setErrorMessage("Password must be at least 6 characters.");
+            if (isRegister && password.length < 8) {
+              setErrorMessage("Password must be at least 8 characters.");
               return;
             }
             if (isRegister && password !== confirmPassword) {
@@ -317,11 +323,17 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           Powered by Supabase Auth
         </p>
         {isRegister ? (
-          <Link href="/login" className="font-semibold text-[var(--color-wb-primary)]">
+          <Link
+            href="/login"
+            className="font-semibold text-[var(--color-wb-primary)]"
+          >
             Already have an account?
           </Link>
         ) : (
-          <Link href="/register" className="font-semibold text-[var(--color-wb-primary)]">
+          <Link
+            href="/register"
+            className="font-semibold text-[var(--color-wb-primary)]"
+          >
             Create account
           </Link>
         )}

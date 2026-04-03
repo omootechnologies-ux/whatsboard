@@ -4,6 +4,8 @@ import type {
   OrderRecord,
   PaymentRecord,
 } from "@/data/whatsboard";
+import { WHATSBOARD_ACCESS_TOKEN_COOKIE } from "@/lib/auth/constants";
+import { formatOrderReference } from "@/lib/display-labels";
 import { statusFromDueDate } from "@/lib/follow-up-status";
 import type {
   AnalyticsPoint,
@@ -25,6 +27,7 @@ import type {
   WhatsboardRepository,
 } from "@/lib/whatsboard-repository";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 type LegacyCustomerRow = {
   id: string;
@@ -60,11 +63,33 @@ type LegacyFollowUpRow = {
   id: string;
   order_id: string | null;
   business_id: string;
+  title: string | null;
+  priority: FollowUpRecord["priority"] | string | null;
   due_at: string;
   note: string | null;
   completed: boolean | null;
   completed_at: string | null;
   created_at: string;
+};
+
+type LegacyBusinessMemberRow = {
+  business_id: string;
+  user_id: string;
+  role: string | null;
+};
+
+type LegacyBusinessRow = {
+  id: string;
+  owner_id: string | null;
+  name: string | null;
+};
+
+type LegacyProfileRow = {
+  id: string;
+  business_id: string | null;
+  business_name: string | null;
+  full_name: string | null;
+  email: string | null;
 };
 
 const CHANNELS = ["WhatsApp", "Instagram", "TikTok", "Facebook"] as const;
@@ -79,6 +104,10 @@ const ORDER_STAGES = [
 const PAYMENT_STATUSES = ["unpaid", "partial", "paid", "cod"] as const;
 const PAYMENT_METHODS = ["M-Pesa", "Cash", "Bank"] as const;
 const PRIORITIES = ["high", "medium", "low"] as const;
+const LEGACY_ORDER_SELECT =
+  "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,created_at,updated_at";
+const LEGACY_FOLLOW_UP_SELECT =
+  "id,order_id,business_id,title,priority,due_at,note,completed,completed_at,created_at";
 
 function asNumber(value: number | string | null | undefined) {
   if (typeof value === "number") return value;
@@ -133,7 +162,9 @@ function asCustomerStatus(
   return "active";
 }
 
-function asPriority(value: string | null | undefined): FollowUpRecord["priority"] {
+function asPriority(
+  value: string | null | undefined,
+): FollowUpRecord["priority"] {
   if (value && PRIORITIES.includes(value as (typeof PRIORITIES)[number])) {
     return value as FollowUpRecord["priority"];
   }
@@ -148,55 +179,241 @@ function parseItemList(productName: string | null | undefined) {
     .filter(Boolean);
 }
 
-function deriveFollowUpStatus(row: LegacyFollowUpRow): FollowUpRecord["status"] {
+function deriveFollowUpStatus(
+  row: LegacyFollowUpRow,
+): FollowUpRecord["status"] {
   if (row.completed) return "completed";
   return statusFromDueDate(row.due_at);
 }
 
-let cachedBusinessId: string | undefined;
+const businessCacheByUserId = new Map<string, string>();
+let cachedAnonymousBusinessId: string | undefined;
 
-async function resolveBusinessId() {
-  if (cachedBusinessId) return cachedBusinessId;
+function businessNameFromEmail(email?: string | null) {
+  const local = (email || "").split("@")[0]?.trim();
+  if (!local) return "WhatsBoard Business";
+  const cleaned = local.replace(/[._-]+/g, " ").trim();
+  if (!cleaned) return "WhatsBoard Business";
+  return `${cleaned.replace(/\b\w/g, (char) => char.toUpperCase())} Business`;
+}
+
+async function getAuthUserContext() {
+  try {
+    const cookieStore = await cookies();
+    const accessToken =
+      cookieStore.get(WHATSBOARD_ACCESS_TOKEN_COOKIE)?.value || "";
+    if (!accessToken) return { userId: null, hadAccessToken: false };
+
+    const client = createSupabaseServiceClient();
+    const { data, error } = await client.auth.getUser(accessToken);
+    if (error || !data.user?.id) {
+      return { userId: null, hadAccessToken: true };
+    }
+    return { userId: data.user.id, hadAccessToken: true };
+  } catch {
+    return { userId: null, hadAccessToken: false };
+  }
+}
+
+async function ensureBusinessMember(
+  userId: string,
+  businessId: string,
+  role: "owner" | "member" = "owner",
+) {
+  const client = createSupabaseServiceClient();
+  const existingResult = await client
+    .from("business_members")
+    .select("id,business_id")
+    .eq("user_id", userId)
+    .limit(1);
+
+  if (existingResult.error) {
+    throw new Error(
+      `Failed to query business membership: ${JSON.stringify(existingResult.error)}`,
+    );
+  }
+
+  if (existingResult.data?.[0]?.id) {
+    const existing = existingResult.data[0] as {
+      id: string;
+      business_id: string | null;
+    };
+    if (existing.business_id === businessId) return;
+
+    const { error: updateError } = await client
+      .from("business_members")
+      .update({
+        business_id: businessId,
+        role,
+        invited_by: userId,
+      })
+      .eq("id", existing.id);
+    if (updateError) {
+      throw new Error(
+        `Failed to update business membership: ${JSON.stringify(updateError)}`,
+      );
+    }
+    return;
+  }
+
+  const { error: insertError } = await client.from("business_members").insert({
+    user_id: userId,
+    business_id: businessId,
+    role,
+    invited_by: userId,
+  });
+
+  if (insertError) {
+    throw new Error(
+      `Failed to create business membership: ${JSON.stringify(insertError)}`,
+    );
+  }
+}
+
+async function ensureProfileBusiness(
+  userId: string,
+  businessId: string,
+  businessName?: string | null,
+) {
+  const client = createSupabaseServiceClient();
+  const { error } = await client.from("profiles").upsert(
+    {
+      id: userId,
+      business_id: businessId,
+      business_name: businessName || null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "id" },
+  );
+  if (error) {
+    throw new Error(
+      `Failed to ensure profile business link: ${JSON.stringify(error)}`,
+    );
+  }
+}
+
+async function ensureBusinessForUser(userId: string) {
+  const client = createSupabaseServiceClient();
+
+  const memberResult = await client
+    .from("business_members")
+    .select("business_id,user_id,role")
+    .eq("user_id", userId)
+    .limit(1);
+  if (!memberResult.error && memberResult.data?.[0]?.business_id) {
+    return String(
+      (memberResult.data[0] as LegacyBusinessMemberRow).business_id,
+    );
+  }
+
+  const ownedResult = await client
+    .from("businesses")
+    .select("id,owner_id,name")
+    .eq("owner_id", userId)
+    .limit(1);
+  if (!ownedResult.error && ownedResult.data?.[0]?.id) {
+    const business = ownedResult.data[0] as LegacyBusinessRow;
+    await ensureBusinessMember(userId, business.id, "owner");
+    await ensureProfileBusiness(userId, business.id, business.name);
+    return String(business.id);
+  }
+
+  const profileResult = await client
+    .from("profiles")
+    .select("id,business_id,business_name,full_name,email")
+    .eq("id", userId)
+    .maybeSingle();
+  if (!profileResult.error && profileResult.data?.business_id) {
+    const profile = profileResult.data as LegacyProfileRow;
+    await ensureBusinessMember(userId, String(profile.business_id), "owner");
+    await ensureProfileBusiness(
+      userId,
+      String(profile.business_id),
+      profile.business_name,
+    );
+    return String(profile.business_id);
+  }
+
+  const authUser = await client.auth.admin.getUserById(userId);
+  const email = authUser.data.user?.email || null;
+  const profile = profileResult.data as LegacyProfileRow | null;
+  const businessName =
+    profile?.business_name ||
+    profile?.full_name ||
+    businessNameFromEmail(profile?.email || email);
+  const { data: createdBusiness, error: createBusinessError } = await client
+    .from("businesses")
+    .insert({
+      owner_id: userId,
+      name: businessName,
+      currency: "TZS",
+    })
+    .select("id,name")
+    .single();
+
+  if (createBusinessError || !createdBusiness?.id) {
+    throw new Error(
+      `Failed to bootstrap business for user: ${JSON.stringify(createBusinessError)}`,
+    );
+  }
+
+  await ensureBusinessMember(userId, String(createdBusiness.id), "owner");
+  await ensureProfileBusiness(
+    userId,
+    String(createdBusiness.id),
+    createdBusiness.name,
+  );
+  return String(createdBusiness.id);
+}
+
+async function resolveAnonymousBusinessId() {
+  if (cachedAnonymousBusinessId) return cachedAnonymousBusinessId;
 
   const client = createSupabaseServiceClient();
   const preferredBusinessId =
     process.env.WHATSBOARD_DEFAULT_WORKSPACE_ID?.trim() || undefined;
 
   if (preferredBusinessId) {
-    cachedBusinessId = preferredBusinessId;
+    cachedAnonymousBusinessId = preferredBusinessId;
     return preferredBusinessId;
   }
 
   const fromBusinesses = await client.from("businesses").select("id").limit(1);
   if (!fromBusinesses.error && fromBusinesses.data?.[0]?.id) {
-    cachedBusinessId = String(fromBusinesses.data[0].id);
-    return cachedBusinessId;
+    cachedAnonymousBusinessId = String(fromBusinesses.data[0].id);
+    return cachedAnonymousBusinessId;
   }
 
-  const fromProfiles = await client.from("profiles").select("business_id").limit(1);
-  if (!fromProfiles.error && fromProfiles.data?.[0]?.business_id) {
-    cachedBusinessId = String(fromProfiles.data[0].business_id);
-    return cachedBusinessId;
-  }
-
-  const fromOrders = await client.from("orders").select("business_id").limit(1);
-  if (!fromOrders.error && fromOrders.data?.[0]?.business_id) {
-    cachedBusinessId = String(fromOrders.data[0].business_id);
-    return cachedBusinessId;
-  }
-
-  const fromCustomers = await client
-    .from("customers")
+  const fromProfiles = await client
+    .from("profiles")
     .select("business_id")
     .limit(1);
-  if (!fromCustomers.error && fromCustomers.data?.[0]?.business_id) {
-    cachedBusinessId = String(fromCustomers.data[0].business_id);
-    return cachedBusinessId;
+  if (!fromProfiles.error && fromProfiles.data?.[0]?.business_id) {
+    cachedAnonymousBusinessId = String(fromProfiles.data[0].business_id);
+    return cachedAnonymousBusinessId;
   }
 
   throw new Error(
-    "Unable to resolve business context. Set WHATSBOARD_DEFAULT_WORKSPACE_ID to an existing businesses.id value.",
+    "Unable to resolve business context for unauthenticated request. Configure WHATSBOARD_DEFAULT_WORKSPACE_ID or sign in.",
   );
+}
+
+async function resolveBusinessId() {
+  const { userId: authUserId, hadAccessToken } = await getAuthUserContext();
+
+  if (hadAccessToken && !authUserId) {
+    throw new Error("Invalid or expired authentication session.");
+  }
+
+  if (authUserId) {
+    const cached = businessCacheByUserId.get(authUserId);
+    if (cached) return cached;
+    const businessId = await ensureBusinessForUser(authUserId);
+    businessCacheByUserId.set(authUserId, businessId);
+    return businessId;
+  }
+
+  return resolveAnonymousBusinessId();
 }
 
 async function getLegacyCustomersByIds(ids: string[]) {
@@ -223,9 +440,7 @@ async function listLegacyOrdersByBusiness() {
   const businessId = await resolveBusinessId();
   const { data, error } = await client
     .from("orders")
-    .select(
-      "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,created_at,updated_at",
-    )
+    .select(LEGACY_ORDER_SELECT)
     .eq("business_id", businessId)
     .order("updated_at", { ascending: false });
 
@@ -241,9 +456,7 @@ async function listLegacyFollowUpsByBusiness() {
   const businessId = await resolveBusinessId();
   const { data, error } = await client
     .from("follow_ups")
-    .select(
-      "id,order_id,business_id,due_at,note,completed,completed_at,created_at",
-    )
+    .select(LEGACY_FOLLOW_UP_SELECT)
     .eq("business_id", businessId)
     .order("due_at", { ascending: true });
 
@@ -254,6 +467,55 @@ async function listLegacyFollowUpsByBusiness() {
   return (data || []) as LegacyFollowUpRow[];
 }
 
+function normalizeOrderIdentifier(value: string) {
+  return value
+    .trim()
+    .replace(/^order\s*#?/i, "")
+    .replace(/^#/i, "");
+}
+
+async function findLegacyOrderByIdentifier(
+  businessId: string,
+  identifier: string,
+) {
+  const normalized = normalizeOrderIdentifier(identifier);
+  if (!normalized) return null;
+
+  const client = createSupabaseServiceClient();
+  const exact = await client
+    .from("orders")
+    .select(LEGACY_ORDER_SELECT)
+    .eq("business_id", businessId)
+    .eq("id", normalized)
+    .maybeSingle();
+
+  if (exact.error) {
+    throw new Error(`Failed to query order: ${JSON.stringify(exact.error)}`);
+  }
+  if (exact.data) return exact.data as LegacyOrderRow;
+
+  const desiredRef = normalizeOrderIdentifier(normalized).toUpperCase();
+  const candidates = await client
+    .from("orders")
+    .select(LEGACY_ORDER_SELECT)
+    .eq("business_id", businessId)
+    .order("updated_at", { ascending: false })
+    .limit(500);
+
+  if (candidates.error) {
+    throw new Error(
+      `Failed to query order candidates: ${JSON.stringify(candidates.error)}`,
+    );
+  }
+
+  const matched = ((candidates.data || []) as LegacyOrderRow[]).find((row) => {
+    const reference = formatOrderReference(row.id);
+    return reference?.toUpperCase() === desiredRef;
+  });
+
+  return matched || null;
+}
+
 function mapOrderRecord(
   row: LegacyOrderRow,
   customerMap: Map<string, LegacyCustomerRow>,
@@ -261,7 +523,8 @@ function mapOrderRecord(
 ): OrderRecord {
   const customer =
     (row.customer_id ? customerMap.get(row.customer_id) : undefined) || null;
-  const deliveryArea = row.delivery_area || row.area || customer?.area || "Unknown area";
+  const deliveryArea =
+    row.delivery_area || row.area || customer?.area || "Unknown area";
 
   return {
     id: row.id,
@@ -307,16 +570,27 @@ function computeDashboardStats(
   payments: PaymentRecord[],
   customers: CustomerRecord[],
 ): DashboardStats {
-  const activeOrders = orders.filter((order) => order.stage !== "delivered").length;
-  const overdueFollowUps = followUps.filter((item) => item.status === "overdue").length;
+  const activeOrders = orders.filter(
+    (order) => order.stage !== "delivered",
+  ).length;
+  const overdueFollowUps = followUps.filter(
+    (item) => item.status === "overdue",
+  ).length;
   const revenueMonth = payments
     .filter((item) => item.status === "paid" || item.status === "cod")
     .reduce((sum, item) => sum + item.amount, 0);
   const payoutPending = orders
-    .filter((order) => order.paymentStatus === "unpaid" || order.paymentStatus === "partial")
+    .filter(
+      (order) =>
+        order.paymentStatus === "unpaid" || order.paymentStatus === "partial",
+    )
     .reduce((sum, order) => sum + order.amount, 0);
-  const delivered = orders.filter((order) => order.stage === "delivered").length;
-  const conversionRate = orders.length ? Math.round((delivered / orders.length) * 100) : 0;
+  const delivered = orders.filter(
+    (order) => order.stage === "delivered",
+  ).length;
+  const conversionRate = orders.length
+    ? Math.round((delivered / orders.length) * 100)
+    : 0;
 
   return {
     revenueMonth,
@@ -328,7 +602,10 @@ function computeDashboardStats(
   };
 }
 
-function computeAnalyticsSeries(orders: OrderRecord[], payments: PaymentRecord[]) {
+function computeAnalyticsSeries(
+  orders: OrderRecord[],
+  payments: PaymentRecord[],
+) {
   const labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const series = labels.map((label) => ({ label, revenue: 0, orders: 0 }));
 
@@ -356,7 +633,9 @@ async function listOrders(query: OrdersQuery = {}) {
   ]);
 
   const customerIds = Array.from(
-    new Set(orderRows.map((row) => row.customer_id).filter(Boolean) as string[]),
+    new Set(
+      orderRows.map((row) => row.customer_id).filter(Boolean) as string[],
+    ),
   );
   const customersById = await getLegacyCustomersByIds(customerIds);
 
@@ -374,7 +653,9 @@ async function listOrders(query: OrdersQuery = {}) {
   return orderRows
     .map((row) => mapOrderRecord(row, customersById, dueFollowUpByOrderId))
     .filter((order) => (query.stage ? order.stage === query.stage : true))
-    .filter((order) => (query.payment ? order.paymentStatus === query.payment : true))
+    .filter((order) =>
+      query.payment ? order.paymentStatus === query.payment : true,
+    )
     .filter((order) => {
       if (!search) return true;
       const haystack = [
@@ -432,11 +713,14 @@ async function findOrCreateCustomer(
   if (phone?.trim()) {
     const byPhone = await client
       .from("customers")
-      .select("id,business_id,name,phone,area,notes,status,created_at,updated_at")
+      .select(
+        "id,business_id,name,phone,area,notes,status,created_at,updated_at",
+      )
       .eq("business_id", businessId)
       .eq("phone", phone.trim())
       .maybeSingle();
-    if (!byPhone.error && byPhone.data) return byPhone.data as LegacyCustomerRow;
+    if (!byPhone.error && byPhone.data)
+      return byPhone.data as LegacyCustomerRow;
   }
 
   const byName = await client
@@ -571,7 +855,9 @@ async function listCustomers(query: CustomersQuery = {}) {
     await Promise.all([
       client
         .from("customers")
-        .select("id,business_id,name,phone,area,notes,status,created_at,updated_at")
+        .select(
+          "id,business_id,name,phone,area,notes,status,created_at,updated_at",
+        )
         .eq("business_id", businessId)
         .order("updated_at", { ascending: false }),
       listLegacyOrdersByBusiness(),
@@ -579,7 +865,9 @@ async function listCustomers(query: CustomersQuery = {}) {
     ]);
 
   if (customerError) {
-    throw new Error(`Failed to list customers: ${JSON.stringify(customerError)}`);
+    throw new Error(
+      `Failed to list customers: ${JSON.stringify(customerError)}`,
+    );
   }
 
   const orderStatsByCustomer = new Map<
@@ -595,11 +883,14 @@ async function listCustomers(query: CustomersQuery = {}) {
     };
     current.totalOrders += 1;
     current.totalSpend += asNumber(order.amount);
-    if (current.lastOrderAt < order.created_at) current.lastOrderAt = order.created_at;
+    if (current.lastOrderAt < order.created_at)
+      current.lastOrderAt = order.created_at;
     orderStatsByCustomer.set(order.customer_id, current);
   }
 
-  const orderById = new Map<string, LegacyOrderRow>(orders.map((row) => [row.id, row]));
+  const orderById = new Map<string, LegacyOrderRow>(
+    orders.map((row) => [row.id, row]),
+  );
   const nextFollowUpByCustomer = new Map<string, string>();
   followUps
     .filter((row) => !row.completed && row.order_id)
@@ -705,16 +996,22 @@ function mapFollowUpRecord(
     ? customersById.get(order.customer_id)
     : undefined;
 
+  const orderReference = order ? formatOrderReference(order.id) : null;
+
   return {
     id: row.id,
     customerId: order?.customer_id || "unknown-customer",
     customerName: customer?.name || "Unknown customer",
     orderId: row.order_id || undefined,
-    title: order ? `Follow-up for ${order.id}` : "Customer follow-up",
+    title:
+      row.title?.trim() ||
+      (orderReference
+        ? `Follow-up for Order #${orderReference}`
+        : "Customer follow-up"),
     note: row.note || "",
     dueAt: row.due_at,
     status: deriveFollowUpStatus(row),
-    priority: asPriority(row.completed ? "low" : "medium"),
+    priority: asPriority(row.priority || (row.completed ? "low" : "medium")),
   };
 }
 
@@ -725,18 +1022,25 @@ async function listFollowUps(query: FollowUpsQuery = {}) {
     listLegacyOrdersByBusiness(),
   ]);
   const customersById = await getLegacyCustomersByIds(
-    Array.from(new Set(orders.map((row) => row.customer_id).filter(Boolean) as string[])),
+    Array.from(
+      new Set(orders.map((row) => row.customer_id).filter(Boolean) as string[]),
+    ),
   );
-  const ordersById = new Map<string, LegacyOrderRow>(orders.map((row) => [row.id, row]));
+  const ordersById = new Map<string, LegacyOrderRow>(
+    orders.map((row) => [row.id, row]),
+  );
 
   return followUps
     .map((row) => mapFollowUpRecord(row, ordersById, customersById))
     .filter((item) => (query.status ? item.status === query.status : true))
     .filter((item) => {
       if (!search) return true;
-      const haystack = [item.title, item.customerName, item.note, item.orderId || ""].join(
-        " ",
-      );
+      const haystack = [
+        item.title,
+        item.customerName,
+        item.note,
+        item.orderId || "",
+      ].join(" ");
       return includesText(haystack, search);
     })
     .sort((a, b) => (a.dueAt > b.dueAt ? 1 : -1));
@@ -749,15 +1053,11 @@ async function createFollowUp(input: CreateFollowUpInput) {
 
   let orderId: string | null = null;
   if (input.orderId?.trim()) {
-    const { data } = await client
-      .from("orders")
-      .select("id")
-      .eq("business_id", businessId)
-      .eq("id", input.orderId.trim())
-      .maybeSingle();
-    if (data?.id) {
-      orderId = String(data.id);
+    const order = await findLegacyOrderByIdentifier(businessId, input.orderId);
+    if (!order) {
+      throw new Error(`Order not found for follow-up: ${input.orderId}`);
     }
+    orderId = String(order.id);
   }
 
   const { data, error } = await client
@@ -765,12 +1065,16 @@ async function createFollowUp(input: CreateFollowUpInput) {
     .insert({
       business_id: businessId,
       order_id: orderId,
+      title: input.customerName?.trim()
+        ? `Follow up: ${input.customerName.trim()}`
+        : "Customer follow-up",
+      priority: input.priority,
       due_at: dueAtIso,
       note: input.note,
       completed: false,
       completed_at: null,
     })
-    .select("id,order_id,business_id,due_at,note,completed,completed_at,created_at")
+    .select(LEGACY_FOLLOW_UP_SELECT)
     .single();
 
   if (error || !data) {
@@ -778,17 +1082,27 @@ async function createFollowUp(input: CreateFollowUpInput) {
   }
 
   const orders = await listLegacyOrdersByBusiness();
-  const ordersById = new Map<string, LegacyOrderRow>(orders.map((row) => [row.id, row]));
-  const customersById = await getLegacyCustomersByIds(
-    Array.from(new Set(orders.map((row) => row.customer_id).filter(Boolean) as string[])),
+  const ordersById = new Map<string, LegacyOrderRow>(
+    orders.map((row) => [row.id, row]),
   );
-  return mapFollowUpRecord(data as LegacyFollowUpRow, ordersById, customersById);
+  const customersById = await getLegacyCustomersByIds(
+    Array.from(
+      new Set(orders.map((row) => row.customer_id).filter(Boolean) as string[]),
+    ),
+  );
+  return mapFollowUpRecord(
+    data as LegacyFollowUpRow,
+    ordersById,
+    customersById,
+  );
 }
 
 async function updateFollowUp(id: string, input: UpdateFollowUpInput) {
   const businessId = await resolveBusinessId();
   const client = createSupabaseServiceClient();
   const updatePayload: Record<string, unknown> = {
+    title: input.title?.trim() || undefined,
+    priority: input.priority || undefined,
     note: input.note ?? undefined,
     due_at: input.dueAt ? new Date(input.dueAt).toISOString() : undefined,
   };
@@ -809,7 +1123,7 @@ async function updateFollowUp(id: string, input: UpdateFollowUpInput) {
     .update(updatePayload)
     .eq("business_id", businessId)
     .eq("id", id)
-    .select("id,order_id,business_id,due_at,note,completed,completed_at,created_at")
+    .select(LEGACY_FOLLOW_UP_SELECT)
     .maybeSingle();
 
   if (error) {
@@ -818,11 +1132,19 @@ async function updateFollowUp(id: string, input: UpdateFollowUpInput) {
   if (!data) return null;
 
   const orders = await listLegacyOrdersByBusiness();
-  const ordersById = new Map<string, LegacyOrderRow>(orders.map((row) => [row.id, row]));
-  const customersById = await getLegacyCustomersByIds(
-    Array.from(new Set(orders.map((row) => row.customer_id).filter(Boolean) as string[])),
+  const ordersById = new Map<string, LegacyOrderRow>(
+    orders.map((row) => [row.id, row]),
   );
-  return mapFollowUpRecord(data as LegacyFollowUpRow, ordersById, customersById);
+  const customersById = await getLegacyCustomersByIds(
+    Array.from(
+      new Set(orders.map((row) => row.customer_id).filter(Boolean) as string[]),
+    ),
+  );
+  return mapFollowUpRecord(
+    data as LegacyFollowUpRow,
+    ordersById,
+    customersById,
+  );
 }
 
 async function listOrderFollowUps(orderId: string) {
@@ -834,7 +1156,11 @@ async function listPayments(query: PaymentsQuery = {}) {
   const search = query.search?.trim() ?? "";
   const orderRows = await listLegacyOrdersByBusiness();
   const customersById = await getLegacyCustomersByIds(
-    Array.from(new Set(orderRows.map((row) => row.customer_id).filter(Boolean) as string[])),
+    Array.from(
+      new Set(
+        orderRows.map((row) => row.customer_id).filter(Boolean) as string[],
+      ),
+    ),
   );
 
   return orderRows
@@ -843,9 +1169,12 @@ async function listPayments(query: PaymentsQuery = {}) {
     .filter((item) => (query.method ? item.method === query.method : true))
     .filter((item) => {
       if (!search) return true;
-      const haystack = [item.orderId, item.customerName, item.reference, item.method].join(
-        " ",
-      );
+      const haystack = [
+        item.orderId,
+        item.customerName,
+        item.reference,
+        item.method,
+      ].join(" ");
       return includesText(haystack, search);
     })
     .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
@@ -854,6 +1183,14 @@ async function listPayments(query: PaymentsQuery = {}) {
 async function createPayment(input: CreatePaymentInput) {
   const businessId = await resolveBusinessId();
   const client = createSupabaseServiceClient();
+  const targetOrder = await findLegacyOrderByIdentifier(
+    businessId,
+    input.orderId,
+  );
+  if (!targetOrder) {
+    throw new Error(`Order not found for payment: ${input.orderId}`);
+  }
+
   const { data, error } = await client
     .from("orders")
     .update({
@@ -864,10 +1201,8 @@ async function createPayment(input: CreatePaymentInput) {
       updated_at: new Date().toISOString(),
     })
     .eq("business_id", businessId)
-    .eq("id", input.orderId)
-    .select(
-      "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,created_at,updated_at",
-    )
+    .eq("id", targetOrder.id)
+    .select(LEGACY_ORDER_SELECT)
     .maybeSingle();
 
   if (error) {
@@ -884,10 +1219,15 @@ async function createPayment(input: CreatePaymentInput) {
 }
 
 async function updatePayment(id: string, input: UpdatePaymentInput) {
-  const orderId = (input.orderId || id.replace(/^pay-/, "")).trim();
-  if (!orderId) return null;
+  const orderIdentifier = (input.orderId || id.replace(/^pay-/, "")).trim();
+  if (!orderIdentifier) return null;
   const businessId = await resolveBusinessId();
   const client = createSupabaseServiceClient();
+  const targetOrder = await findLegacyOrderByIdentifier(
+    businessId,
+    orderIdentifier,
+  );
+  if (!targetOrder) return null;
 
   const payload: Record<string, unknown> = {
     payment_status: input.status || undefined,
@@ -904,10 +1244,8 @@ async function updatePayment(id: string, input: UpdatePaymentInput) {
     .from("orders")
     .update(payload)
     .eq("business_id", businessId)
-    .eq("id", orderId)
-    .select(
-      "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,created_at,updated_at",
-    )
+    .eq("id", targetOrder.id)
+    .select(LEGACY_ORDER_SELECT)
     .maybeSingle();
 
   if (error) {
@@ -977,4 +1315,8 @@ export function createSupabaseLegacyRepository(): WhatsboardRepository {
     getAnalyticsSnapshot,
     getDashboardSnapshot,
   };
+}
+
+export async function resolveLegacyBusinessIdForRequest() {
+  return resolveBusinessId();
 }

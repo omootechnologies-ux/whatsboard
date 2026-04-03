@@ -25,7 +25,9 @@ export function PricingCard({ plan }: { plan: PricingPlan }) {
           <p className="mt-3 text-3xl font-black tracking-[-0.04em]">
             {plan.priceLabel}
           </p>
-          <p className={`text-sm ${plan.highlight ? "text-white/78" : "text-[var(--color-wb-text-muted)]"}`}>
+          <p
+            className={`text-sm ${plan.highlight ? "text-white/78" : "text-[var(--color-wb-text-muted)]"}`}
+          >
             {plan.cadence}
           </p>
         </div>
@@ -53,7 +55,9 @@ export function PricingCard({ plan }: { plan: PricingPlan }) {
           <li
             key={feature}
             className={`flex items-start gap-2 text-sm ${
-              plan.highlight ? "text-white/88" : "text-[var(--color-wb-text-muted)]"
+              plan.highlight
+                ? "text-white/88"
+                : "text-[var(--color-wb-text-muted)]"
             }`}
           >
             <CheckCircle2

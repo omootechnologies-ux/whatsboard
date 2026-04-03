@@ -8,9 +8,12 @@ import {
 const PROTECTED_PREFIXES = [
   "/dashboard",
   "/orders",
+  "/products",
   "/customers",
   "/follow-ups",
   "/payments",
+  "/team",
+  "/billing",
   "/analytics",
   "/settings",
   "/api/customers",
@@ -48,14 +51,17 @@ async function isSupabaseTokenValid(accessToken: string) {
   }
 
   try {
-    const response = await fetch(`${supabaseUrl.replace(/\/+$/, "")}/auth/v1/user`, {
-      method: "GET",
-      headers: {
-        apikey: supabasePublicKey,
-        Authorization: `Bearer ${accessToken}`,
+    const response = await fetch(
+      `${supabaseUrl.replace(/\/+$/, "")}/auth/v1/user`,
+      {
+        method: "GET",
+        headers: {
+          apikey: supabasePublicKey,
+          Authorization: `Bearer ${accessToken}`,
+        },
+        cache: "no-store",
       },
-      cache: "no-store",
-    });
+    );
     return response.ok;
   } catch {
     return false;
@@ -85,7 +91,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const accessToken = request.cookies.get(WHATSBOARD_ACCESS_TOKEN_COOKIE)?.value;
+  const accessToken = request.cookies.get(
+    WHATSBOARD_ACCESS_TOKEN_COOKIE,
+  )?.value;
 
   if (isProtectedPath(pathname)) {
     if (!accessToken) {

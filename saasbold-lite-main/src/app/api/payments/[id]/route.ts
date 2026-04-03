@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
-import { createPayment } from "@/lib/whatsboard-repository";
+import { updatePayment } from "@/lib/whatsboard-repository";
 
-export async function POST(request: Request) {
+export async function POST(
+  request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  const { id } = await context.params;
   const formData = await request.formData();
   const orderId = String(formData.get("orderId") || "");
   const amount = Number(formData.get("amount") || 0);
@@ -16,13 +20,13 @@ export async function POST(request: Request) {
     !reference.trim()
   ) {
     return NextResponse.redirect(
-      new URL("/payments/new?error=invalid", request.url),
+      new URL(`/payments/${id}/edit?error=invalid`, request.url),
       303,
     );
   }
 
   try {
-    await createPayment({
+    const updated = await updatePayment(id, {
       orderId,
       amount,
       method: (["M-Pesa", "Bank", "Cash"].includes(method)
@@ -34,13 +38,20 @@ export async function POST(request: Request) {
       reference,
     });
 
+    if (!updated) {
+      return NextResponse.redirect(
+        new URL("/payments?error=not-found", request.url),
+        303,
+      );
+    }
+
     return NextResponse.redirect(
-      new URL("/payments?created=1", request.url),
+      new URL("/payments?updated=1", request.url),
       303,
     );
   } catch {
     return NextResponse.redirect(
-      new URL("/payments/new?error=persistence", request.url),
+      new URL(`/payments/${id}/edit?error=persistence`, request.url),
       303,
     );
   }

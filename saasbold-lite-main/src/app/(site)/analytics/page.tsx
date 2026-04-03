@@ -20,7 +20,9 @@ export default async function AnalyticsPage() {
   const minRevenuePoint = [...analyticsSeries].sort(
     (a, b) => a.revenue - b.revenue,
   )[0];
-  const topOrderPoint = [...analyticsSeries].sort((a, b) => b.orders - a.orders)[0];
+  const topOrderPoint = [...analyticsSeries].sort(
+    (a, b) => b.orders - a.orders,
+  )[0];
 
   return (
     <div className="space-y-5 lg:space-y-6">
@@ -102,7 +104,8 @@ export default async function AnalyticsPage() {
               Conversion health
             </p>
             <p className="mt-2 text-sm leading-6 text-[var(--color-wb-text-muted)]">
-              {dashboardStats.conversionRate}% of tracked orders have reached delivered.
+              {dashboardStats.conversionRate}% of tracked orders have reached
+              delivered.
             </p>
           </div>
           <div className="wb-soft-card p-4">
@@ -110,7 +113,8 @@ export default async function AnalyticsPage() {
               Follow-up pressure
             </p>
             <p className="mt-2 text-sm leading-6 text-[var(--color-wb-text-muted)]">
-              {dashboardStats.overdueFollowUps} overdue follow-ups currently need action.
+              {dashboardStats.overdueFollowUps} overdue follow-ups currently
+              need action.
             </p>
           </div>
         </div>
