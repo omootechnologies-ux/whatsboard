@@ -943,10 +943,14 @@ export function ChartCard({
                   <span className="absolute inset-x-0 bottom-0 border-t border-[var(--color-wb-border-strong)]" />
 
                   {item.value > 0 ? (
-                    <span
-                      className="relative w-full max-w-[44px] rounded-t-[14px] bg-gradient-to-b from-[#1f7c5d] to-[var(--color-wb-primary)] transition group-hover:brightness-110"
-                      style={{ height: `${heightPercent}%` }}
-                    />
+                    <div
+                      className="relative h-full w-full max-w-[44px] overflow-hidden rounded-t-[14px] bg-[var(--color-wb-border)]/40"
+                    >
+                      <span
+                        className="absolute inset-x-0 bottom-0 block rounded-t-[14px] bg-gradient-to-b from-[#1f7c5d] to-[var(--color-wb-primary)] transition group-hover:brightness-110"
+                        style={{ height: `${heightPercent}%` }}
+                      />
+                    </div>
                   ) : (
                     <span className="relative mb-[1px] inline-flex h-1.5 w-1.5 rounded-full bg-[var(--color-wb-border-strong)]" />
                   )}
