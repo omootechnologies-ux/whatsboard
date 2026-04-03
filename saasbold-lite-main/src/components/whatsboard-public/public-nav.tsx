@@ -49,10 +49,10 @@ export function PublicNav() {
             />
           </span>
           <div className="leading-tight">
-            <p className="text-sm font-semibold tracking-[0.2em] text-white/75">
+            <p className="text-xs font-semibold tracking-[0.18em] text-white/75 sm:text-sm sm:tracking-[0.2em]">
               WHATSBOARD
             </p>
-            <p className="text-sm font-black tracking-[-0.03em] text-white">
+            <p className="hidden text-sm font-black tracking-[-0.03em] text-white sm:block">
               Sales Control
             </p>
           </div>

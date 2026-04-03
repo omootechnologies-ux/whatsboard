@@ -328,16 +328,16 @@ export function DashboardShellFrame({
             </div>
           ) : null}
 
-          <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-4 pb-32 sm:px-6 sm:pb-36 lg:px-8 lg:py-6 lg:pb-12">
+          <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-4 pb-36 sm:px-6 sm:pb-40 lg:px-8 lg:py-6 lg:pb-12">
             {children}
           </main>
 
           <Link
             href="/orders/new"
-            className="fixed bottom-[5.35rem] left-3 right-3 z-20 inline-flex h-14 items-center justify-center gap-2 rounded-full bg-[var(--color-wb-primary)] px-5 text-sm font-semibold text-white shadow-[0_24px_40px_rgba(15,93,70,0.26)] transition hover:bg-[var(--color-wb-primary-dark)] sm:left-auto sm:right-4 sm:bottom-24 lg:bottom-8 lg:right-8"
+            className="fixed bottom-[calc(5.05rem+env(safe-area-inset-bottom))] right-3 z-20 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--color-wb-primary)] px-4 text-sm font-semibold text-white shadow-[0_24px_40px_rgba(15,93,70,0.26)] transition hover:bg-[var(--color-wb-primary-dark)] sm:bottom-24 sm:right-4 sm:h-12 sm:px-5 lg:bottom-8 lg:right-8 lg:h-14 lg:px-6"
           >
             <Plus className="h-4 w-4" />
-            Add Order
+            Add order
             <ArrowUpRight className="h-4 w-4" />
           </Link>
 
@@ -363,7 +363,7 @@ export function DashboardShellFrame({
                     >
                       <Icon className="h-4 w-4" />
                     </span>
-                    <span className="truncate">{item.label}</span>
+                    <span className="truncate text-[11px]">{item.label}</span>
                   </Link>
                 );
               })}
@@ -804,7 +804,7 @@ export function OrderCard({ order }: { order: OrderRecord }) {
     <div className="rounded-[24px] border border-[var(--color-wb-border)] bg-white p-4 shadow-[0_14px_28px_rgba(17,17,17,0.04)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate font-semibold text-[var(--color-wb-text)]">
+          <p className="break-words font-semibold text-[var(--color-wb-text)]">
             {primaryLabel}
           </p>
           <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
@@ -816,7 +816,7 @@ export function OrderCard({ order }: { order: OrderRecord }) {
       </div>
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--color-wb-border)] pt-3">
         <div className="min-w-0">
-          <p className="truncate text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
+          <p className="break-words text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
             {reference ? `Order #${reference}` : "Untitled order"}
           </p>
           <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
@@ -911,7 +911,7 @@ export function ChartCard({
   return (
     <SectionCard title={title} description={description}>
       <div className="-mx-1 overflow-x-auto">
-        <div className="flex h-64 min-w-[520px] items-end gap-3 rounded-[24px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 sm:min-w-0">
+        <div className="flex h-64 min-w-[360px] items-end gap-3 rounded-[24px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 sm:min-w-[520px] md:min-w-0">
           {data.map((item) => (
             <div
               key={String(item.label)}
@@ -982,7 +982,7 @@ export function CustomerRow({
   return (
     <div className="flex flex-col gap-3 rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
-        <p className="font-semibold text-[var(--color-wb-text)]">
+        <p className="break-words font-semibold text-[var(--color-wb-text)]">
           {customerLabel}
         </p>
         <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
@@ -1036,7 +1036,7 @@ export function FollowUpCard({
     <div className="rounded-[24px] border border-[var(--color-wb-border)] bg-white p-4 shadow-[0_14px_28px_rgba(17,17,17,0.04)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-semibold text-[var(--color-wb-text)]">
+          <p className="break-words font-semibold text-[var(--color-wb-text)]">
             {item.title}
           </p>
           <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">

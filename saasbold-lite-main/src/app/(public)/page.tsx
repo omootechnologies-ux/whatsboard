@@ -464,10 +464,10 @@ export default function HomePage() {
                     className="flex items-start justify-between gap-3 rounded-2xl border border-[var(--color-wb-border)] bg-white p-3.5"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-[var(--color-wb-text)]">
+                      <p className="break-words text-sm font-semibold text-[var(--color-wb-text)]">
                         {item.title}
                       </p>
-                      <p className="mt-1 truncate text-sm text-[var(--color-wb-text-muted)]">
+                      <p className="mt-1 break-words text-sm text-[var(--color-wb-text-muted)]">
                         {item.subtitle}
                       </p>
                     </div>
