@@ -28,7 +28,7 @@ export default async function SiteLayout({
     businessName = context.businessName;
     paymentsReconciledToday = reconciledToday;
   } catch {
-    redirect("/login?next=%2Fdashboard");
+    redirect("/login?force=1&next=%2Fdashboard");
   }
 
   return (
