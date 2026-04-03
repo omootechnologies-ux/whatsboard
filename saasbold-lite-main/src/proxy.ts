@@ -114,13 +114,6 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(buildLoginRedirect(request));
     }
 
-    const tokenValid = await isSupabaseTokenValid(accessToken);
-    if (!tokenValid) {
-      const response = NextResponse.redirect(buildLoginRedirect(request));
-      clearAuthCookies(response);
-      return response;
-    }
-
     return NextResponse.next();
   }
 
