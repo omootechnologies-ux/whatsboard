@@ -328,13 +328,13 @@ export function DashboardShellFrame({
             </div>
           ) : null}
 
-          <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-4 pb-28 sm:px-6 lg:px-8 lg:py-6 lg:pb-10">
+          <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-4 pb-32 sm:px-6 sm:pb-36 lg:px-8 lg:py-6 lg:pb-12">
             {children}
           </main>
 
           <Link
             href="/orders/new"
-            className="fixed bottom-24 right-4 z-20 inline-flex h-14 items-center justify-center gap-2 rounded-full bg-[var(--color-wb-primary)] px-5 text-sm font-semibold text-white shadow-[0_24px_40px_rgba(15,93,70,0.26)] transition hover:bg-[var(--color-wb-primary-dark)] lg:bottom-8 lg:right-8"
+            className="fixed bottom-[5.35rem] left-3 right-3 z-20 inline-flex h-14 items-center justify-center gap-2 rounded-full bg-[var(--color-wb-primary)] px-5 text-sm font-semibold text-white shadow-[0_24px_40px_rgba(15,93,70,0.26)] transition hover:bg-[var(--color-wb-primary-dark)] sm:left-auto sm:right-4 sm:bottom-24 lg:bottom-8 lg:right-8"
           >
             <Plus className="h-4 w-4" />
             Add Order
@@ -437,9 +437,17 @@ export function PageHeader({
           </p>
         </div>
         {primaryAction || secondaryAction ? (
-          <div className="flex flex-col gap-3 sm:flex-row">
-            {secondaryAction}
-            {primaryAction}
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            {secondaryAction ? (
+              <div className="w-full sm:w-auto [&>*]:w-full [&>*]:justify-center sm:[&>*]:w-auto">
+                {secondaryAction}
+              </div>
+            ) : null}
+            {primaryAction ? (
+              <div className="w-full sm:w-auto [&>*]:w-full [&>*]:justify-center sm:[&>*]:w-auto">
+                {primaryAction}
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -496,8 +504,8 @@ export function DataTable({
   children: React.ReactNode;
 }) {
   return (
-    <div className="overflow-x-auto rounded-[22px] border border-[var(--color-wb-border)] bg-white">
-      <table className="min-w-full divide-y divide-[var(--color-wb-border)]">
+    <div className="-mx-2 overflow-x-auto rounded-[22px] border border-[var(--color-wb-border)] bg-white sm:mx-0">
+      <table className="min-w-[680px] divide-y divide-[var(--color-wb-border)] sm:min-w-full">
         <thead className="bg-[var(--color-wb-surface-alt)]">
           <tr>
             {headers.map((header) => (
@@ -597,7 +605,7 @@ export function KpiCard({
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
             {label}
           </p>
-          <p className="mt-3 text-3xl font-black tracking-[-0.04em] text-[var(--color-wb-text)]">
+          <p className="mt-3 text-2xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-3xl">
             {value}
           </p>
           <p className="mt-2 text-sm leading-6 text-[var(--color-wb-text-muted)]">
@@ -638,7 +646,11 @@ export function SectionCard({
             </p>
           ) : null}
         </div>
-        {actions}
+        {actions ? (
+          <div className="w-full sm:w-auto [&>*]:w-full [&>*]:justify-center sm:[&>*]:w-auto">
+            {actions}
+          </div>
+        ) : null}
       </div>
       <div className="mt-5">{children}</div>
     </section>
@@ -715,7 +727,10 @@ export function FilterToolbar({
               onChange={setSearch}
             />
           </div>
-          <button type="submit" className="wb-button-secondary">
+          <button
+            type="submit"
+            className="wb-button-secondary w-full sm:w-auto"
+          >
             Apply
           </button>
         </form>
@@ -787,7 +802,7 @@ export function OrderCard({ order }: { order: OrderRecord }) {
 
   return (
     <div className="rounded-[24px] border border-[var(--color-wb-border)] bg-white p-4 shadow-[0_14px_28px_rgba(17,17,17,0.04)]">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate font-semibold text-[var(--color-wb-text)]">
             {primaryLabel}
@@ -895,30 +910,32 @@ export function ChartCard({
 
   return (
     <SectionCard title={title} description={description}>
-      <div className="flex h-64 items-end gap-3 rounded-[24px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4">
-        {data.map((item) => (
-          <div
-            key={String(item.label)}
-            className="flex min-w-0 flex-1 flex-col items-center gap-3"
-          >
-            <div className="relative flex h-full w-full items-end justify-center">
-              <div
-                className="w-full max-w-[52px] rounded-t-[18px] bg-gradient-to-b from-[#1f7c5d] to-[var(--color-wb-primary)]"
-                style={{
-                  height: `${Math.max((Number(item[dataKey]) / max) * 100, 10)}%`,
-                }}
-              />
+      <div className="-mx-1 overflow-x-auto">
+        <div className="flex h-64 min-w-[520px] items-end gap-3 rounded-[24px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 sm:min-w-0">
+          {data.map((item) => (
+            <div
+              key={String(item.label)}
+              className="flex min-w-0 flex-1 flex-col items-center gap-3"
+            >
+              <div className="relative flex h-full w-full items-end justify-center">
+                <div
+                  className="w-full max-w-[52px] rounded-t-[18px] bg-gradient-to-b from-[#1f7c5d] to-[var(--color-wb-primary)]"
+                  style={{
+                    height: `${Math.max((Number(item[dataKey]) / max) * 100, 10)}%`,
+                  }}
+                />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-semibold text-[var(--color-wb-text)]">
+                  {Number(item[dataKey]).toLocaleString()}
+                </p>
+                <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
+                  {String(item.label)}
+                </p>
+              </div>
             </div>
-            <div className="text-center">
-              <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-                {Number(item[dataKey]).toLocaleString()}
-              </p>
-              <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                {String(item.label)}
-              </p>
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </SectionCard>
   );
@@ -1017,7 +1034,7 @@ export function FollowUpCard({
 
   return (
     <div className="rounded-[24px] border border-[var(--color-wb-border)] bg-white p-4 shadow-[0_14px_28px_rgba(17,17,17,0.04)]">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-semibold text-[var(--color-wb-text)]">
             {item.title}
@@ -1035,7 +1052,7 @@ export function FollowUpCard({
       <p className="mt-4 text-sm leading-6 text-[var(--color-wb-text-muted)]">
         {item.note}
       </p>
-      <div className="mt-4 flex items-center justify-between gap-3 text-sm">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm">
         <span className="font-semibold text-[var(--color-wb-text)]">
           {formatDate(item.dueAt)}
         </span>

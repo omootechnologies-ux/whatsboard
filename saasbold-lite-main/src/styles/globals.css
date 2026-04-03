@@ -31,6 +31,7 @@
   body {
     @apply bg-[var(--color-wb-background)] font-sans text-[var(--color-wb-text)] antialiased;
     font-family: var(--font-satoshi), var(--font-inter), sans-serif;
+    overflow-x: hidden;
   }
 
   a,
@@ -65,5 +66,9 @@
 
   .wb-input {
     @apply h-12 w-full rounded-2xl border border-[var(--color-wb-border)] bg-white px-4 text-sm text-[var(--color-wb-text)] placeholder:text-[var(--color-wb-text-muted)] focus:border-[color:rgba(15,93,70,0.35)];
+  }
+
+  .wb-textarea {
+    @apply min-h-[110px] w-full rounded-2xl border border-[var(--color-wb-border)] bg-white px-4 py-3 text-sm text-[var(--color-wb-text)] placeholder:text-[var(--color-wb-text-muted)] focus:border-[color:rgba(15,93,70,0.35)];
   }
 }

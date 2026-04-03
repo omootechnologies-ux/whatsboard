@@ -71,33 +71,31 @@ export default async function OrdersPage({
         title="Orders Board"
         description="Stage-by-stage workflow with touch-friendly cards."
       >
-        <div className="-mx-1 overflow-x-auto pb-1">
-          <div className="grid min-w-[960px] gap-4 xl:min-w-0 xl:grid-cols-4">
-            <OrderStageBoard
-              title="New order"
-              orders={filteredOrders.filter(
-                (order) => order.stage === "new_order",
-              )}
-            />
-            <OrderStageBoard
-              title="Awaiting payment"
-              orders={filteredOrders.filter(
-                (order) => order.stage === "waiting_payment",
-              )}
-            />
-            <OrderStageBoard
-              title="Paid / Packing"
-              orders={filteredOrders.filter((order) =>
-                ["paid", "packing"].includes(order.stage),
-              )}
-            />
-            <OrderStageBoard
-              title="Dispatch / Delivered"
-              orders={filteredOrders.filter((order) =>
-                ["dispatched", "delivered"].includes(order.stage),
-              )}
-            />
-          </div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <OrderStageBoard
+            title="New order"
+            orders={filteredOrders.filter(
+              (order) => order.stage === "new_order",
+            )}
+          />
+          <OrderStageBoard
+            title="Awaiting payment"
+            orders={filteredOrders.filter(
+              (order) => order.stage === "waiting_payment",
+            )}
+          />
+          <OrderStageBoard
+            title="Paid / Packing"
+            orders={filteredOrders.filter((order) =>
+              ["paid", "packing"].includes(order.stage),
+            )}
+          />
+          <OrderStageBoard
+            title="Dispatch / Delivered"
+            orders={filteredOrders.filter((order) =>
+              ["dispatched", "delivered"].includes(order.stage),
+            )}
+          />
         </div>
       </SectionCard>
 

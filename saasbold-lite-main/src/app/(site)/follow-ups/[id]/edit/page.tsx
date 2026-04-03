@@ -122,7 +122,7 @@ export default async function EditFollowUpPage({
             <textarea
               name="note"
               required
-              className="min-h-[120px] w-full rounded-2xl border border-[var(--color-wb-border)] bg-white px-4 py-3 text-sm text-[var(--color-wb-text)]"
+              className="wb-textarea"
               defaultValue={followUp.note}
             />
           </div>

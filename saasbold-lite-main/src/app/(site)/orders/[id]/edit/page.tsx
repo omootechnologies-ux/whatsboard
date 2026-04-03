@@ -125,7 +125,7 @@ export default async function EditOrderPage({
             </label>
             <textarea
               name="notes"
-              className="min-h-[120px] w-full rounded-2xl border border-[var(--color-wb-border)] bg-white px-4 py-3 text-sm text-[var(--color-wb-text)]"
+              className="wb-textarea"
               defaultValue={order.notes}
             />
           </div>

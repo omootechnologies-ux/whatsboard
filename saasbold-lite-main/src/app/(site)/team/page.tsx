@@ -107,37 +107,82 @@ export default async function TeamPage() {
         description="Live team list from Supabase membership records."
       >
         {members.length ? (
-          <DataTable headers={["Name", "Contact", "Role", "Joined"]}>
-            {members.map((member) => {
-              const profile = profileMap.get(member.user_id);
-              const nameLabel =
-                profile?.full_name || profile?.email || "Team member";
-              return (
-                <DataRow key={member.id}>
-                  <DataCell>
-                    <p className="font-semibold text-[var(--color-wb-text)]">
-                      {nameLabel}
+          <>
+            <div className="hidden md:block">
+              <DataTable headers={["Name", "Contact", "Role", "Joined"]}>
+                {members.map((member) => {
+                  const profile = profileMap.get(member.user_id);
+                  const nameLabel =
+                    profile?.full_name || profile?.email || "Team member";
+                  return (
+                    <DataRow key={member.id}>
+                      <DataCell>
+                        <p className="font-semibold text-[var(--color-wb-text)]">
+                          {nameLabel}
+                        </p>
+                        <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
+                          Workspace member
+                        </p>
+                      </DataCell>
+                      <DataCell>
+                        {(profile?.email || "No email") +
+                          (profile?.phone ? ` • ${profile.phone}` : "")}
+                      </DataCell>
+                      <DataCell>
+                        <span className="rounded-full border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] px-3 py-1 text-xs font-semibold capitalize text-[var(--color-wb-text-muted)]">
+                          {member.role || "member"}
+                        </span>
+                      </DataCell>
+                      <DataCell>
+                        {member.created_at
+                          ? formatDate(member.created_at)
+                          : "N/A"}
+                      </DataCell>
+                    </DataRow>
+                  );
+                })}
+              </DataTable>
+            </div>
+
+            <div className="space-y-3 md:hidden">
+              {members.map((member) => {
+                const profile = profileMap.get(member.user_id);
+                const nameLabel =
+                  profile?.full_name || profile?.email || "Team member";
+                return (
+                  <article
+                    key={member.id}
+                    className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-[var(--color-wb-text)]">
+                          {nameLabel}
+                        </p>
+                        <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
+                          {profile?.email || "No email"}
+                        </p>
+                        {profile?.phone ? (
+                          <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
+                            {profile.phone}
+                          </p>
+                        ) : null}
+                      </div>
+                      <span className="rounded-full border border-[var(--color-wb-border)] bg-white px-3 py-1 text-xs font-semibold capitalize text-[var(--color-wb-text-muted)]">
+                        {member.role || "member"}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-xs text-[var(--color-wb-text-muted)]">
+                      Joined{" "}
+                      {member.created_at
+                        ? formatDate(member.created_at)
+                        : "N/A"}
                     </p>
-                    <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-                      Workspace member
-                    </p>
-                  </DataCell>
-                  <DataCell>
-                    {(profile?.email || "No email") +
-                      (profile?.phone ? ` • ${profile.phone}` : "")}
-                  </DataCell>
-                  <DataCell>
-                    <span className="rounded-full border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] px-3 py-1 text-xs font-semibold capitalize text-[var(--color-wb-text-muted)]">
-                      {member.role || "member"}
-                    </span>
-                  </DataCell>
-                  <DataCell>
-                    {member.created_at ? formatDate(member.created_at) : "N/A"}
-                  </DataCell>
-                </DataRow>
-              );
-            })}
-          </DataTable>
+                  </article>
+                );
+              })}
+            </div>
+          </>
         ) : (
           <EmptyState
             title="No team members yet"

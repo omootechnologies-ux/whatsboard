@@ -92,40 +92,97 @@ export default async function ProductsPage() {
         description="Live catalog rows from Supabase. No template/demo data."
       >
         {products.length ? (
-          <DataTable
-            headers={["Product", "Price", "Stock", "Status", "Last updated"]}
-          >
-            {products.map((product) => (
-              <DataRow key={product.id}>
-                <DataCell>
-                  <p className="font-semibold text-[var(--color-wb-text)]">
-                    {product.name}
-                  </p>
-                  <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-                    {product.description || "No description"}
-                  </p>
-                </DataCell>
-                <DataCell>
-                  <span className="font-semibold text-[var(--color-wb-primary)]">
-                    {formatCurrency(asNumber(product.price))}
-                  </span>
-                </DataCell>
-                <DataCell>{asNumber(product.stock_count)}</DataCell>
-                <DataCell>
-                  <span className="rounded-full border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] px-3 py-1 text-xs font-semibold capitalize text-[var(--color-wb-text-muted)]">
-                    {product.is_active ? "active" : "inactive"}
-                  </span>
-                </DataCell>
-                <DataCell>
-                  <span className="text-xs text-[var(--color-wb-text-muted)]">
+          <>
+            <div className="hidden md:block">
+              <DataTable
+                headers={[
+                  "Product",
+                  "Price",
+                  "Stock",
+                  "Status",
+                  "Last updated",
+                ]}
+              >
+                {products.map((product) => (
+                  <DataRow key={product.id}>
+                    <DataCell>
+                      <p className="font-semibold text-[var(--color-wb-text)]">
+                        {product.name}
+                      </p>
+                      <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
+                        {product.description || "No description"}
+                      </p>
+                    </DataCell>
+                    <DataCell>
+                      <span className="font-semibold text-[var(--color-wb-primary)]">
+                        {formatCurrency(asNumber(product.price))}
+                      </span>
+                    </DataCell>
+                    <DataCell>{asNumber(product.stock_count)}</DataCell>
+                    <DataCell>
+                      <span className="rounded-full border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] px-3 py-1 text-xs font-semibold capitalize text-[var(--color-wb-text-muted)]">
+                        {product.is_active ? "active" : "inactive"}
+                      </span>
+                    </DataCell>
+                    <DataCell>
+                      <span className="text-xs text-[var(--color-wb-text-muted)]">
+                        {product.updated_at
+                          ? formatDate(product.updated_at)
+                          : "N/A"}
+                      </span>
+                    </DataCell>
+                  </DataRow>
+                ))}
+              </DataTable>
+            </div>
+
+            <div className="space-y-3 md:hidden">
+              {products.map((product) => (
+                <article
+                  key={product.id}
+                  className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-[var(--color-wb-text)]">
+                        {product.name}
+                      </p>
+                      <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
+                        {product.description || "No description"}
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-[var(--color-wb-border)] bg-white px-3 py-1 text-xs font-semibold capitalize text-[var(--color-wb-text-muted)]">
+                      {product.is_active ? "active" : "inactive"}
+                    </span>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
+                        Price
+                      </p>
+                      <p className="mt-1 font-semibold text-[var(--color-wb-primary)]">
+                        {formatCurrency(asNumber(product.price))}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
+                        Stock
+                      </p>
+                      <p className="mt-1 font-semibold text-[var(--color-wb-text)]">
+                        {asNumber(product.stock_count)}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-xs text-[var(--color-wb-text-muted)]">
+                    Updated{" "}
                     {product.updated_at
                       ? formatDate(product.updated_at)
                       : "N/A"}
-                  </span>
-                </DataCell>
-              </DataRow>
-            ))}
-          </DataTable>
+                  </p>
+                </article>
+              ))}
+            </div>
+          </>
         ) : (
           <EmptyState
             title="No products yet"

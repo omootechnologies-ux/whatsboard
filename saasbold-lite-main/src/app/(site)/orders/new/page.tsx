@@ -146,7 +146,7 @@ export default async function NewOrderPage({
             </label>
             <textarea
               name="items"
-              className="min-h-[120px] w-full rounded-2xl border border-[var(--color-wb-border)] bg-white px-4 py-3 text-sm text-[var(--color-wb-text)]"
+              className="wb-textarea"
               placeholder="2x Ankara set, 1x delivery fee"
             />
           </div>
@@ -156,7 +156,7 @@ export default async function NewOrderPage({
             </label>
             <textarea
               name="notes"
-              className="min-h-[110px] w-full rounded-2xl border border-[var(--color-wb-border)] bg-white px-4 py-3 text-sm text-[var(--color-wb-text)]"
+              className="wb-textarea"
               placeholder="Customer asked for fast courier option."
             />
           </div>

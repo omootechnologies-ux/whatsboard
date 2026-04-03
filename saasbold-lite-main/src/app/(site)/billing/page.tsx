@@ -158,29 +158,77 @@ export default async function BillingPage() {
         description="Recent billing transactions recorded for this business."
       >
         {transactions.length ? (
-          <DataTable
-            headers={["Amount", "Status", "Provider", "Reference", "Date"]}
-          >
-            {transactions.map((txn) => (
-              <DataRow key={txn.id}>
-                <DataCell>
-                  <span className="font-semibold text-[var(--color-wb-primary)]">
-                    {formatCurrency(asNumber(txn.amount))}
-                  </span>
-                </DataCell>
-                <DataCell>
-                  <span className="rounded-full border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] px-3 py-1 text-xs font-semibold capitalize text-[var(--color-wb-text-muted)]">
-                    {txn.status || "pending"}
-                  </span>
-                </DataCell>
-                <DataCell>{txn.provider || "N/A"}</DataCell>
-                <DataCell>{txn.provider_reference || "N/A"}</DataCell>
-                <DataCell>
-                  {txn.created_at ? formatDate(txn.created_at) : "N/A"}
-                </DataCell>
-              </DataRow>
-            ))}
-          </DataTable>
+          <>
+            <div className="hidden md:block">
+              <DataTable
+                headers={["Amount", "Status", "Provider", "Reference", "Date"]}
+              >
+                {transactions.map((txn) => (
+                  <DataRow key={txn.id}>
+                    <DataCell>
+                      <span className="font-semibold text-[var(--color-wb-primary)]">
+                        {formatCurrency(asNumber(txn.amount))}
+                      </span>
+                    </DataCell>
+                    <DataCell>
+                      <span className="rounded-full border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] px-3 py-1 text-xs font-semibold capitalize text-[var(--color-wb-text-muted)]">
+                        {txn.status || "pending"}
+                      </span>
+                    </DataCell>
+                    <DataCell>{txn.provider || "N/A"}</DataCell>
+                    <DataCell>{txn.provider_reference || "N/A"}</DataCell>
+                    <DataCell>
+                      {txn.created_at ? formatDate(txn.created_at) : "N/A"}
+                    </DataCell>
+                  </DataRow>
+                ))}
+              </DataTable>
+            </div>
+
+            <div className="space-y-3 md:hidden">
+              {transactions.map((txn) => (
+                <article
+                  key={txn.id}
+                  className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
+                        Amount
+                      </p>
+                      <p className="mt-1 font-semibold text-[var(--color-wb-primary)]">
+                        {formatCurrency(asNumber(txn.amount))}
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-[var(--color-wb-border)] bg-white px-3 py-1 text-xs font-semibold capitalize text-[var(--color-wb-text-muted)]">
+                      {txn.status || "pending"}
+                    </span>
+                  </div>
+                  <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
+                        Provider
+                      </p>
+                      <p className="mt-1 text-[var(--color-wb-text)]">
+                        {txn.provider || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
+                        Reference
+                      </p>
+                      <p className="mt-1 text-[var(--color-wb-text)]">
+                        {txn.provider_reference || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-xs text-[var(--color-wb-text-muted)]">
+                    {txn.created_at ? formatDate(txn.created_at) : "N/A"}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </>
         ) : (
           <EmptyState
             title="No billing transactions yet"
