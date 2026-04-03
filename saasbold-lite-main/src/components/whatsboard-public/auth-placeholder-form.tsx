@@ -53,18 +53,30 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [redirectPath, setRedirectPath] = useState("/dashboard");
+  const [forceAuthFlow, setForceAuthFlow] = useState(false);
+  const [paramsReady, setParamsReady] = useState(false);
 
   const isRegister = mode === "register";
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setRedirectPath(getRedirectPath(params.get("next")));
+    setForceAuthFlow(params.get("force") === "1");
+    setParamsReady(true);
   }, []);
 
   useEffect(() => {
+    if (!paramsReady) return;
     let mounted = true;
 
     async function checkSession() {
+      if (forceAuthFlow) {
+        if (mounted) {
+          setIsCheckingSession(false);
+        }
+        return;
+      }
+
       try {
         const supabase = createSupabaseBrowserClient();
         const { data, error } = await supabase.auth.getSession();
@@ -95,7 +107,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     return () => {
       mounted = false;
     };
-  }, [router, redirectPath]);
+  }, [forceAuthFlow, paramsReady, redirectPath, router]);
 
   if (isCheckingSession) {
     return (
@@ -324,14 +336,14 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         </p>
         {isRegister ? (
           <Link
-            href="/login"
+            href="/login?force=1"
             className="font-semibold text-[var(--color-wb-primary)]"
           >
             Already have an account?
           </Link>
         ) : (
           <Link
-            href="/register"
+            href="/register?force=1"
             className="font-semibold text-[var(--color-wb-primary)]"
           >
             Create account

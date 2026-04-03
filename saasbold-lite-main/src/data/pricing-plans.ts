@@ -21,7 +21,7 @@ export const pricingPlans: PricingPlan[] = [
     description:
       "Track your first orders and see how structured selling feels without paying upfront.",
     ctaLabel: "Start Free",
-    ctaHref: "/register",
+    ctaHref: "/register?force=1",
     features: [
       "Up to 30 orders per month",
       "Basic orders board",
@@ -38,7 +38,7 @@ export const pricingPlans: PricingPlan[] = [
     description:
       "For one-person sellers who need daily control over payments, follow-ups, and delivery updates.",
     ctaLabel: "Get Started Today",
-    ctaHref: "/register",
+    ctaHref: "/register?force=1",
     features: [
       "Unlimited orders",
       "Payment tracking",
@@ -56,7 +56,7 @@ export const pricingPlans: PricingPlan[] = [
     description:
       "Built for growing social commerce teams that need shared workflows and tighter operations.",
     ctaLabel: "Get Started Today",
-    ctaHref: "/register",
+    ctaHref: "/register?force=1",
     highlight: true,
     features: [
       "Everything in Starter",
@@ -74,7 +74,7 @@ export const pricingPlans: PricingPlan[] = [
     description:
       "For established East African sellers running multi-channel teams and higher daily volume.",
     ctaLabel: "Get Started Today",
-    ctaHref: "/register",
+    ctaHref: "/register?force=1",
     features: [
       "Everything in Growth",
       "5 team members included",

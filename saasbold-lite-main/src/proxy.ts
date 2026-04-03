@@ -86,6 +86,7 @@ function clearAuthCookies(response: NextResponse) {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const forceAuthPage = request.nextUrl.searchParams.get("force") === "1";
 
   if (pathname.startsWith("/_next/") || pathname === "/favicon.ico") {
     return NextResponse.next();
@@ -110,7 +111,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (isAuthPage(pathname) && accessToken) {
+  if (isAuthPage(pathname) && accessToken && !forceAuthPage) {
     const tokenValid = await isSupabaseTokenValid(accessToken);
     if (tokenValid) {
       const dashboardUrl = request.nextUrl.clone();

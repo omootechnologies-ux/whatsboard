@@ -365,7 +365,7 @@ export default function HomePage() {
               simple place to track orders, customers, payments, and deliveries.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/register" className="wb-button-primary">
+              <Link href="/register?force=1" className="wb-button-primary">
                 Start Free
                 <ArrowRight className="h-4 w-4" />
               </Link>
@@ -546,7 +546,7 @@ export default function HomePage() {
             </ul>
 
             <div className="mt-7">
-              <Link href="/register" className="wb-button-primary">
+              <Link href="/register?force=1" className="wb-button-primary">
                 Get Started Today
                 <ArrowRight className="h-4 w-4" />
               </Link>
@@ -742,7 +742,7 @@ export default function HomePage() {
         </div>
 
         <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <Link href="/register" className="wb-button-primary">
+          <Link href="/register?force=1" className="wb-button-primary">
             Get Started Today
           </Link>
           <Link href="/login?next=%2Fdashboard" className="wb-button-secondary">
@@ -791,7 +791,7 @@ export default function HomePage() {
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
-              href="/register"
+              href="/register?force=1"
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[var(--color-wb-primary-dark)] transition hover:bg-white/90"
             >
               Start Free

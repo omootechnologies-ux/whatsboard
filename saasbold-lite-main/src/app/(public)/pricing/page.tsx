@@ -51,7 +51,7 @@ export default function PricingPage() {
           operations and team workflows.
         </p>
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link href="/register" className="wb-button-primary">
+          <Link href="/register?force=1" className="wb-button-primary">
             Start Free
           </Link>
           <Link href="/login" className="wb-button-secondary">

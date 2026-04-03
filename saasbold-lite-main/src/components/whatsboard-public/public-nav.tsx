@@ -73,7 +73,7 @@ export function PublicNav() {
           <Link href="/login?next=%2Fdashboard" className="wb-button-secondary">
             Watch Demo
           </Link>
-          <Link href="/register" className="wb-button-primary">
+          <Link href="/register?force=1" className="wb-button-primary">
             Start Free
           </Link>
         </div>
@@ -113,7 +113,7 @@ export function PublicNav() {
               >
                 Watch Demo
               </Link>
-              <Link href="/register" className="wb-button-primary">
+              <Link href="/register?force=1" className="wb-button-primary">
                 Start Free
               </Link>
             </div>

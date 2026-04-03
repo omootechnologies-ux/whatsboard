@@ -42,7 +42,7 @@ export function PublicFooter() {
             Login
           </Link>
           <Link
-            href="/register"
+            href="/register?force=1"
             className="rounded-xl px-3 py-2 text-[var(--color-wb-text-muted)] transition hover:bg-[var(--color-wb-primary-soft)] hover:text-[var(--color-wb-primary)]"
           >
             Start Free
