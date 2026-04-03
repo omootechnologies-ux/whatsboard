@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import {
@@ -70,7 +69,6 @@ async function bootstrapBusinessContext(options: {
 }
 
 export function AuthForm({ mode }: { mode: AuthMode }) {
-  const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,6 +77,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const [forceAuthFlow, setForceAuthFlow] = useState(false);
   const [paramsReady, setParamsReady] = useState(false);
   const [authSwitchQuery, setAuthSwitchQuery] = useState("");
+  const redirectInFlightRef = useRef(false);
 
   const isRegister = mode === "register";
 
@@ -124,12 +123,15 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           await bootstrapBusinessContext({
             accessToken: data.session.access_token,
           });
-          router.replace(redirectPath);
-          router.refresh();
+          if (!redirectInFlightRef.current) {
+            redirectInFlightRef.current = true;
+            window.location.assign(redirectPath);
+          }
           return;
         }
         clearAuthSessionCookies();
       } catch (error) {
+        redirectInFlightRef.current = false;
         setErrorMessage(resolveAuthErrorMessage(error));
       } finally {
         if (mounted) {
@@ -143,7 +145,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     return () => {
       mounted = false;
     };
-  }, [forceAuthFlow, paramsReady, redirectPath, router]);
+  }, [forceAuthFlow, paramsReady, redirectPath]);
 
   if (isCheckingSession) {
     return (
@@ -241,8 +243,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 accessToken: data.session.access_token,
                 businessName,
               });
-              router.push(redirectPath);
-              router.refresh();
+              window.location.assign(redirectPath);
               return;
             }
 
@@ -276,8 +277,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               });
             }
 
-            router.push(redirectPath);
-            router.refresh();
+            window.location.assign(redirectPath);
           } catch (error) {
             setErrorMessage(resolveAuthErrorMessage(error));
           } finally {

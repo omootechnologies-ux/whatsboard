@@ -42,10 +42,9 @@ export function PublicNav() {
             <Image
               src="/whatsboard-logo.png"
               alt="WhatsBoard logo"
-              width={2000}
-              height={2000}
+              width={40}
+              height={40}
               className="h-8 w-8 object-contain sm:h-9 sm:w-9"
-              priority
             />
           </span>
           <div className="leading-tight">
