@@ -46,6 +46,29 @@ function getRedirectPath(nextParam: string | null) {
   return nextParam;
 }
 
+async function bootstrapBusinessContext(options: {
+  accessToken: string;
+  businessName?: string;
+}) {
+  const response = await fetch("/api/auth/bootstrap", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${options.accessToken}`,
+    },
+    body: JSON.stringify({
+      businessName: options.businessName || undefined,
+    }),
+  });
+
+  if (response.ok) return;
+
+  const payload = (await response.json().catch(() => ({}))) as {
+    error?: string;
+  };
+  throw new Error(payload.error || "Failed to prepare your business profile.");
+}
+
 export function AuthForm({ mode }: { mode: AuthMode }) {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -88,6 +111,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
 
         if (data.session) {
           persistAuthSessionCookies(data.session);
+          await bootstrapBusinessContext({
+            accessToken: data.session.access_token,
+          });
           router.replace(redirectPath);
           router.refresh();
           return;
@@ -201,6 +227,10 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               }
 
               persistAuthSessionCookies(data.session);
+              await bootstrapBusinessContext({
+                accessToken: data.session.access_token,
+                businessName,
+              });
               router.push(redirectPath);
               router.refresh();
               return;
@@ -226,8 +256,14 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 return;
               }
               persistAuthSessionCookies(sessionData.session);
+              await bootstrapBusinessContext({
+                accessToken: sessionData.session.access_token,
+              });
             } else {
               persistAuthSessionCookies(data.session);
+              await bootstrapBusinessContext({
+                accessToken: data.session.access_token,
+              });
             }
 
             router.push(redirectPath);

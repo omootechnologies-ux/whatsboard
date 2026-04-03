@@ -101,8 +101,10 @@ export function stageTone(stage: OrderRecord["stage"]) {
 
 export function DashboardShellFrame({
   children,
+  workspaceName,
 }: {
   children: React.ReactNode;
+  workspaceName?: string | null;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -120,6 +122,8 @@ export function DashboardShellFrame({
       })),
     [],
   );
+  const workspaceLabel = workspaceName?.trim() || "My Business";
+  const workspaceTagline = `Seller control room • ${workspaceLabel}`;
 
   const onSignOut = async () => {
     if (isSigningOut) return;
@@ -164,7 +168,7 @@ export function DashboardShellFrame({
                     WhatsBoard
                   </p>
                   <p className="text-sm font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
-                    Seller control room
+                    {workspaceLabel}
                   </p>
                 </div>
               ) : null}
@@ -242,7 +246,7 @@ export function DashboardShellFrame({
                     {currentLabel}
                   </p>
                   <h1 className="truncate text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
-                    WhatsBoard
+                    {workspaceLabel}
                   </h1>
                 </div>
               </div>
@@ -250,7 +254,9 @@ export function DashboardShellFrame({
               <div className="flex items-center gap-2 sm:gap-3">
                 <span className="hidden items-center gap-2 rounded-full border border-[var(--color-wb-border)] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-primary)] xl:inline-flex">
                   <LayoutGrid className="h-3.5 w-3.5" />
-                  Live workspace
+                  <span className="max-w-[16rem] truncate">
+                    {workspaceLabel}
+                  </span>
                 </span>
                 <button
                   onClick={onSignOut}
@@ -276,10 +282,10 @@ export function DashboardShellFrame({
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
-                      WhatsBoard
+                      {workspaceLabel}
                     </p>
                     <p className="text-sm text-[var(--color-wb-text-muted)]">
-                      Seller control room
+                      {workspaceTagline}
                     </p>
                   </div>
                   <button

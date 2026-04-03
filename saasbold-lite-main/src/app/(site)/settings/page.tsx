@@ -14,6 +14,7 @@ import {
   listOrders,
   listPayments,
 } from "@/lib/whatsboard-repository";
+import { resolveLegacyBusinessContextForRequest } from "@/lib/repositories/supabase-legacy-repository";
 import { isSupabaseServerConfigured } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -37,12 +38,14 @@ function mostFrequent(values: string[]) {
 }
 
 export default async function SettingsPage() {
-  const [orders, customers, followUps, payments] = await Promise.all([
-    listOrders(),
-    listCustomers(),
-    listFollowUps(),
-    listPayments(),
-  ]);
+  const [orders, customers, followUps, payments, businessContext] =
+    await Promise.all([
+      listOrders(),
+      listCustomers(),
+      listFollowUps(),
+      listPayments(),
+      resolveLegacyBusinessContextForRequest(),
+    ]);
 
   const topChannel = mostFrequent(orders.map((order) => order.channel));
   const topCity = mostFrequent(customers.map((customer) => customer.location));
@@ -72,8 +75,27 @@ export default async function SettingsPage() {
           title="Workspace profile"
           description="Operational profile computed from your current data."
         >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="wb-soft-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
+                Business name
+              </p>
+              <p className="mt-2 text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
+                {businessContext.businessName}
+              </p>
+            </div>
+            <div className="wb-soft-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
+                Account email
+              </p>
+              <p className="mt-2 text-sm font-semibold text-[var(--color-wb-text)]">
+                {businessContext.profileEmail || "Not set"}
+              </p>
+            </div>
+          </div>
+
           {orders.length || customers.length || payments.length ? (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="wb-soft-card p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
                   Primary channel

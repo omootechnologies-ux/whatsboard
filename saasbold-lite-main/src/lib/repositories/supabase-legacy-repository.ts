@@ -4,6 +4,7 @@ import type {
   OrderRecord,
   PaymentRecord,
 } from "@/data/whatsboard";
+import type { User } from "@supabase/supabase-js";
 import { WHATSBOARD_ACCESS_TOKEN_COOKIE } from "@/lib/auth/constants";
 import { formatOrderReference } from "@/lib/display-labels";
 import { statusFromDueDate } from "@/lib/follow-up-status";
@@ -92,6 +93,15 @@ type LegacyProfileRow = {
   email: string | null;
 };
 
+export type LegacyBusinessContext = {
+  userId: string;
+  businessId: string;
+  businessName: string;
+  profileBusinessName: string | null;
+  profileFullName: string | null;
+  profileEmail: string | null;
+};
+
 const CHANNELS = ["WhatsApp", "Instagram", "TikTok", "Facebook"] as const;
 const ORDER_STAGES = [
   "new_order",
@@ -108,6 +118,13 @@ const LEGACY_ORDER_SELECT =
   "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,created_at,updated_at";
 const LEGACY_FOLLOW_UP_SELECT =
   "id,order_id,business_id,title,priority,due_at,note,completed,completed_at,created_at";
+
+type EnsureBusinessOptions = {
+  businessNameHint?: string | null;
+  emailHint?: string | null;
+  fullNameHint?: string | null;
+  updateExistingBusinessName?: boolean;
+};
 
 function asNumber(value: number | string | null | undefined) {
   if (typeof value === "number") return value;
@@ -187,7 +204,11 @@ function deriveFollowUpStatus(
 }
 
 const businessCacheByUserId = new Map<string, string>();
-let cachedAnonymousBusinessId: string | undefined;
+
+function cleanText(value?: string | null) {
+  const trimmed = String(value || "").trim();
+  return trimmed.length ? trimmed : null;
+}
 
 function businessNameFromEmail(email?: string | null) {
   const local = (email || "").split("@")[0]?.trim();
@@ -197,21 +218,47 @@ function businessNameFromEmail(email?: string | null) {
   return `${cleaned.replace(/\b\w/g, (char) => char.toUpperCase())} Business`;
 }
 
-async function getAuthUserContext() {
+function extractBusinessNameFromMetadata(user?: User | null) {
+  if (!user) return null;
+  const metadata = (user.user_metadata || {}) as Record<string, unknown>;
+  return (
+    cleanText(String(metadata.business_name || "")) ||
+    cleanText(String(metadata.businessName || "")) ||
+    cleanText(String(metadata.company_name || "")) ||
+    cleanText(String(metadata.companyName || ""))
+  );
+}
+
+function extractFullNameFromMetadata(user?: User | null) {
+  if (!user) return null;
+  const metadata = (user.user_metadata || {}) as Record<string, unknown>;
+  return (
+    cleanText(String(metadata.full_name || "")) ||
+    cleanText(String(metadata.fullName || "")) ||
+    cleanText(String(metadata.name || ""))
+  );
+}
+
+async function getAuthUserContext(options?: { accessToken?: string | null }) {
   try {
+    const tokenFromParam = cleanText(options?.accessToken);
     const cookieStore = await cookies();
-    const accessToken =
-      cookieStore.get(WHATSBOARD_ACCESS_TOKEN_COOKIE)?.value || "";
-    if (!accessToken) return { userId: null, hadAccessToken: false };
+    const cookieAccessToken = cleanText(
+      cookieStore.get(WHATSBOARD_ACCESS_TOKEN_COOKIE)?.value || "",
+    );
+    const accessToken = tokenFromParam || cookieAccessToken;
+    if (!accessToken) {
+      return { userId: null, hadAccessToken: false, user: null };
+    }
 
     const client = createSupabaseServiceClient();
     const { data, error } = await client.auth.getUser(accessToken);
     if (error || !data.user?.id) {
-      return { userId: null, hadAccessToken: true };
+      return { userId: null, hadAccessToken: true, user: null };
     }
-    return { userId: data.user.id, hadAccessToken: true };
+    return { userId: data.user.id, hadAccessToken: true, user: data.user };
   } catch {
-    return { userId: null, hadAccessToken: false };
+    return { userId: null, hadAccessToken: false, user: null };
   }
 }
 
@@ -273,18 +320,35 @@ async function ensureBusinessMember(
 async function ensureProfileBusiness(
   userId: string,
   businessId: string,
-  businessName?: string | null,
+  input?: {
+    businessName?: string | null;
+    fullName?: string | null;
+    email?: string | null;
+  },
 ) {
   const client = createSupabaseServiceClient();
-  const { error } = await client.from("profiles").upsert(
-    {
-      id: userId,
-      business_id: businessId,
-      business_name: businessName || null,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "id" },
-  );
+  const payload: {
+    id: string;
+    business_id: string;
+    updated_at: string;
+    business_name?: string;
+    full_name?: string;
+    email?: string;
+  } = {
+    id: userId,
+    business_id: businessId,
+    updated_at: new Date().toISOString(),
+  };
+  const businessName = cleanText(input?.businessName);
+  const fullName = cleanText(input?.fullName);
+  const email = cleanText(input?.email)?.toLowerCase();
+  if (businessName) payload.business_name = businessName;
+  if (fullName) payload.full_name = fullName;
+  if (email) payload.email = email;
+
+  const { error } = await client
+    .from("profiles")
+    .upsert(payload, { onConflict: "id" });
   if (error) {
     throw new Error(
       `Failed to ensure profile business link: ${JSON.stringify(error)}`,
@@ -292,8 +356,40 @@ async function ensureProfileBusiness(
   }
 }
 
-async function ensureBusinessForUser(userId: string) {
+async function maybeUpdateBusinessName(
+  businessId: string,
+  businessNameHint?: string | null,
+) {
+  const targetName = cleanText(businessNameHint);
+  if (!targetName) return;
+
   const client = createSupabaseServiceClient();
+  const { error } = await client
+    .from("businesses")
+    .update({
+      name: targetName,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", businessId);
+
+  if (error) {
+    throw new Error(`Failed to update business name: ${JSON.stringify(error)}`);
+  }
+}
+
+async function ensureBusinessForUser(
+  userId: string,
+  options?: EnsureBusinessOptions,
+) {
+  const client = createSupabaseServiceClient();
+  const authUser = await client.auth.admin.getUserById(userId);
+  const authEmail = cleanText(options?.emailHint) || authUser.data.user?.email;
+  const metadataBusinessName = extractBusinessNameFromMetadata(
+    authUser.data.user,
+  );
+  const metadataFullName = extractFullNameFromMetadata(authUser.data.user);
+  const explicitBusinessName = cleanText(options?.businessNameHint);
+  const explicitFullName = cleanText(options?.fullNameHint);
 
   const memberResult = await client
     .from("business_members")
@@ -301,9 +397,18 @@ async function ensureBusinessForUser(userId: string) {
     .eq("user_id", userId)
     .limit(1);
   if (!memberResult.error && memberResult.data?.[0]?.business_id) {
-    return String(
+    const businessId = String(
       (memberResult.data[0] as LegacyBusinessMemberRow).business_id,
     );
+    if (options?.updateExistingBusinessName && explicitBusinessName) {
+      await maybeUpdateBusinessName(businessId, explicitBusinessName);
+    }
+    await ensureProfileBusiness(userId, businessId, {
+      businessName: explicitBusinessName || metadataBusinessName,
+      fullName: explicitFullName || metadataFullName,
+      email: authEmail,
+    });
+    return businessId;
   }
 
   const ownedResult = await client
@@ -314,7 +419,15 @@ async function ensureBusinessForUser(userId: string) {
   if (!ownedResult.error && ownedResult.data?.[0]?.id) {
     const business = ownedResult.data[0] as LegacyBusinessRow;
     await ensureBusinessMember(userId, business.id, "owner");
-    await ensureProfileBusiness(userId, business.id, business.name);
+    if (options?.updateExistingBusinessName && explicitBusinessName) {
+      await maybeUpdateBusinessName(business.id, explicitBusinessName);
+    }
+    await ensureProfileBusiness(userId, business.id, {
+      businessName:
+        explicitBusinessName || business.name || metadataBusinessName,
+      fullName: explicitFullName || metadataFullName,
+      email: authEmail,
+    });
     return String(business.id);
   }
 
@@ -326,21 +439,30 @@ async function ensureBusinessForUser(userId: string) {
   if (!profileResult.error && profileResult.data?.business_id) {
     const profile = profileResult.data as LegacyProfileRow;
     await ensureBusinessMember(userId, String(profile.business_id), "owner");
-    await ensureProfileBusiness(
-      userId,
-      String(profile.business_id),
-      profile.business_name,
-    );
+    if (options?.updateExistingBusinessName && explicitBusinessName) {
+      await maybeUpdateBusinessName(
+        String(profile.business_id),
+        explicitBusinessName,
+      );
+    }
+    await ensureProfileBusiness(userId, String(profile.business_id), {
+      businessName:
+        explicitBusinessName || profile.business_name || metadataBusinessName,
+      fullName: explicitFullName || profile.full_name || metadataFullName,
+      email: authEmail || profile.email,
+    });
     return String(profile.business_id);
   }
 
-  const authUser = await client.auth.admin.getUserById(userId);
-  const email = authUser.data.user?.email || null;
   const profile = profileResult.data as LegacyProfileRow | null;
   const businessName =
+    explicitBusinessName ||
     profile?.business_name ||
+    metadataBusinessName ||
+    explicitFullName ||
     profile?.full_name ||
-    businessNameFromEmail(profile?.email || email);
+    metadataFullName ||
+    businessNameFromEmail(authEmail || profile?.email);
   const { data: createdBusiness, error: createBusinessError } = await client
     .from("businesses")
     .insert({
@@ -358,48 +480,24 @@ async function ensureBusinessForUser(userId: string) {
   }
 
   await ensureBusinessMember(userId, String(createdBusiness.id), "owner");
-  await ensureProfileBusiness(
-    userId,
-    String(createdBusiness.id),
-    createdBusiness.name,
-  );
+  await ensureProfileBusiness(userId, String(createdBusiness.id), {
+    businessName: explicitBusinessName || createdBusiness.name || businessName,
+    fullName: explicitFullName || metadataFullName || profile?.full_name,
+    email: authEmail || profile?.email,
+  });
   return String(createdBusiness.id);
 }
 
-async function resolveAnonymousBusinessId() {
-  if (cachedAnonymousBusinessId) return cachedAnonymousBusinessId;
-
-  const client = createSupabaseServiceClient();
-  const preferredBusinessId =
-    process.env.WHATSBOARD_DEFAULT_WORKSPACE_ID?.trim() || undefined;
-
-  if (preferredBusinessId) {
-    cachedAnonymousBusinessId = preferredBusinessId;
-    return preferredBusinessId;
-  }
-
-  const fromBusinesses = await client.from("businesses").select("id").limit(1);
-  if (!fromBusinesses.error && fromBusinesses.data?.[0]?.id) {
-    cachedAnonymousBusinessId = String(fromBusinesses.data[0].id);
-    return cachedAnonymousBusinessId;
-  }
-
-  const fromProfiles = await client
-    .from("profiles")
-    .select("business_id")
-    .limit(1);
-  if (!fromProfiles.error && fromProfiles.data?.[0]?.business_id) {
-    cachedAnonymousBusinessId = String(fromProfiles.data[0].business_id);
-    return cachedAnonymousBusinessId;
-  }
-
-  throw new Error(
-    "Unable to resolve business context for unauthenticated request. Configure WHATSBOARD_DEFAULT_WORKSPACE_ID or sign in.",
-  );
-}
-
-async function resolveBusinessId() {
-  const { userId: authUserId, hadAccessToken } = await getAuthUserContext();
+async function resolveBusinessId(options?: {
+  accessToken?: string | null;
+  businessNameHint?: string | null;
+  fullNameHint?: string | null;
+  emailHint?: string | null;
+  updateExistingBusinessName?: boolean;
+}) {
+  const { userId: authUserId, hadAccessToken } = await getAuthUserContext({
+    accessToken: options?.accessToken,
+  });
 
   if (hadAccessToken && !authUserId) {
     throw new Error("Invalid or expired authentication session.");
@@ -407,13 +505,26 @@ async function resolveBusinessId() {
 
   if (authUserId) {
     const cached = businessCacheByUserId.get(authUserId);
-    if (cached) return cached;
-    const businessId = await ensureBusinessForUser(authUserId);
+    if (
+      cached &&
+      !cleanText(options?.businessNameHint) &&
+      !cleanText(options?.fullNameHint) &&
+      !cleanText(options?.emailHint)
+    ) {
+      return cached;
+    }
+
+    const businessId = await ensureBusinessForUser(authUserId, {
+      businessNameHint: options?.businessNameHint,
+      fullNameHint: options?.fullNameHint,
+      emailHint: options?.emailHint,
+      updateExistingBusinessName: options?.updateExistingBusinessName,
+    });
     businessCacheByUserId.set(authUserId, businessId);
     return businessId;
   }
 
-  return resolveAnonymousBusinessId();
+  throw new Error("Authenticated business context is required.");
 }
 
 async function getLegacyCustomersByIds(ids: string[]) {
@@ -1294,6 +1405,78 @@ async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
   };
 }
 
+async function resolveBusinessContext(options?: {
+  accessToken?: string | null;
+  businessNameHint?: string | null;
+  fullNameHint?: string | null;
+  emailHint?: string | null;
+  updateExistingBusinessName?: boolean;
+}): Promise<LegacyBusinessContext> {
+  const authContext = await getAuthUserContext({
+    accessToken: options?.accessToken,
+  });
+  if (authContext.hadAccessToken && !authContext.userId) {
+    throw new Error("Invalid or expired authentication session.");
+  }
+  if (!authContext.userId) {
+    throw new Error("Authenticated user is required.");
+  }
+
+  const businessId = await resolveBusinessId({
+    accessToken: options?.accessToken,
+    businessNameHint: options?.businessNameHint,
+    fullNameHint: options?.fullNameHint,
+    emailHint: options?.emailHint || authContext.user?.email,
+    updateExistingBusinessName: options?.updateExistingBusinessName,
+  });
+  const client = createSupabaseServiceClient();
+  const [{ data: businessRow, error: businessError }, { data: profileRow }] =
+    await Promise.all([
+      client
+        .from("businesses")
+        .select("id,name")
+        .eq("id", businessId)
+        .maybeSingle(),
+      client
+        .from("profiles")
+        .select("id,business_name,full_name,email")
+        .eq("id", authContext.userId)
+        .maybeSingle(),
+    ]);
+
+  if (businessError) {
+    throw new Error(
+      `Failed to resolve business context: ${JSON.stringify(businessError)}`,
+    );
+  }
+
+  const profile = (profileRow || null) as {
+    business_name?: string | null;
+    full_name?: string | null;
+    email?: string | null;
+  } | null;
+  const businessName =
+    cleanText((businessRow as { name?: string | null } | null)?.name) ||
+    cleanText(profile?.business_name) ||
+    cleanText(options?.businessNameHint) ||
+    extractBusinessNameFromMetadata(authContext.user) ||
+    businessNameFromEmail(
+      authContext.user?.email || cleanText(options?.emailHint),
+    );
+
+  return {
+    userId: authContext.userId,
+    businessId,
+    businessName: businessName || "WhatsBoard Business",
+    profileBusinessName: cleanText(profile?.business_name),
+    profileFullName:
+      cleanText(profile?.full_name) ||
+      extractFullNameFromMetadata(authContext.user),
+    profileEmail:
+      cleanText(profile?.email) || cleanText(authContext.user?.email),
+  };
+}
+
 export function createSupabaseLegacyRepository(): WhatsboardRepository {
   return {
     listOrders,
@@ -1318,5 +1501,21 @@ export function createSupabaseLegacyRepository(): WhatsboardRepository {
 }
 
 export async function resolveLegacyBusinessIdForRequest() {
-  return resolveBusinessId();
+  const context = await resolveBusinessContext();
+  return context.businessId;
+}
+
+export async function resolveLegacyBusinessContextForRequest() {
+  return resolveBusinessContext();
+}
+
+export async function provisionLegacyBusinessForAccessToken(options: {
+  accessToken: string;
+  businessNameHint?: string | null;
+}) {
+  return resolveBusinessContext({
+    accessToken: options.accessToken,
+    businessNameHint: options.businessNameHint,
+    updateExistingBusinessName: Boolean(cleanText(options.businessNameHint)),
+  });
 }
