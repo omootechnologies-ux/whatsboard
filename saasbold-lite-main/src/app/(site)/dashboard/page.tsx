@@ -285,10 +285,10 @@ export default async function DashboardPage() {
 
       <section className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
         <ChartCard
-          title="Weekly order pulse"
-          description="Live order volume based on your current workspace data."
+          title="Weekly performance"
+          description="Bar chart of weekly revenue based on recorded payments."
           data={analytics.series}
-          dataKey="orders"
+          dataKey="revenue"
         />
         <SectionCard
           title="Recent activity"
