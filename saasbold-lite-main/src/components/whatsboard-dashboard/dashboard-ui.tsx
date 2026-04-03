@@ -906,35 +906,62 @@ export function ChartCard({
   data: Array<Record<string, string | number>>;
   dataKey: string;
 }) {
-  const max = Math.max(...data.map((item) => Number(item[dataKey])), 1);
+  const normalized = data.map((item, index) => {
+    const rawValue = Number(item[dataKey]);
+    const value = Number.isFinite(rawValue) ? rawValue : 0;
+    const rawLabel =
+      typeof item.label === "string" ? item.label : String(item.label || "");
+    const label = rawLabel.trim() || `D${index + 1}`;
+
+    return {
+      label: label.slice(0, 3).toUpperCase(),
+      value,
+    };
+  });
+
+  const max = Math.max(...normalized.map((item) => item.value), 1);
+
+  const formatValue = (value: number) =>
+    new Intl.NumberFormat("en-TZ", {
+      maximumFractionDigits: 0,
+    }).format(value);
 
   return (
     <SectionCard title={title} description={description}>
-      <div className="-mx-1 overflow-x-auto">
-        <div className="flex h-64 min-w-[360px] items-end gap-3 rounded-[24px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 sm:min-w-[520px] md:min-w-0">
-          {data.map((item) => (
-            <div
-              key={String(item.label)}
-              className="flex min-w-0 flex-1 flex-col items-center gap-3"
-            >
-              <div className="relative flex h-full w-full items-end justify-center">
-                <div
-                  className="w-full max-w-[52px] rounded-t-[18px] bg-gradient-to-b from-[#1f7c5d] to-[var(--color-wb-primary)]"
-                  style={{
-                    height: `${Math.max((Number(item[dataKey]) / max) * 100, 10)}%`,
-                  }}
-                />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-                  {Number(item[dataKey]).toLocaleString()}
+      <div className="rounded-[24px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-3 sm:p-4">
+        <div className="flex h-56 items-end gap-2 sm:gap-3">
+          {normalized.map((item) => {
+            const heightPercent =
+              item.value > 0 ? Math.max((item.value / max) * 100, 8) : 0;
+
+            return (
+              <div
+                key={item.label}
+                className="group relative flex min-w-0 flex-1 flex-col items-center"
+              >
+                <div className="relative flex h-[calc(100%-1.5rem)] w-full items-end justify-center">
+                  <span className="absolute inset-x-0 bottom-0 border-t border-[var(--color-wb-border-strong)]" />
+
+                  {item.value > 0 ? (
+                    <span
+                      className="relative w-full max-w-[44px] rounded-t-[14px] bg-gradient-to-b from-[#1f7c5d] to-[var(--color-wb-primary)] transition group-hover:brightness-110"
+                      style={{ height: `${heightPercent}%` }}
+                    />
+                  ) : (
+                    <span className="relative mb-[1px] inline-flex h-1.5 w-1.5 rounded-full bg-[var(--color-wb-border-strong)]" />
+                  )}
+
+                  <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-[var(--color-wb-border)] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--color-wb-text)] shadow-[0_10px_24px_rgba(17,17,17,0.1)] group-hover:inline-flex">
+                    {formatValue(item.value)}
+                  </span>
+                </div>
+
+                <p className="mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)] sm:text-xs">
+                  {item.label}
                 </p>
-                <p className="mt-1 text-xs uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                  {String(item.label)}
-                </p>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </SectionCard>

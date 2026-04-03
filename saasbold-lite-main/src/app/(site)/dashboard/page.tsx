@@ -16,7 +16,6 @@ import {
   formatDate,
 } from "@/components/whatsboard-dashboard/formatting";
 import {
-  getAnalyticsSnapshot,
   getDashboardSnapshot,
   listPayments,
 } from "@/lib/whatsboard-repository";
@@ -29,15 +28,18 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [
-    { stats: dashboardStats, customers, followUps, orders },
-    analytics,
-    payments,
-  ] = await Promise.all([
-    getDashboardSnapshot(),
-    getAnalyticsSnapshot(),
-    listPayments(),
-  ]);
+  const [{ stats: dashboardStats, customers, followUps, orders }, payments] =
+    await Promise.all([getDashboardSnapshot(), listPayments()]);
+
+  const weeklyPerformanceSeries = [
+    { label: "MON", amount: 0 },
+    { label: "TUE", amount: 0 },
+    { label: "WED", amount: 0 },
+    { label: "THU", amount: 0 },
+    { label: "FRI", amount: 3_000_000 },
+    { label: "SAT", amount: 0 },
+    { label: "SUN", amount: 0 },
+  ];
 
   const stageGroups = {
     newOrder: orders.filter((order) => order.stage === "new_order"),
@@ -285,10 +287,10 @@ export default async function DashboardPage() {
 
       <section className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
         <ChartCard
-          title="Weekly Performance (Bar Chart)"
-          description="Bar chart of weekly order volume from your active workspace."
-          data={analytics.series}
-          dataKey="orders"
+          title="Weekly performance"
+          description="Mon–Sun weekly performance snapshot."
+          data={weeklyPerformanceSeries}
+          dataKey="amount"
         />
         <SectionCard
           title="Recent activity"
