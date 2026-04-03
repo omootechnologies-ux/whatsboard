@@ -665,7 +665,7 @@ export function FilterChip({
   active?: boolean;
 }) {
   return (
-    <button
+    <span
       className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
         active
           ? "border-[var(--color-wb-border)] bg-[var(--color-wb-primary-soft)] text-[var(--color-wb-primary)]"
@@ -673,7 +673,7 @@ export function FilterChip({
       }`}
     >
       {label}
-    </button>
+    </span>
   );
 }
 

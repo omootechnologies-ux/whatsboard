@@ -110,6 +110,8 @@ Migration file:
 
 - `supabase/migrations/20260402_whatsboard_persistence.sql`
 - `supabase/migrations/20260403_legacy_business_compat.sql`
+- `supabase/migrations/20260403_auth_business_bootstrap.sql`
+- `supabase/migrations/20260404_legacy_schema_hardening.sql`
 
 2. Backfill local data into Supabase:
 

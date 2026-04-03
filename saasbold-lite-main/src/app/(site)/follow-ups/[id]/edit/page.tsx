@@ -107,11 +107,9 @@ export default async function EditFollowUpPage({
             <select
               name="status"
               className="wb-input"
-              defaultValue={followUp.status}
+              defaultValue={followUp.status === "completed" ? "completed" : ""}
             >
-              <option value="overdue">Overdue</option>
-              <option value="today">Today</option>
-              <option value="upcoming">Upcoming</option>
+              <option value="">Open (auto from due date)</option>
               <option value="completed">Completed</option>
             </select>
           </div>

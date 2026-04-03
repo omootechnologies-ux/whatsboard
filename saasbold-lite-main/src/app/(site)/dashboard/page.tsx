@@ -337,7 +337,7 @@ export default async function DashboardPage() {
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <Link
-              href="/orders"
+              href="/orders/new"
               className="wb-soft-card p-4 transition hover:bg-white"
             >
               <p className="text-sm font-semibold text-[var(--color-wb-text)]">
@@ -348,7 +348,7 @@ export default async function DashboardPage() {
               </p>
             </Link>
             <Link
-              href="/customers/new"
+              href="/customers"
               className="wb-soft-card p-4 transition hover:bg-white"
             >
               <p className="text-sm font-semibold text-[var(--color-wb-text)]">
@@ -370,7 +370,7 @@ export default async function DashboardPage() {
               </p>
             </Link>
             <Link
-              href="/payments/new"
+              href="/payments"
               className="wb-soft-card p-4 transition hover:bg-white"
             >
               <p className="text-sm font-semibold text-[var(--color-wb-text)]">
