@@ -1,9 +1,12 @@
 import type {
+  BuyerStatus,
   CustomerRecord,
+  CustomerProfileRecord,
   FollowUpRecord,
   OrderRecord,
   PaymentRecord,
   PaymentReconciliationStatus,
+  SourceChannel,
 } from "@/data/whatsboard";
 import type { ParsedSmsPayment } from "@/lib/payments/sms-parser";
 import { createLocalRepository } from "@/lib/repositories/local-repository";
@@ -21,6 +24,9 @@ export type OrdersQuery = {
 export type CustomersQuery = {
   search?: string;
   status?: string;
+  buyerStatus?: BuyerStatus;
+  sourceChannel?: SourceChannel | "all";
+  sort?: "ltv" | "last_order" | "total_orders" | "days_since_last_order";
 };
 
 export type FollowUpsQuery = {
@@ -84,6 +90,9 @@ export type UpdateOrderInput = {
 export type CreateCustomerInput = {
   name: string;
   phone: string;
+  whatsappNumber?: string;
+  sourceChannel?: SourceChannel;
+  notes?: string;
   location: string;
   status: CustomerRecord["status"];
 };
@@ -149,6 +158,7 @@ export interface WhatsboardRepository {
 
   listCustomers(query?: CustomersQuery): Promise<CustomerRecord[]>;
   getCustomerById(id: string): Promise<CustomerRecord | null>;
+  getCustomerProfileById(id: string): Promise<CustomerProfileRecord | null>;
   createCustomer(input: CreateCustomerInput): Promise<CustomerRecord>;
   updateCustomer(
     id: string,
@@ -260,6 +270,10 @@ export async function listCustomers(query: CustomersQuery = {}) {
 
 export async function getCustomerById(id: string) {
   return getRepository().getCustomerById(id);
+}
+
+export async function getCustomerProfileById(id: string) {
+  return getRepository().getCustomerProfileById(id);
 }
 
 export async function createCustomer(input: CreateCustomerInput) {

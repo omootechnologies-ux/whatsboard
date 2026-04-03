@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Bell, CreditCard, Package2, Users } from "lucide-react";
 import {
+  BuyerBadge,
   ChartCard,
   CustomerRow,
   EmptyState,
@@ -30,6 +31,36 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const [{ stats: dashboardStats, customers, followUps, orders }, payments] =
     await Promise.all([getDashboardSnapshot(), listPayments()]);
+  const totalUniqueCustomers = customers.length;
+  const repeatCustomers = customers.filter((customer) => customer.isRepeatBuyer)
+    .length;
+  const atRiskCustomers = customers.filter(
+    (customer) => customer.buyerStatus === "at_risk",
+  ).length;
+  const repeatBuyerPercentage = totalUniqueCustomers
+    ? Math.round((repeatCustomers / totalUniqueCustomers) * 100)
+    : 0;
+  const now = new Date();
+  const currentMonth = now.getUTCMonth();
+  const currentYear = now.getUTCFullYear();
+  const monthSpendByCustomer = new Map<string, number>();
+  orders.forEach((order) => {
+    const date = new Date(order.createdAt);
+    if (
+      date.getUTCMonth() !== currentMonth ||
+      date.getUTCFullYear() !== currentYear
+    ) {
+      return;
+    }
+    const current = monthSpendByCustomer.get(order.customerId) || 0;
+    monthSpendByCustomer.set(order.customerId, current + order.amount);
+  });
+  const bestCustomerEntry = Array.from(monthSpendByCustomer.entries()).sort(
+    (a, b) => b[1] - a[1],
+  )[0];
+  const bestCustomerThisMonth = bestCustomerEntry
+    ? customers.find((customer) => customer.id === bestCustomerEntry[0]) || null
+    : null;
 
   const weeklyPerformanceSeries = [
     { label: "MON", amount: 0 },
@@ -163,6 +194,91 @@ export default async function DashboardPage() {
         ]}
       />
 
+      <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+        <SectionCard
+          title="Customer Insights"
+          description="Retention and growth snapshot from real buyer behavior."
+          actions={
+            <Link href="/customers?status=at_risk" className="wb-button-secondary">
+              View at-risk buyers
+            </Link>
+          }
+        >
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="wb-soft-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
+                Total unique customers
+              </p>
+              <p className="mt-2 text-2xl font-black tracking-[-0.04em] text-[var(--color-wb-text)]">
+                {totalUniqueCustomers}
+              </p>
+            </div>
+            <div className="wb-soft-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
+                Repeat buyer %
+              </p>
+              <p className="mt-2 text-2xl font-black tracking-[-0.04em] text-[var(--color-wb-primary)]">
+                {repeatBuyerPercentage}%
+              </p>
+            </div>
+            <div className="wb-soft-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
+                At-risk customers
+              </p>
+              <p className="mt-2 text-2xl font-black tracking-[-0.04em] text-[var(--color-wb-warning)]">
+                {atRiskCustomers}
+              </p>
+            </div>
+            <div className="wb-soft-card p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
+                Best customer this month
+              </p>
+              <p className="mt-2 text-sm font-semibold text-[var(--color-wb-text)]">
+                {bestCustomerThisMonth
+                  ? `${bestCustomerThisMonth.name} • LTV ${formatCurrency(bestCustomerThisMonth.totalSpend)}`
+                  : "No customer activity yet"}
+              </p>
+            </div>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="CRM nudges"
+          description="Action prompts to protect repeat revenue."
+        >
+          <div className="space-y-3">
+            <div className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4">
+              <p className="text-sm font-semibold text-[var(--color-wb-text)]">
+                Daily digest
+              </p>
+              <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
+                {atRiskCustomers > 0
+                  ? `${atRiskCustomers} repeat buyers haven't ordered in 3 weeks — follow up today.`
+                  : "No repeat buyers at-risk today. Keep momentum with proactive follow-ups."}
+              </p>
+            </div>
+            <div className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4">
+              <p className="text-sm font-semibold text-[var(--color-wb-text)]">
+                Retention focus
+              </p>
+              <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
+                Prioritize repeat buyers with low recent activity to recover silent revenue.
+              </p>
+            </div>
+            <div className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4">
+              <p className="text-sm font-semibold text-[var(--color-wb-text)]">
+                Buyer health
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <BuyerBadge status="repeat" compact />
+                <BuyerBadge status="at_risk" compact />
+                <BuyerBadge status="lost" compact />
+              </div>
+            </div>
+          </div>
+        </SectionCard>
+      </section>
+
       <section className="grid gap-4 xl:grid-cols-2">
         <SectionCard
           title="Urgent follow-ups"
@@ -232,6 +348,9 @@ export default async function DashboardPage() {
                         {order.channel} •{" "}
                         {formatPaymentStatusLabel(order.paymentStatus)}
                       </p>
+                      <div className="mt-2">
+                        <BuyerBadge status={order.customerBuyerStatus} compact />
+                      </div>
                     </div>
                     <span className="text-sm font-semibold text-[var(--color-wb-primary)]">
                       {formatCurrency(order.amount)}

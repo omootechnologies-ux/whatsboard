@@ -43,9 +43,9 @@ export default async function EditCustomerPage({
           </button>
         }
         secondaryAction={
-          <Link href="/customers" className="wb-button-secondary">
+          <Link href={`/customers/${customer.id}`} className="wb-button-secondary">
             <ArrowLeft className="h-4 w-4" />
-            Back to customers
+            Back to profile
           </Link>
         }
       />
@@ -92,6 +92,16 @@ export default async function EditCustomerPage({
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
+              WhatsApp number
+            </label>
+            <input
+              name="whatsappNumber"
+              className="wb-input"
+              defaultValue={customer.whatsappNumber || customer.phone}
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
               Location
             </label>
             <input
@@ -100,6 +110,22 @@ export default async function EditCustomerPage({
               className="wb-input"
               defaultValue={customer.location}
             />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
+              Source channel
+            </label>
+            <select
+              name="sourceChannel"
+              className="wb-input"
+              defaultValue={customer.sourceChannel || "Unknown"}
+            >
+              <option value="WhatsApp">WhatsApp</option>
+              <option value="Instagram">Instagram</option>
+              <option value="Facebook">Facebook</option>
+              <option value="TikTok">TikTok</option>
+              <option value="Unknown">Unknown</option>
+            </select>
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
@@ -114,6 +140,16 @@ export default async function EditCustomerPage({
               <option value="waiting">Waiting</option>
               <option value="vip">VIP</option>
             </select>
+          </div>
+          <div className="sm:col-span-2">
+            <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
+              Private notes
+            </label>
+            <textarea
+              name="notes"
+              className="wb-textarea"
+              defaultValue={customer.notes || ""}
+            />
           </div>
         </form>
       </SectionCard>

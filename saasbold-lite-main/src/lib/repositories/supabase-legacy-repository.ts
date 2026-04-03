@@ -1,15 +1,24 @@
 import type {
+  BuyerStatus,
   PaymentProvider,
   PaymentReconciliationStatus,
   CustomerRecord,
+  CustomerProfileRecord,
   FollowUpRecord,
   OrderRecord,
   PaymentRecord,
+  SourceChannel,
 } from "@/data/whatsboard";
 import type { User } from "@supabase/supabase-js";
 import { WHATSBOARD_ACCESS_TOKEN_COOKIE } from "@/lib/auth/constants";
 import { formatOrderReference } from "@/lib/display-labels";
 import { statusFromDueDate } from "@/lib/follow-up-status";
+import {
+  calculateAverageOrderValue,
+  calculateDaysSince,
+  calculateRepeatPurchaseRate,
+  resolveBuyerStatus,
+} from "@/lib/customer-insights";
 import type {
   AssignPaymentInput,
   AnalyticsPoint,
@@ -50,6 +59,8 @@ type LegacyCustomerRow = {
   business_id: string;
   name: string;
   phone: string | null;
+  whatsapp_number: string | null;
+  source_channel: SourceChannel | string | null;
   area: string | null;
   notes: string | null;
   status: "active" | "waiting" | "vip" | string | null;
@@ -71,6 +82,7 @@ type LegacyOrderRow = {
   payment_reference: string | null;
   payment_date: string | null;
   notes: string | null;
+  source: SourceChannel | string | null;
   created_at: string;
   updated_at: string;
 };
@@ -141,6 +153,7 @@ export type LegacyBusinessContext = {
 };
 
 const CHANNELS = ["WhatsApp", "Instagram", "TikTok", "Facebook"] as const;
+const SOURCE_CHANNELS = [...CHANNELS, "Unknown"] as const;
 const ORDER_STAGES = [
   "new_order",
   "waiting_payment",
@@ -167,7 +180,9 @@ const PAYMENT_PROVIDERS = [
 ] as const;
 const RECONCILIATION_STATUSES = ["matched", "pending", "unmatched"] as const;
 const LEGACY_ORDER_SELECT =
-  "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,created_at,updated_at";
+  "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,source,created_at,updated_at";
+const LEGACY_CUSTOMER_SELECT =
+  "id,business_id,name,phone,whatsapp_number,source_channel,area,notes,status,created_at,updated_at";
 const LEGACY_FOLLOW_UP_SELECT =
   "id,order_id,business_id,title,priority,due_at,note,completed,completed_at,created_at";
 const LEGACY_PAYMENT_SELECT =
@@ -257,6 +272,18 @@ function asCustomerStatus(
     return value;
   }
   return "active";
+}
+
+function asSourceChannel(
+  value: string | null | undefined,
+): SourceChannel {
+  if (
+    value &&
+    SOURCE_CHANNELS.includes(value as (typeof SOURCE_CHANNELS)[number])
+  ) {
+    return value as SourceChannel;
+  }
+  return "Unknown";
 }
 
 function asPriority(
@@ -630,7 +657,7 @@ async function getLegacyCustomersByIds(ids: string[]) {
   const businessId = await resolveBusinessId();
   const { data, error } = await client
     .from("customers")
-    .select("id,business_id,name,phone,area,notes,status,created_at,updated_at")
+    .select(LEGACY_CUSTOMER_SELECT)
     .eq("business_id", businessId)
     .in("id", ids);
 
@@ -787,19 +814,30 @@ function mapOrderRecord(
   row: LegacyOrderRow,
   customerMap: Map<string, LegacyCustomerRow>,
   dueFollowUpByOrderId: Map<string, string>,
+  orderStatsByCustomerId: Map<string, { totalOrders: number; totalSpend: number }>,
 ): OrderRecord {
   const customer =
     (row.customer_id ? customerMap.get(row.customer_id) : undefined) || null;
   const deliveryArea =
     row.delivery_area || row.area || customer?.area || "Unknown area";
+  const sourceChannel = asSourceChannel(row.source);
+  const customerStats = row.customer_id
+    ? orderStatsByCustomerId.get(row.customer_id)
+    : null;
+  const totalOrders = customerStats?.totalOrders || 0;
+  const totalSpend = customerStats?.totalSpend || 0;
+  const buyerStatus: BuyerStatus =
+    totalOrders > 1 ? "repeat" : "new";
 
   return {
     id: row.id,
     customerId: row.customer_id || "unknown-customer",
     customerName: customer?.name || "Unknown customer",
-    channel: CHANNELS.includes("WhatsApp")
-      ? "WhatsApp"
-      : ("WhatsApp" as OrderRecord["channel"]),
+    customerPhone: customer?.phone || undefined,
+    channel:
+      sourceChannel === "Unknown"
+        ? "WhatsApp"
+        : (sourceChannel as OrderRecord["channel"]),
     stage: asOrderStage(row.stage),
     paymentStatus: asPaymentStatus(row.payment_status),
     amount: asNumber(row.amount),
@@ -810,6 +848,10 @@ function mapOrderRecord(
     notes: row.notes || "",
     items: parseItemList(row.product_name),
     paymentReference: row.payment_reference || undefined,
+    paymentMethod: row.payment_method ? asPaymentMethod(row.payment_method) : null,
+    customerTotalOrders: totalOrders,
+    customerLifetimeValue: totalSpend,
+    customerBuyerStatus: buyerStatus,
   };
 }
 
@@ -958,8 +1000,30 @@ async function listOrders(query: OrdersQuery = {}) {
       }
     });
 
+  const orderStatsByCustomerId = new Map<
+    string,
+    { totalOrders: number; totalSpend: number }
+  >();
+  orderRows.forEach((row) => {
+    if (!row.customer_id) return;
+    const current = orderStatsByCustomerId.get(row.customer_id) || {
+      totalOrders: 0,
+      totalSpend: 0,
+    };
+    current.totalOrders += 1;
+    current.totalSpend += asNumber(row.amount);
+    orderStatsByCustomerId.set(row.customer_id, current);
+  });
+
   return orderRows
-    .map((row) => mapOrderRecord(row, customersById, dueFollowUpByOrderId))
+    .map((row) =>
+      mapOrderRecord(
+        row,
+        customersById,
+        dueFollowUpByOrderId,
+        orderStatsByCustomerId,
+      ),
+    )
     .filter((order) => (query.stage ? order.stage === query.stage : true))
     .filter((order) =>
       query.payment ? order.paymentStatus === query.payment : true,
@@ -983,7 +1047,7 @@ async function getOrderById(id: string) {
   const { data, error } = await client
     .from("orders")
     .select(
-      "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,created_at,updated_at",
+      "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,source,created_at,updated_at",
     )
     .eq("business_id", businessId)
     .eq("id", id)
@@ -998,6 +1062,21 @@ async function getOrderById(id: string) {
   const customerMap = await getLegacyCustomersByIds(
     orderRow.customer_id ? [orderRow.customer_id] : [],
   );
+  const allOrders = await listLegacyOrdersByBusiness();
+  const orderStatsByCustomerId = new Map<
+    string,
+    { totalOrders: number; totalSpend: number }
+  >();
+  allOrders.forEach((row) => {
+    if (!row.customer_id) return;
+    const current = orderStatsByCustomerId.get(row.customer_id) || {
+      totalOrders: 0,
+      totalSpend: 0,
+    };
+    current.totalOrders += 1;
+    current.totalSpend += asNumber(row.amount);
+    orderStatsByCustomerId.set(row.customer_id, current);
+  });
   const followUps = await listLegacyFollowUpsByBusiness();
   const dueFollowUpByOrderId = new Map<string, string>();
   followUps
@@ -1008,7 +1087,12 @@ async function getOrderById(id: string) {
         dueFollowUpByOrderId.set(id, row.due_at);
       }
     });
-  return mapOrderRecord(orderRow, customerMap, dueFollowUpByOrderId);
+  return mapOrderRecord(
+    orderRow,
+    customerMap,
+    dueFollowUpByOrderId,
+    orderStatsByCustomerId,
+  );
 }
 
 async function findOrCreateCustomer(
@@ -1016,14 +1100,13 @@ async function findOrCreateCustomer(
   name: string,
   phone?: string,
   area?: string,
+  sourceChannel?: SourceChannel,
 ) {
   const client = createSupabaseServiceClient();
   if (phone?.trim()) {
     const byPhone = await client
       .from("customers")
-      .select(
-        "id,business_id,name,phone,area,notes,status,created_at,updated_at",
-      )
+      .select(LEGACY_CUSTOMER_SELECT)
       .eq("business_id", businessId)
       .eq("phone", phone.trim())
       .maybeSingle();
@@ -1033,7 +1116,7 @@ async function findOrCreateCustomer(
 
   const byName = await client
     .from("customers")
-    .select("id,business_id,name,phone,area,notes,status,created_at,updated_at")
+    .select(LEGACY_CUSTOMER_SELECT)
     .eq("business_id", businessId)
     .eq("name", name.trim())
     .maybeSingle();
@@ -1045,11 +1128,13 @@ async function findOrCreateCustomer(
       business_id: businessId,
       name: name.trim(),
       phone: phone?.trim() || null,
+      whatsapp_number: phone?.trim() || null,
+      source_channel: sourceChannel || "WhatsApp",
       area: area?.trim() || null,
       notes: null,
       status: "active",
     })
-    .select("id,business_id,name,phone,area,notes,status,created_at,updated_at")
+    .select(LEGACY_CUSTOMER_SELECT)
     .single();
 
   if (error || !data) {
@@ -1067,6 +1152,7 @@ async function createOrder(input: CreateOrderInput) {
     input.customerName,
     input.customerPhone,
     input.deliveryArea,
+    input.channel,
   );
 
   const { data, error } = await client
@@ -1084,9 +1170,10 @@ async function createOrder(input: CreateOrderInput) {
       payment_reference: null,
       payment_date: null,
       notes: input.notes || null,
+      source: input.channel,
     })
     .select(
-      "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,created_at,updated_at",
+      "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,source,created_at,updated_at",
     )
     .single();
 
@@ -1105,6 +1192,7 @@ async function createOrder(input: CreateOrderInput) {
     data as LegacyOrderRow,
     new Map([[customer.id, customer]]),
     new Map(),
+    new Map([[customer.id, { totalOrders: 1, totalSpend: asNumber(data.amount) }]]),
   );
 }
 
@@ -1115,7 +1203,7 @@ async function updateOrder(id: string, input: UpdateOrderInput) {
   const existing = await client
     .from("orders")
     .select(
-      "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,created_at,updated_at",
+      "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,source,created_at,updated_at",
     )
     .eq("business_id", businessId)
     .eq("id", id)
@@ -1131,6 +1219,7 @@ async function updateOrder(id: string, input: UpdateOrderInput) {
     input.customerName,
     undefined,
     current.delivery_area || current.area || undefined,
+    current.source ? asSourceChannel(current.source) : undefined,
   );
 
   const { data, error } = await client
@@ -1146,7 +1235,7 @@ async function updateOrder(id: string, input: UpdateOrderInput) {
     .eq("business_id", businessId)
     .eq("id", id)
     .select(
-      "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,created_at,updated_at",
+      "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,source,created_at,updated_at",
     )
     .maybeSingle();
 
@@ -1159,6 +1248,7 @@ async function updateOrder(id: string, input: UpdateOrderInput) {
     data as LegacyOrderRow,
     new Map([[customer.id, customer]]),
     new Map(),
+    new Map([[customer.id, { totalOrders: 1, totalSpend: asNumber(data.amount) }]]),
   );
 }
 
@@ -1166,14 +1256,13 @@ async function listCustomers(query: CustomersQuery = {}) {
   const businessId = await resolveBusinessId();
   const client = createSupabaseServiceClient();
   const search = query.search?.trim() ?? "";
+  const now = new Date();
 
   const [{ data: customersData, error: customerError }, orders, followUps] =
     await Promise.all([
       client
         .from("customers")
-        .select(
-          "id,business_id,name,phone,area,notes,status,created_at,updated_at",
-        )
+        .select(LEGACY_CUSTOMER_SELECT)
         .eq("business_id", businessId)
         .order("updated_at", { ascending: false }),
       listLegacyOrdersByBusiness(),
@@ -1188,7 +1277,13 @@ async function listCustomers(query: CustomersQuery = {}) {
 
   const orderStatsByCustomer = new Map<
     string,
-    { totalOrders: number; totalSpend: number; lastOrderAt: string }
+    {
+      totalOrders: number;
+      totalSpend: number;
+      lastOrderAt: string;
+      firstOrderAt: string;
+      sourceChannel: SourceChannel;
+    }
   >();
   for (const order of orders) {
     if (!order.customer_id) continue;
@@ -1196,11 +1291,15 @@ async function listCustomers(query: CustomersQuery = {}) {
       totalOrders: 0,
       totalSpend: 0,
       lastOrderAt: order.created_at,
+      firstOrderAt: order.created_at,
+      sourceChannel: asSourceChannel(order.source),
     };
     current.totalOrders += 1;
     current.totalSpend += asNumber(order.amount);
     if (current.lastOrderAt < order.created_at)
       current.lastOrderAt = order.created_at;
+    if (current.firstOrderAt > order.created_at)
+      current.firstOrderAt = order.created_at;
     orderStatsByCustomer.set(order.customer_id, current);
   }
 
@@ -1219,33 +1318,212 @@ async function listCustomers(query: CustomersQuery = {}) {
       }
     });
 
-  return ((customersData || []) as LegacyCustomerRow[])
+  const records = ((customersData || []) as LegacyCustomerRow[])
     .map((row): CustomerRecord => {
       const stats = orderStatsByCustomer.get(row.id);
+      const totalOrders = stats?.totalOrders || 0;
+      const totalSpend = stats?.totalSpend || 0;
+      const lastOrderAt = stats?.lastOrderAt || row.updated_at || row.created_at;
+      const daysSinceLastOrder = calculateDaysSince(lastOrderAt, now);
+      const buyerStatus = resolveBuyerStatus({
+        totalOrders,
+        createdAt: row.created_at,
+        lastOrderAt,
+        now,
+      });
       return {
         id: row.id,
         name: row.name,
         phone: row.phone || "Not provided",
+        whatsappNumber: row.whatsapp_number || row.phone || undefined,
+        sourceChannel: asSourceChannel(
+          row.source_channel || stats?.sourceChannel || "Unknown",
+        ),
         location: row.area || "Not specified",
-        totalOrders: stats?.totalOrders || 0,
-        totalSpend: stats?.totalSpend || 0,
-        lastOrderAt: stats?.lastOrderAt || row.updated_at || row.created_at,
+        totalOrders,
+        totalSpend,
+        lastOrderAt,
+        averageOrderValue: calculateAverageOrderValue(totalSpend, totalOrders),
+        daysSinceLastOrder,
+        repeatPurchaseRate: calculateRepeatPurchaseRate(totalOrders),
+        buyerStatus,
+        isRepeatBuyer: totalOrders > 1,
+        notes: row.notes || undefined,
+        createdAt: row.created_at,
         nextFollowUpAt: nextFollowUpByCustomer.get(row.id),
         status: asCustomerStatus(row.status),
       };
     })
-    .filter((item) => (query.status ? item.status === query.status : true))
+    .filter((item) => {
+      if (query.status && query.status !== "all") {
+        if (query.status === "new") return item.buyerStatus === "new";
+        if (query.status === "repeat") return item.buyerStatus === "repeat";
+        if (query.status === "at_risk") return item.buyerStatus === "at_risk";
+        if (query.status === "lost") return item.buyerStatus === "lost";
+        return item.status === query.status;
+      }
+      return true;
+    })
+    .filter((item) =>
+      query.buyerStatus ? item.buyerStatus === query.buyerStatus : true,
+    )
+    .filter((item) => {
+      if (!query.sourceChannel || query.sourceChannel === "all") return true;
+      return item.sourceChannel === query.sourceChannel;
+    })
     .filter((item) => {
       if (!search) return true;
-      const haystack = [item.name, item.phone, item.location].join(" ");
+      const haystack = [
+        item.name,
+        item.phone,
+        item.whatsappNumber || "",
+        item.location,
+        item.sourceChannel || "",
+        item.notes || "",
+      ].join(" ");
       return includesText(haystack, search);
-    })
-    .sort((a, b) => (a.lastOrderAt > b.lastOrderAt ? -1 : 1));
+    });
+
+  const sortBy = query.sort || "last_order";
+  const sorted = [...records].sort((a, b) => {
+    if (sortBy === "ltv") return b.totalSpend - a.totalSpend;
+    if (sortBy === "total_orders") return b.totalOrders - a.totalOrders;
+    if (sortBy === "days_since_last_order")
+      return (b.daysSinceLastOrder || 0) - (a.daysSinceLastOrder || 0);
+    return a.lastOrderAt > b.lastOrderAt ? -1 : 1;
+  });
+
+  return sorted;
 }
 
 async function getCustomerById(id: string) {
   const records = await listCustomers();
   return records.find((item) => item.id === id) || null;
+}
+
+async function getCustomerProfileById(id: string): Promise<CustomerProfileRecord | null> {
+  const businessId = await resolveBusinessId();
+  const client = createSupabaseServiceClient();
+  const customerResult = await client
+    .from("customers")
+    .select(LEGACY_CUSTOMER_SELECT)
+    .eq("business_id", businessId)
+    .eq("id", id)
+    .maybeSingle();
+
+  if (customerResult.error) {
+    throw new Error(
+      `Failed to load customer profile: ${JSON.stringify(customerResult.error)}`,
+    );
+  }
+  if (!customerResult.data) return null;
+
+  const customerRow = customerResult.data as LegacyCustomerRow;
+  const [orderRows, followUpRows] = await Promise.all([
+    listLegacyOrdersByBusiness(),
+    listLegacyFollowUpsByBusiness(),
+  ]);
+
+  const dueFollowUpByOrderId = new Map<string, string>();
+  followUpRows
+    .filter((row) => !row.completed && row.order_id)
+    .forEach((row) => {
+      const key = String(row.order_id);
+      const current = dueFollowUpByOrderId.get(key);
+      if (!current || current > row.due_at) {
+        dueFollowUpByOrderId.set(key, row.due_at);
+      }
+    });
+
+  const orderStatsByCustomerId = new Map<
+    string,
+    { totalOrders: number; totalSpend: number }
+  >();
+  orderRows.forEach((row) => {
+    if (!row.customer_id) return;
+    const current = orderStatsByCustomerId.get(row.customer_id) || {
+      totalOrders: 0,
+      totalSpend: 0,
+    };
+    current.totalOrders += 1;
+    current.totalSpend += asNumber(row.amount);
+    orderStatsByCustomerId.set(row.customer_id, current);
+  });
+
+  const customerOrders = orderRows
+    .filter((row) => row.customer_id === id)
+    .map((row) =>
+      mapOrderRecord(
+        row,
+        new Map([[id, customerRow]]),
+        dueFollowUpByOrderId,
+        orderStatsByCustomerId,
+      ),
+    )
+    .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
+
+  const totalLifetimeValue = customerOrders.reduce(
+    (sum, row) => sum + row.amount,
+    0,
+  );
+  const totalOrders = customerOrders.length;
+  const lastOrderDate =
+    customerOrders[0]?.createdAt || customerRow.updated_at || customerRow.created_at;
+  const daysSinceLastOrder = calculateDaysSince(lastOrderDate);
+  const repeatPurchaseRate = calculateRepeatPurchaseRate(totalOrders);
+  const averageOrderValue = calculateAverageOrderValue(
+    totalLifetimeValue,
+    totalOrders,
+  );
+  const buyerStatus = resolveBuyerStatus({
+    totalOrders,
+    createdAt: customerRow.created_at,
+    lastOrderAt: lastOrderDate,
+  });
+  const sourceChannel =
+    asSourceChannel(customerRow.source_channel) !== "Unknown"
+      ? asSourceChannel(customerRow.source_channel)
+      : customerOrders[0]?.channel || "Unknown";
+
+  const customer: CustomerRecord = {
+    id: customerRow.id,
+    name: customerRow.name,
+    phone: customerRow.phone || "Not provided",
+    whatsappNumber: customerRow.whatsapp_number || customerRow.phone || undefined,
+    sourceChannel,
+    location: customerRow.area || "Not specified",
+    totalOrders,
+    totalSpend: totalLifetimeValue,
+    lastOrderAt: lastOrderDate,
+    averageOrderValue,
+    daysSinceLastOrder,
+    repeatPurchaseRate,
+    buyerStatus,
+    isRepeatBuyer: totalOrders > 1,
+    notes: customerRow.notes || undefined,
+    createdAt: customerRow.created_at,
+    status: asCustomerStatus(customerRow.status),
+  };
+
+  return {
+    customer,
+    orderHistory: customerOrders.map((order) => ({
+      id: order.id,
+      orderReference: formatOrderReference(order.id) || "WB-00000",
+      date: order.createdAt,
+      items: order.items,
+      amount: order.amount,
+      status: order.stage,
+      paymentStatus: order.paymentStatus,
+      paymentMethod: order.paymentMethod || null,
+    })),
+    totalLifetimeValue,
+    averageOrderValue,
+    repeatPurchaseRate,
+    daysSinceLastOrder,
+    lastOrderDate,
+    lastBoughtProduct: customerOrders[0]?.items?.[0] || undefined,
+  };
 }
 
 async function createCustomer(input: CreateCustomerInput) {
@@ -1257,11 +1535,13 @@ async function createCustomer(input: CreateCustomerInput) {
       business_id: businessId,
       name: input.name,
       phone: input.phone || null,
+      whatsapp_number: input.whatsappNumber || input.phone || null,
+      source_channel: input.sourceChannel || "Unknown",
       area: input.location || null,
-      notes: null,
+      notes: input.notes || null,
       status: input.status,
     })
-    .select("id,business_id,name,phone,area,notes,status,created_at,updated_at")
+    .select(LEGACY_CUSTOMER_SELECT)
     .single();
 
   if (error || !data) {
@@ -1273,10 +1553,19 @@ async function createCustomer(input: CreateCustomerInput) {
     id: row.id,
     name: row.name,
     phone: row.phone || "Not provided",
+    whatsappNumber: row.whatsapp_number || row.phone || undefined,
+    sourceChannel: asSourceChannel(row.source_channel),
     location: row.area || "Not specified",
     totalOrders: 0,
     totalSpend: 0,
     lastOrderAt: row.created_at,
+    averageOrderValue: 0,
+    daysSinceLastOrder: 0,
+    repeatPurchaseRate: 0,
+    buyerStatus: "new" as const,
+    isRepeatBuyer: false,
+    notes: row.notes || undefined,
+    createdAt: row.created_at,
     status: asCustomerStatus(row.status),
   };
 }
@@ -1289,7 +1578,10 @@ async function updateCustomer(id: string, input: UpdateCustomerInput) {
     .update({
       name: input.name || undefined,
       phone: input.phone || undefined,
+      whatsapp_number: input.whatsappNumber || undefined,
+      source_channel: input.sourceChannel || undefined,
       area: input.location || undefined,
+      notes: input.notes === undefined ? undefined : input.notes || null,
       status: input.status || undefined,
       updated_at: new Date().toISOString(),
     })
@@ -2219,6 +2511,7 @@ export function createSupabaseLegacyRepository(): WhatsboardRepository {
     updateOrder,
     listCustomers,
     getCustomerById,
+    getCustomerProfileById,
     createCustomer,
     updateCustomer,
     listFollowUps,

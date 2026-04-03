@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Edit3 } from "lucide-react";
 import {
+  BuyerBadge,
   PaymentBadge,
   StageBadge,
   PageHeader,
@@ -90,6 +91,12 @@ export default async function OrderDetailsPage({
               <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
                 {customer?.phone || "No phone"} • {order.deliveryArea}
               </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <BuyerBadge status={order.customerBuyerStatus} compact />
+                <span className="text-xs font-semibold text-[var(--color-wb-text-muted)]">
+                  LTV {formatCurrency(order.customerLifetimeValue || 0)}
+                </span>
+              </div>
             </div>
             <div className="wb-soft-card p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">

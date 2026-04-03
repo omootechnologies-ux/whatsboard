@@ -7,6 +7,13 @@ export type OrderStage =
   | "delivered";
 
 export type PaymentStatus = "unpaid" | "partial" | "paid" | "cod";
+export type SourceChannel =
+  | "WhatsApp"
+  | "Instagram"
+  | "Facebook"
+  | "TikTok"
+  | "Unknown";
+export type BuyerStatus = "new" | "repeat" | "at_risk" | "lost";
 
 export type PaymentMethod =
   | "M-Pesa"
@@ -35,16 +42,29 @@ export type OrderRecord = {
   notes: string;
   items: string[];
   paymentReference?: string;
+  paymentMethod?: PaymentMethod | null;
+  customerTotalOrders?: number;
+  customerLifetimeValue?: number;
+  customerBuyerStatus?: BuyerStatus;
 };
 
 export type CustomerRecord = {
   id: string;
   name: string;
   phone: string;
+  whatsappNumber?: string;
+  sourceChannel?: SourceChannel;
   location: string;
   totalOrders: number;
   totalSpend: number;
   lastOrderAt: string;
+  averageOrderValue?: number;
+  daysSinceLastOrder?: number;
+  repeatPurchaseRate?: number;
+  buyerStatus?: BuyerStatus;
+  isRepeatBuyer?: boolean;
+  notes?: string;
+  createdAt?: string;
   nextFollowUpAt?: string;
   status: "active" | "waiting" | "vip";
 };
@@ -79,4 +99,26 @@ export type PaymentRecord = {
   reconciliationStatus?: PaymentReconciliationStatus;
   suggestedOrderId?: string | null;
   matchedAt?: string | null;
+};
+
+export type CustomerOrderHistoryRecord = {
+  id: string;
+  orderReference: string;
+  date: string;
+  items: string[];
+  amount: number;
+  status: OrderStage;
+  paymentStatus: PaymentStatus;
+  paymentMethod: PaymentMethod | null;
+};
+
+export type CustomerProfileRecord = {
+  customer: CustomerRecord;
+  orderHistory: CustomerOrderHistoryRecord[];
+  totalLifetimeValue: number;
+  averageOrderValue: number;
+  repeatPurchaseRate: number;
+  daysSinceLastOrder: number;
+  lastOrderDate: string;
+  lastBoughtProduct?: string;
 };

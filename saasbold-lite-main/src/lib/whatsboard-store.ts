@@ -38,6 +38,9 @@ export type UpdateOrderInput = {
 export type CreateCustomerInput = {
   name: string;
   phone: string;
+  whatsappNumber?: string;
+  sourceChannel?: CustomerRecord["sourceChannel"];
+  notes?: string;
   location: string;
   status: CustomerRecord["status"];
 };
@@ -207,13 +210,18 @@ export function createOrder(input: CreateOrderInput) {
       id: nextCustomerId(state.customers),
       name: input.customerName.trim(),
       phone: input.customerPhone?.trim() || "Not provided",
+      whatsappNumber: input.customerPhone?.trim() || undefined,
+      sourceChannel: input.channel,
       location: input.deliveryArea.trim(),
       totalOrders: 0,
       totalSpend: 0,
       lastOrderAt: now,
       status: "active",
+      createdAt: now,
     };
     state.customers.push(customer);
+  } else if (!customer.sourceChannel) {
+    customer.sourceChannel = input.channel;
   }
 
   const record: OrderRecord = {
@@ -267,10 +275,14 @@ export function createCustomer(input: CreateCustomerInput) {
     id: nextCustomerId(state.customers),
     name: input.name.trim(),
     phone: input.phone.trim(),
+    whatsappNumber: input.whatsappNumber?.trim() || input.phone.trim(),
+    sourceChannel: input.sourceChannel || "Unknown",
     location: input.location.trim(),
     totalOrders: 0,
     totalSpend: 0,
     lastOrderAt: now,
+    notes: input.notes?.trim() || undefined,
+    createdAt: now,
     status: input.status,
   };
   state.customers.push(customer);
@@ -289,7 +301,11 @@ export function updateCustomer(id: string, input: UpdateCustomerInput) {
     ...current,
     name: nextName,
     phone: input.phone?.trim() || current.phone,
+    whatsappNumber:
+      input.whatsappNumber?.trim() || current.whatsappNumber || current.phone,
+    sourceChannel: input.sourceChannel || current.sourceChannel,
     location: input.location?.trim() || current.location,
+    notes: input.notes?.trim() || current.notes,
     status: input.status || current.status,
     lastOrderAt: current.lastOrderAt,
   };

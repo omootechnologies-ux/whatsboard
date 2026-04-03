@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import {
+  BuyerBadge,
   DataCell,
   DataRow,
   DataTable,
@@ -154,6 +155,12 @@ export default async function OrdersPage({
                     <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
                       {order.deliveryArea}
                     </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <BuyerBadge status={order.customerBuyerStatus} compact />
+                      <span className="text-[11px] font-semibold text-[var(--color-wb-text-muted)]">
+                        LTV {formatCurrency(order.customerLifetimeValue || 0)}
+                      </span>
+                    </div>
                   </DataCell>
                   <DataCell>
                     <StageBadge stage={order.stage} />

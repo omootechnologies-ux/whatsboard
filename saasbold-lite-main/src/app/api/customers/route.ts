@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
+import type { SourceChannel } from "@/data/whatsboard";
 import { createCustomer } from "@/lib/whatsboard-repository";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
   const name = String(formData.get("name") || "");
   const phone = String(formData.get("phone") || "");
+  const whatsappNumber = String(formData.get("whatsappNumber") || "");
+  const sourceChannel = String(formData.get("sourceChannel") || "Unknown");
+  const notes = String(formData.get("notes") || "");
   const location = String(formData.get("location") || "");
   const status = String(formData.get("status") || "active");
 
@@ -19,6 +23,17 @@ export async function POST(request: Request) {
     await createCustomer({
       name,
       phone,
+      whatsappNumber,
+      sourceChannel: ([
+        "WhatsApp",
+        "Instagram",
+        "Facebook",
+        "TikTok",
+        "Unknown",
+      ].includes(sourceChannel)
+        ? sourceChannel
+        : "Unknown") as SourceChannel,
+      notes,
       location,
       status: (["active", "waiting", "vip"].includes(status)
         ? status

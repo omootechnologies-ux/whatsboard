@@ -78,6 +78,16 @@ export default async function NewCustomerPage({
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
+              WhatsApp number
+            </label>
+            <input
+              name="whatsappNumber"
+              className="wb-input"
+              placeholder="+255 754 000 000"
+            />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
               Location
             </label>
             <input
@@ -89,6 +99,18 @@ export default async function NewCustomerPage({
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
+              Source channel
+            </label>
+            <select name="sourceChannel" className="wb-input" defaultValue="WhatsApp">
+              <option value="WhatsApp">WhatsApp</option>
+              <option value="Instagram">Instagram</option>
+              <option value="Facebook">Facebook</option>
+              <option value="TikTok">TikTok</option>
+              <option value="Unknown">Unknown</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
               Customer status
             </label>
             <select name="status" className="wb-input" defaultValue="active">
@@ -96,6 +118,16 @@ export default async function NewCustomerPage({
               <option value="waiting">Waiting</option>
               <option value="vip">VIP</option>
             </select>
+          </div>
+          <div className="sm:col-span-2">
+            <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
+              Private notes
+            </label>
+            <textarea
+              name="notes"
+              className="wb-textarea"
+              placeholder="Notes about preferences, payment behavior, or delivery details."
+            />
           </div>
         </form>
       </SectionCard>

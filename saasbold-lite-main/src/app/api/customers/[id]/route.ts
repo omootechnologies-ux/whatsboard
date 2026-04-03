@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { updateCustomer } from "@/lib/whatsboard-repository";
+import type { SourceChannel } from "@/data/whatsboard";
+import { getCustomerById, updateCustomer } from "@/lib/whatsboard-repository";
 
 export async function POST(
   request: Request,
@@ -7,14 +8,30 @@ export async function POST(
 ) {
   const { id } = await context.params;
   const formData = await request.formData();
-  const name = String(formData.get("name") || "");
-  const phone = String(formData.get("phone") || "");
-  const location = String(formData.get("location") || "");
+  const existing = await getCustomerById(id);
+  const name = String(formData.get("name") || existing?.name || "");
+  const phone = String(formData.get("phone") || existing?.phone || "");
+  const whatsappNumber = String(
+    formData.get("whatsappNumber") || existing?.whatsappNumber || "",
+  );
+  const sourceChannel = String(
+    formData.get("sourceChannel") || existing?.sourceChannel || "Unknown",
+  );
+  const notes = String(formData.get("notes") || existing?.notes || "");
+  const location = String(formData.get("location") || existing?.location || "");
   const status = String(formData.get("status") || "active");
+  const referer = request.headers.get("referer");
+  const fromEdit = Boolean(referer?.includes(`/customers/${id}/edit`));
+  const fromProfile = Boolean(referer?.includes(`/customers/${id}`)) && !fromEdit;
 
   if (!name.trim() || !phone.trim() || !location.trim()) {
     return NextResponse.redirect(
-      new URL(`/customers/${id}/edit?error=invalid`, request.url),
+      new URL(
+        fromProfile
+          ? `/customers/${id}?error=invalid`
+          : `/customers/${id}/edit?error=invalid`,
+        request.url,
+      ),
       303,
     );
   }
@@ -23,6 +40,17 @@ export async function POST(
     const updated = await updateCustomer(id, {
       name,
       phone,
+      whatsappNumber,
+      sourceChannel: ([
+        "WhatsApp",
+        "Instagram",
+        "Facebook",
+        "TikTok",
+        "Unknown",
+      ].includes(sourceChannel)
+        ? sourceChannel
+        : "Unknown") as SourceChannel,
+      notes,
       location,
       status: (["active", "waiting", "vip"].includes(status)
         ? status
@@ -37,12 +65,20 @@ export async function POST(
     }
 
     return NextResponse.redirect(
-      new URL("/customers?updated=1", request.url),
+      new URL(
+        fromProfile ? `/customers/${id}?updated=1` : "/customers?updated=1",
+        request.url,
+      ),
       303,
     );
   } catch {
     return NextResponse.redirect(
-      new URL(`/customers/${id}/edit?error=persistence`, request.url),
+      new URL(
+        fromProfile
+          ? `/customers/${id}?error=persistence`
+          : `/customers/${id}/edit?error=persistence`,
+        request.url,
+      ),
       303,
     );
   }

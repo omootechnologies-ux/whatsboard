@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import {
+  BuyerBadge,
   CustomerRow,
   DataCell,
   DataRow,
@@ -21,6 +22,9 @@ import { getPrimaryOrderLabel } from "@/lib/display-labels";
 type CustomersPageSearchParams = Promise<{
   search?: string;
   status?: string;
+  buyerStatus?: string;
+  sourceChannel?: string;
+  sort?: string;
   created?: string;
   updated?: string;
   error?: string;
@@ -35,6 +39,27 @@ export default async function CustomersPage({
   const customerRecords = await listCustomers({
     search: query.search,
     status: query.status,
+    buyerStatus:
+      query.buyerStatus === "new" ||
+      query.buyerStatus === "repeat" ||
+      query.buyerStatus === "at_risk" ||
+      query.buyerStatus === "lost"
+        ? query.buyerStatus
+        : undefined,
+    sourceChannel:
+      query.sourceChannel === "WhatsApp" ||
+      query.sourceChannel === "Instagram" ||
+      query.sourceChannel === "Facebook" ||
+      query.sourceChannel === "TikTok"
+        ? query.sourceChannel
+        : undefined,
+    sort:
+      query.sort === "ltv" ||
+      query.sort === "last_order" ||
+      query.sort === "total_orders" ||
+      query.sort === "days_since_last_order"
+        ? query.sort
+        : undefined,
   });
 
   return (
@@ -71,30 +96,42 @@ export default async function CustomersPage({
           detail="Records captured from daily selling activity."
         />
         <KpiCard
-          label="VIP buyers"
+          label="Repeat buyers"
           value={String(
-            customerRecords.filter((customer) => customer.status === "vip")
+            customerRecords.filter((customer) => customer.buyerStatus === "repeat")
               .length,
           )}
-          detail="High-value customers worth active follow-up."
+          detail="Customers with 2+ recorded orders."
         />
         <KpiCard
-          label="Waiting sellers"
+          label="At-risk buyers"
           value={String(
-            customerRecords.filter((customer) => customer.status === "waiting")
+            customerRecords.filter((customer) => customer.buyerStatus === "at_risk")
               .length,
           )}
-          detail="Customers still waiting for next action."
+          detail="Repeat buyers inactive for 21+ days."
         />
       </section>
 
       <FilterToolbar
-        searchPlaceholder="Search by name, phone, city, or last order"
+        searchPlaceholder="Search by name, phone, WhatsApp, source channel, or notes"
         chips={[
           { key: "status", label: "All customers" },
-          { key: "status", label: "VIP", value: "vip" },
-          { key: "status", label: "Waiting", value: "waiting" },
-          { key: "status", label: "Active", value: "active" },
+          { key: "status", label: "New", value: "new" },
+          { key: "status", label: "Repeat", value: "repeat" },
+          { key: "status", label: "At-risk", value: "at_risk" },
+          { key: "status", label: "Lost", value: "lost" },
+          { key: "sourceChannel", label: "WhatsApp", value: "WhatsApp" },
+          { key: "sourceChannel", label: "Instagram", value: "Instagram" },
+          { key: "sourceChannel", label: "Facebook", value: "Facebook" },
+          { key: "sort", label: "Sort: LTV", value: "ltv" },
+          { key: "sort", label: "Sort: Last order", value: "last_order" },
+          { key: "sort", label: "Sort: Total orders", value: "total_orders" },
+          {
+            key: "sort",
+            label: "Sort: Days since order",
+            value: "days_since_last_order",
+          },
         ]}
       />
 
@@ -110,8 +147,9 @@ export default async function CustomersPage({
                 "Phone",
                 "Location",
                 "Last order",
+                "Days since last order",
                 "Total spend",
-                "Status",
+                "Buyer status",
                 "Action",
               ]}
             >
@@ -137,22 +175,34 @@ export default async function CustomersPage({
                     </span>
                   </DataCell>
                   <DataCell>
+                    <span className="text-sm font-semibold text-[var(--color-wb-text)]">
+                      {customer.daysSinceLastOrder || 0} days
+                    </span>
+                  </DataCell>
+                  <DataCell>
                     <span className="font-semibold text-[var(--color-wb-primary)]">
                       {formatCurrency(customer.totalSpend)}
                     </span>
                   </DataCell>
                   <DataCell>
-                    <span className="rounded-full border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] px-3 py-1 text-xs font-semibold capitalize text-[var(--color-wb-text-muted)]">
-                      {customer.status}
-                    </span>
+                    <BuyerBadge status={customer.buyerStatus} compact />
                   </DataCell>
                   <DataCell compact>
-                    <Link
-                      href={`/customers/${customer.id}/edit`}
-                      className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
-                    >
-                      Edit
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        href={`/customers/${customer.id}`}
+                        className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
+                      >
+                        View
+                      </Link>
+                      <span className="text-[var(--color-wb-text-muted)]">•</span>
+                      <Link
+                        href={`/customers/${customer.id}/edit`}
+                        className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
+                      >
+                        Edit
+                      </Link>
+                    </div>
                   </DataCell>
                 </DataRow>
               ))}
@@ -176,7 +226,8 @@ export default async function CustomersPage({
               <CustomerRow
                 key={customer.id}
                 customer={customer}
-                actionHref={`/customers/${customer.id}/edit`}
+                actionHref={`/customers/${customer.id}`}
+                actionLabel="View"
               />
             ))
           ) : (

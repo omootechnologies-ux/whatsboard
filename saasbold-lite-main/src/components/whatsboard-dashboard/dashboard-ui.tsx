@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import type {
+  BuyerStatus,
   CustomerRecord,
   FollowUpRecord,
   OrderRecord,
@@ -798,6 +799,31 @@ export function StageBadge({ stage }: { stage: OrderRecord["stage"] }) {
   );
 }
 
+export function BuyerBadge({
+  status,
+  compact = false,
+}: {
+  status?: BuyerStatus;
+  compact?: boolean;
+}) {
+  const resolved = status || "new";
+  const tones: Record<BuyerStatus, string> = {
+    new: "bg-slate-50 text-slate-700 border-slate-100",
+    repeat:
+      "bg-[var(--color-wb-primary-soft)] text-[var(--color-wb-primary)] border-[var(--color-wb-border)]",
+    at_risk: "bg-amber-50 text-amber-700 border-amber-100",
+    lost: "bg-rose-50 text-rose-700 border-rose-100",
+  };
+
+  return (
+    <span
+      className={`inline-flex rounded-full border ${compact ? "px-2.5 py-0.5 text-[11px]" : "px-3 py-1 text-xs"} font-semibold capitalize ${tones[resolved]}`}
+    >
+      {resolved === "at_risk" ? "At-risk customer" : `${resolved} customer`}
+    </span>
+  );
+}
+
 export function OrderCard({ order }: { order: OrderRecord }) {
   const primaryLabel = getPrimaryOrderLabel({
     customerName: order.customerName,
@@ -813,6 +839,9 @@ export function OrderCard({ order }: { order: OrderRecord }) {
           <p className="break-words font-semibold text-[var(--color-wb-text)]">
             {primaryLabel}
           </p>
+          <div className="mt-2">
+            <BuyerBadge status={order.customerBuyerStatus} compact />
+          </div>
           <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
             {order.channel} • {formatCurrency(order.amount)} •{" "}
             {formatPaymentStatusLabel(order.paymentStatus)}
@@ -1035,6 +1064,7 @@ export function CustomerRow({
         <span className="font-semibold text-[var(--color-wb-primary)]">
           {formatCurrency(customer.totalSpend)}
         </span>
+        <BuyerBadge status={customer.buyerStatus} compact />
         <span className="rounded-full border border-[var(--color-wb-border)] bg-white px-3 py-1 text-xs font-semibold capitalize text-[var(--color-wb-text-muted)]">
           {customer.status}
         </span>

@@ -1,6 +1,8 @@
 import type {
+  CustomerProfileRecord,
   FollowUpRecord,
   PaymentReconciliationStatus,
+  SourceChannel,
 } from "@/data/whatsboard";
 import {
   createCustomer as createCustomerInStore,
@@ -14,6 +16,12 @@ import {
   updatePayment as updatePaymentInStore,
 } from "@/lib/whatsboard-store";
 import { statusFromDueDate } from "@/lib/follow-up-status";
+import {
+  calculateAverageOrderValue,
+  calculateDaysSince,
+  calculateRepeatPurchaseRate,
+  resolveBuyerStatus,
+} from "@/lib/customer-insights";
 import { parsePaymentSms } from "@/lib/payments/sms-parser";
 import {
   matchBandFromConfidence,
@@ -45,6 +53,13 @@ import type {
 
 function includesText(value: string, search: string) {
   return value.toLowerCase().includes(search.toLowerCase());
+}
+
+function resolveSourceChannel(value?: string | null): SourceChannel {
+  if (value === "WhatsApp" || value === "Instagram" || value === "Facebook" || value === "TikTok") {
+    return value;
+  }
+  return "Unknown";
 }
 
 function computeFollowUpStatus(
@@ -114,7 +129,35 @@ function computeAnalyticsSeries() {
 async function listOrders(query: OrdersQuery = {}) {
   const state = getStoreState();
   const search = query.search?.trim() ?? "";
+  const orderStatsByCustomer = new Map<
+    string,
+    { totalOrders: number; totalSpend: number }
+  >();
+  state.orders.forEach((order) => {
+    const current = orderStatsByCustomer.get(order.customerId) || {
+      totalOrders: 0,
+      totalSpend: 0,
+    };
+    current.totalOrders += 1;
+    current.totalSpend += order.amount;
+    orderStatsByCustomer.set(order.customerId, current);
+  });
+
   return state.orders
+    .map((order) => {
+      const stats = orderStatsByCustomer.get(order.customerId) || {
+        totalOrders: 0,
+        totalSpend: 0,
+      };
+      return {
+        ...order,
+        customerTotalOrders: stats.totalOrders,
+        customerLifetimeValue: stats.totalSpend,
+        customerBuyerStatus: (stats.totalOrders > 1 ? "repeat" : "new") as
+          | "repeat"
+          | "new",
+      };
+    })
     .filter((order) => (query.stage ? order.stage === query.stage : true))
     .filter((order) =>
       query.payment ? order.paymentStatus === query.payment : true,
@@ -149,6 +192,7 @@ async function updateOrder(id: string, input: UpdateOrderInput) {
 async function listCustomers(query: CustomersQuery = {}) {
   const state = getStoreState();
   const search = query.search?.trim() ?? "";
+  const now = new Date();
   const followUpsByCustomer = new Map<string, string>();
 
   state.followUps
@@ -160,28 +204,108 @@ async function listCustomers(query: CustomersQuery = {}) {
       }
     });
 
-  return state.customers
+  const records = state.customers
+    .map((customer) => {
+      const totalOrders = customer.totalOrders || 0;
+      const totalSpend = customer.totalSpend || 0;
+      const lastOrderAt = customer.lastOrderAt || customer.createdAt || new Date().toISOString();
+      const daysSinceLastOrder = calculateDaysSince(lastOrderAt, now);
+      const buyerStatus = resolveBuyerStatus({
+        totalOrders,
+        createdAt: customer.createdAt || customer.lastOrderAt,
+        lastOrderAt,
+        now,
+      });
+      return {
+        ...customer,
+        sourceChannel: resolveSourceChannel(customer.sourceChannel),
+        whatsappNumber: customer.whatsappNumber || customer.phone,
+        averageOrderValue: calculateAverageOrderValue(totalSpend, totalOrders),
+        daysSinceLastOrder,
+        repeatPurchaseRate: calculateRepeatPurchaseRate(totalOrders),
+        buyerStatus,
+        isRepeatBuyer: totalOrders > 1,
+      };
+    })
+    .filter((customer) => {
+      if (query.status && query.status !== "all") {
+        if (query.status === "new") return customer.buyerStatus === "new";
+        if (query.status === "repeat") return customer.buyerStatus === "repeat";
+        if (query.status === "at_risk") return customer.buyerStatus === "at_risk";
+        if (query.status === "lost") return customer.buyerStatus === "lost";
+        return customer.status === query.status;
+      }
+      return true;
+    })
     .filter((customer) =>
-      query.status ? customer.status === query.status : true,
+      query.buyerStatus ? customer.buyerStatus === query.buyerStatus : true,
     )
     .filter((customer) => {
+      if (!query.sourceChannel || query.sourceChannel === "all") return true;
+      return customer.sourceChannel === query.sourceChannel;
+    })
+    .filter((customer) => {
       if (!search) return true;
-      const haystack = [customer.name, customer.phone, customer.location].join(
-        " ",
-      );
+      const haystack = [
+        customer.name,
+        customer.phone,
+        customer.whatsappNumber || "",
+        customer.location,
+        customer.sourceChannel || "",
+        customer.notes || "",
+      ].join(" ");
       return includesText(haystack, search);
     })
     .map((customer) => ({
       ...customer,
       nextFollowUpAt:
         followUpsByCustomer.get(customer.id) || customer.nextFollowUpAt,
-    }))
-    .sort((a, b) => (a.lastOrderAt > b.lastOrderAt ? -1 : 1));
+    }));
+
+  const sortBy = query.sort || "last_order";
+  return records.sort((a, b) => {
+    if (sortBy === "ltv") return b.totalSpend - a.totalSpend;
+    if (sortBy === "total_orders") return b.totalOrders - a.totalOrders;
+    if (sortBy === "days_since_last_order")
+      return (b.daysSinceLastOrder || 0) - (a.daysSinceLastOrder || 0);
+    return a.lastOrderAt > b.lastOrderAt ? -1 : 1;
+  });
 }
 
 async function getCustomerById(id: string) {
-  const state = getStoreState();
-  return state.customers.find((customer) => customer.id === id) || null;
+  const records = await listCustomers();
+  return records.find((customer) => customer.id === id) || null;
+}
+
+async function getCustomerProfileById(id: string): Promise<CustomerProfileRecord | null> {
+  const [customer, orders] = await Promise.all([getCustomerById(id), listOrders()]);
+  if (!customer) return null;
+
+  const orderHistory = orders
+    .filter((order) => order.customerId === id)
+    .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1))
+    .map((order) => ({
+      id: order.id,
+      orderReference: formatOrderReference(order.id) || "WB-00000",
+      date: order.createdAt,
+      items: order.items,
+      amount: order.amount,
+      status: order.stage,
+      paymentStatus: order.paymentStatus,
+      paymentMethod: order.paymentMethod || null,
+    }));
+
+  const lastOrderDate = orderHistory[0]?.date || customer.lastOrderAt;
+  return {
+    customer,
+    orderHistory,
+    totalLifetimeValue: customer.totalSpend,
+    averageOrderValue: customer.averageOrderValue || 0,
+    repeatPurchaseRate: customer.repeatPurchaseRate || 0,
+    daysSinceLastOrder: customer.daysSinceLastOrder || 0,
+    lastOrderDate,
+    lastBoughtProduct: orderHistory[0]?.items?.[0] || undefined,
+  };
 }
 
 async function createCustomer(input: CreateCustomerInput) {
@@ -462,6 +586,7 @@ export function createLocalRepository(): WhatsboardRepository {
     updateOrder,
     listCustomers,
     getCustomerById,
+    getCustomerProfileById,
     createCustomer,
     updateCustomer,
     listFollowUps,
