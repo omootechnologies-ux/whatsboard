@@ -78,6 +78,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const [redirectPath, setRedirectPath] = useState("/dashboard");
   const [forceAuthFlow, setForceAuthFlow] = useState(false);
   const [paramsReady, setParamsReady] = useState(false);
+  const [authSwitchQuery, setAuthSwitchQuery] = useState("");
 
   const isRegister = mode === "register";
 
@@ -85,6 +86,15 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     const params = new URLSearchParams(window.location.search);
     setRedirectPath(getRedirectPath(params.get("next")));
     setForceAuthFlow(params.get("force") === "1");
+    const switchParams = new URLSearchParams();
+    const next = params.get("next");
+    const plan = params.get("plan");
+    const force = params.get("force");
+    if (next) switchParams.set("next", next);
+    if (plan) switchParams.set("plan", plan);
+    if (force === "1") switchParams.set("force", "1");
+    const nextQuery = switchParams.toString();
+    setAuthSwitchQuery(nextQuery ? `?${nextQuery}` : "");
     setParamsReady(true);
   }, []);
 
@@ -372,14 +382,14 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         </p>
         {isRegister ? (
           <Link
-            href="/login?force=1"
+            href={`/login${authSwitchQuery}`}
             className="font-semibold text-[var(--color-wb-primary)]"
           >
             Already have an account?
           </Link>
         ) : (
           <Link
-            href="/register?force=1"
+            href={`/register${authSwitchQuery}`}
             className="font-semibold text-[var(--color-wb-primary)]"
           >
             Create account

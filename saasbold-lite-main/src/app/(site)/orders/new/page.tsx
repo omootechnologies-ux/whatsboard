@@ -13,7 +13,10 @@ export default async function NewOrderPage({
   searchParams: NewOrderSearchParams;
 }) {
   const query = await searchParams;
-  const hasError = query.error === "invalid" || query.error === "persistence";
+  const hasError =
+    query.error === "invalid" ||
+    query.error === "persistence" ||
+    query.error === "order-limit";
 
   return (
     <div className="space-y-5 lg:space-y-6">
@@ -46,6 +49,8 @@ export default async function NewOrderPage({
           <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
             {query.error === "invalid"
               ? "Please fill all required fields with valid values."
+              : query.error === "order-limit"
+                ? "Free plan monthly order limit reached (30). Upgrade your plan on Billing to continue creating new orders."
               : "Could not create order. Check your Supabase connection and try again."}
           </div>
         ) : null}

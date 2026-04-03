@@ -1,8 +1,12 @@
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import type { PricingPlan } from "@/data/pricing-plans";
+import { buildBillingCheckoutPath } from "@/lib/billing/plans";
 
 export function PricingCard({ plan }: { plan: PricingPlan }) {
+  const checkoutPath = buildBillingCheckoutPath(plan.key);
+  const loginHref = `/login?next=${encodeURIComponent(checkoutPath)}&plan=${plan.key}`;
+
   return (
     <article
       className={`flex h-full flex-col rounded-[28px] border p-6 ${
@@ -79,6 +83,14 @@ export function PricingCard({ plan }: { plan: PricingPlan }) {
         }`}
       >
         {plan.ctaLabel}
+      </Link>
+      <Link
+        href={loginHref}
+        className={`mt-3 text-center text-xs font-semibold uppercase tracking-[0.14em] ${
+          plan.highlight ? "text-white/80" : "text-[var(--color-wb-text-muted)]"
+        }`}
+      >
+        Already have account? Login
       </Link>
     </article>
   );

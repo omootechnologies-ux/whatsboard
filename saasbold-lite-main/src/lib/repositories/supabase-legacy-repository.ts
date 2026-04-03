@@ -27,6 +27,10 @@ import type {
   UpdatePaymentInput,
   WhatsboardRepository,
 } from "@/lib/whatsboard-repository";
+import {
+  BillingConstraintError,
+  assertOrderCreationAllowedForBusiness,
+} from "@/lib/billing/subscription";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 
@@ -455,6 +459,19 @@ async function ensureBusinessForUser(
   }
 
   const profile = profileResult.data as LegacyProfileRow | null;
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const monthAheadIso = new Date(
+    Date.UTC(
+      now.getUTCFullYear(),
+      now.getUTCMonth() + 1,
+      now.getUTCDate(),
+      now.getUTCHours(),
+      now.getUTCMinutes(),
+      now.getUTCSeconds(),
+      now.getUTCMilliseconds(),
+    ),
+  ).toISOString();
   const businessName =
     explicitBusinessName ||
     profile?.business_name ||
@@ -469,6 +486,10 @@ async function ensureBusinessForUser(
       owner_id: userId,
       name: businessName,
       currency: "TZS",
+      billing_plan: "free",
+      billing_status: "active",
+      billing_current_period_starts_at: nowIso,
+      billing_current_period_ends_at: monthAheadIso,
     })
     .select("id,name")
     .single();
@@ -863,6 +884,7 @@ async function findOrCreateCustomer(
 
 async function createOrder(input: CreateOrderInput) {
   const businessId = await resolveBusinessId();
+  await assertOrderCreationAllowedForBusiness(businessId);
   const client = createSupabaseServiceClient();
   const customer = await findOrCreateCustomer(
     businessId,
@@ -893,6 +915,13 @@ async function createOrder(input: CreateOrderInput) {
     .single();
 
   if (error || !data) {
+    const errorMessage = JSON.stringify(error);
+    if (errorMessage.toLowerCase().includes("monthly order limit reached")) {
+      throw new BillingConstraintError(
+        "ORDER_LIMIT_REACHED",
+        "Free plan monthly order limit reached.",
+      );
+    }
     throw new Error(`Failed to create order: ${JSON.stringify(error)}`);
   }
 

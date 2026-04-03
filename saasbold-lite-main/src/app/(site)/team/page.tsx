@@ -9,10 +9,18 @@ import {
   SectionCard,
 } from "@/components/whatsboard-dashboard/dashboard-ui";
 import { formatDate } from "@/components/whatsboard-dashboard/formatting";
+import { getBusinessBillingState } from "@/lib/billing/subscription";
 import { resolveLegacyBusinessIdForRequest } from "@/lib/repositories/supabase-legacy-repository";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
+
+type TeamSearchParams = Promise<{
+  invited?: string;
+  updated?: string;
+  removed?: string;
+  error?: string;
+}>;
 
 type TeamMemberRow = {
   id: string;
@@ -29,9 +37,76 @@ type ProfileRow = {
   phone: string | null;
 };
 
-export default async function TeamPage() {
+function teamFlashMessage(query: Awaited<TeamSearchParams>) {
+  if (query.invited === "1") {
+    return {
+      tone: "success" as const,
+      text: "Team member added successfully.",
+    };
+  }
+  if (query.updated === "1") {
+    return {
+      tone: "success" as const,
+      text: "Team member role updated successfully.",
+    };
+  }
+  if (query.removed === "1") {
+    return {
+      tone: "success" as const,
+      text: "Team member removed successfully.",
+    };
+  }
+
+  if (query.error === "team-limit") {
+    return {
+      tone: "danger" as const,
+      text: "Team member limit reached for your current plan. Upgrade to add more members.",
+    };
+  }
+  if (query.error === "user-not-found") {
+    return {
+      tone: "danger" as const,
+      text: "No account found with that email. Ask the user to sign up first.",
+    };
+  }
+  if (query.error === "already-in-another-business") {
+    return {
+      tone: "danger" as const,
+      text: "That user already belongs to another business workspace.",
+    };
+  }
+  if (query.error === "owner-protected") {
+    return {
+      tone: "danger" as const,
+      text: "Owner membership cannot be removed.",
+    };
+  }
+  if (query.error === "forbidden") {
+    return {
+      tone: "danger" as const,
+      text: "Only owner/admin can manage team membership.",
+    };
+  }
+  if (query.error) {
+    return {
+      tone: "danger" as const,
+      text: "Team action failed. Please try again.",
+    };
+  }
+
+  return null;
+}
+
+export default async function TeamPage({
+  searchParams,
+}: {
+  searchParams: TeamSearchParams;
+}) {
+  const query = await searchParams;
   const businessId = await resolveLegacyBusinessIdForRequest();
   const client = createSupabaseServiceClient();
+  const billingState = await getBusinessBillingState(businessId, client);
+  const flash = teamFlashMessage(query);
 
   const { data: membersData, error: membersError } = await client
     .from("business_members")
@@ -49,6 +124,7 @@ export default async function TeamPage() {
   const memberUserIds = Array.from(
     new Set(members.map((member) => member.user_id)),
   );
+
   let profileMap = new Map<string, ProfileRow>();
   if (memberUserIds.length) {
     const { data: profileRows, error: profilesError } = await client
@@ -73,15 +149,29 @@ export default async function TeamPage() {
   const memberCount = members.filter(
     (member) => member.role !== "owner" && member.role !== "admin",
   ).length;
+  const teamLimitReached =
+    billingState.teamMemberCount >= billingState.teamMemberLimit;
 
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
         title="Team"
-        description="Team membership and role visibility for your seller operation."
+        description="Invite and manage team members with plan-based seat limits."
       />
 
-      <section className="grid gap-4 md:grid-cols-3">
+      {flash ? (
+        <div
+          className={`rounded-2xl border p-4 text-sm ${
+            flash.tone === "success"
+              ? "border-emerald-100 bg-emerald-50 text-emerald-700"
+              : "border-rose-100 bg-rose-50 text-rose-700"
+          }`}
+        >
+          {flash.text}
+        </div>
+      ) : null}
+
+      <section className="grid gap-4 md:grid-cols-4">
         <KpiCard
           label="Team members"
           value={String(members.length)}
@@ -100,7 +190,71 @@ export default async function TeamPage() {
           detail="Standard members currently assigned."
           accent={<Users className="h-5 w-5" />}
         />
+        <KpiCard
+          label="Plan seat limit"
+          value={`${billingState.teamMemberCount}/${billingState.teamMemberLimit}`}
+          detail={`${billingState.plan.toUpperCase()} plan capacity`}
+          accent={<Users className="h-5 w-5" />}
+        />
       </section>
+
+      <SectionCard
+        title="Invite team member"
+        description="Add an existing WhatsBoard user by email. Seat limits are enforced by plan."
+      >
+        {teamLimitReached ? (
+          <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            Team limit reached for {billingState.plan.toUpperCase()} (
+            {billingState.teamMemberLimit} members). Upgrade your plan in Billing
+            to invite more members.
+          </div>
+        ) : null}
+
+        <form
+          action="/api/team/invite"
+          method="post"
+          className="grid gap-4 sm:grid-cols-[1.4fr_0.8fr_auto]"
+        >
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
+              Team member email
+            </span>
+            <input
+              name="email"
+              type="email"
+              required
+              placeholder="teammate@business.com"
+              className="wb-input"
+              disabled={teamLimitReached}
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
+              Role
+            </span>
+            <select
+              name="role"
+              className="wb-input"
+              defaultValue="member"
+              disabled={teamLimitReached}
+            >
+              <option value="member">Member</option>
+              <option value="admin">Admin</option>
+            </select>
+          </label>
+
+          <div className="flex items-end">
+            <button
+              type="submit"
+              className="wb-button-primary w-full justify-center sm:w-auto"
+              disabled={teamLimitReached}
+            >
+              Invite
+            </button>
+          </div>
+        </form>
+      </SectionCard>
 
       <SectionCard
         title="Member list"
@@ -109,11 +263,12 @@ export default async function TeamPage() {
         {members.length ? (
           <>
             <div className="hidden md:block">
-              <DataTable headers={["Name", "Contact", "Role", "Joined"]}>
+              <DataTable headers={["Name", "Contact", "Role", "Joined", "Action"]}>
                 {members.map((member) => {
                   const profile = profileMap.get(member.user_id);
                   const nameLabel =
                     profile?.full_name || profile?.email || "Team member";
+                  const isOwner = member.role === "owner";
                   return (
                     <DataRow key={member.id}>
                       <DataCell>
@@ -138,6 +293,23 @@ export default async function TeamPage() {
                           ? formatDate(member.created_at)
                           : "N/A"}
                       </DataCell>
+                      <DataCell>
+                        {isOwner ? (
+                          <span className="text-xs text-[var(--color-wb-text-muted)]">
+                            Owner
+                          </span>
+                        ) : (
+                          <form action="/api/team/remove" method="post">
+                            <input type="hidden" name="memberId" value={member.id} />
+                            <button
+                              type="submit"
+                              className="text-sm font-semibold text-rose-600 hover:underline"
+                            >
+                              Remove
+                            </button>
+                          </form>
+                        )}
+                      </DataCell>
                     </DataRow>
                   );
                 })}
@@ -149,6 +321,7 @@ export default async function TeamPage() {
                 const profile = profileMap.get(member.user_id);
                 const nameLabel =
                   profile?.full_name || profile?.email || "Team member";
+                const isOwner = member.role === "owner";
                 return (
                   <article
                     key={member.id}
@@ -172,12 +345,29 @@ export default async function TeamPage() {
                         {member.role || "member"}
                       </span>
                     </div>
-                    <p className="mt-3 text-xs text-[var(--color-wb-text-muted)]">
-                      Joined{" "}
-                      {member.created_at
-                        ? formatDate(member.created_at)
-                        : "N/A"}
-                    </p>
+                    <div className="mt-3 flex items-center justify-between gap-3">
+                      <p className="text-xs text-[var(--color-wb-text-muted)]">
+                        Joined{" "}
+                        {member.created_at
+                          ? formatDate(member.created_at)
+                          : "N/A"}
+                      </p>
+                      {isOwner ? (
+                        <span className="text-xs text-[var(--color-wb-text-muted)]">
+                          Owner
+                        </span>
+                      ) : (
+                        <form action="/api/team/remove" method="post">
+                          <input type="hidden" name="memberId" value={member.id} />
+                          <button
+                            type="submit"
+                            className="text-xs font-semibold uppercase tracking-[0.12em] text-rose-600"
+                          >
+                            Remove
+                          </button>
+                        </form>
+                      )}
+                    </div>
                   </article>
                 );
               })}
@@ -186,7 +376,7 @@ export default async function TeamPage() {
         ) : (
           <EmptyState
             title="No team members yet"
-            detail="Only your account is currently linked. Invite flow can attach more members."
+            detail="Only your account is currently linked. Invite another existing user to collaborate."
           />
         )}
       </SectionCard>

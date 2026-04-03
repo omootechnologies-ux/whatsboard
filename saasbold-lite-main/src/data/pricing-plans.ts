@@ -1,3 +1,8 @@
+import {
+  buildPlanRegisterHref,
+  formatPlanPriceLabel,
+} from "@/lib/billing/plans";
+
 export type PricingPlan = {
   key: "free" | "starter" | "growth" | "business";
   name: string;
@@ -15,13 +20,13 @@ export const pricingPlans: PricingPlan[] = [
   {
     key: "free",
     name: "Free",
-    priceLabel: "TZS 0",
+    priceLabel: formatPlanPriceLabel(0),
     cadence: "/forever",
     badge: "Try it first",
     description:
       "Track your first orders and see how structured selling feels without paying upfront.",
     ctaLabel: "Start Free",
-    ctaHref: "/register?force=1",
+    ctaHref: buildPlanRegisterHref("free"),
     features: [
       "Up to 30 orders per month",
       "Basic orders board",
@@ -32,13 +37,13 @@ export const pricingPlans: PricingPlan[] = [
   {
     key: "starter",
     name: "Starter",
-    priceLabel: "TZS 15,000",
+    priceLabel: formatPlanPriceLabel(15_000),
     cadence: "/month",
     badge: "Solo seller",
     description:
       "For one-person sellers who need daily control over payments, follow-ups, and delivery updates.",
     ctaLabel: "Get Started Today",
-    ctaHref: "/register?force=1",
+    ctaHref: buildPlanRegisterHref("starter"),
     features: [
       "Unlimited orders",
       "Payment tracking",
@@ -50,13 +55,13 @@ export const pricingPlans: PricingPlan[] = [
   {
     key: "growth",
     name: "Growth",
-    priceLabel: "TZS 35,000",
+    priceLabel: formatPlanPriceLabel(35_000),
     cadence: "/month",
     badge: "Growing business",
     description:
       "Built for growing social commerce teams that need shared workflows and tighter operations.",
     ctaLabel: "Get Started Today",
-    ctaHref: "/register?force=1",
+    ctaHref: buildPlanRegisterHref("growth"),
     highlight: true,
     features: [
       "Everything in Starter",
@@ -68,13 +73,13 @@ export const pricingPlans: PricingPlan[] = [
   {
     key: "business",
     name: "Business",
-    priceLabel: "TZS 70,000",
+    priceLabel: formatPlanPriceLabel(70_000),
     cadence: "/month",
     badge: "Team workflow",
     description:
       "For established East African sellers running multi-channel teams and higher daily volume.",
     ctaLabel: "Get Started Today",
-    ctaHref: "/register?force=1",
+    ctaHref: buildPlanRegisterHref("business"),
     features: [
       "Everything in Growth",
       "5 team members included",

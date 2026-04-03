@@ -20,6 +20,8 @@ const PROTECTED_PREFIXES = [
   "/api/orders",
   "/api/follow-ups",
   "/api/payments",
+  "/api/billing",
+  "/api/team",
 ] as const;
 
 const AUTH_PAGES = ["/login", "/register"] as const;
@@ -78,6 +80,17 @@ function buildLoginRedirect(request: NextRequest) {
   return loginUrl;
 }
 
+function resolveSafeNextPath(rawNext: string | null) {
+  if (!rawNext) return "/dashboard";
+  if (!rawNext.startsWith("/") || rawNext.startsWith("//")) {
+    return "/dashboard";
+  }
+  if (rawNext.startsWith("/login") || rawNext.startsWith("/register")) {
+    return "/dashboard";
+  }
+  return rawNext;
+}
+
 function clearAuthCookies(response: NextResponse) {
   response.cookies.delete(WHATSBOARD_ACCESS_TOKEN_COOKIE);
   response.cookies.delete(WHATSBOARD_REFRESH_TOKEN_COOKIE);
@@ -114,10 +127,11 @@ export async function proxy(request: NextRequest) {
   if (isAuthPage(pathname) && accessToken && !forceAuthPage) {
     const tokenValid = await isSupabaseTokenValid(accessToken);
     if (tokenValid) {
-      const dashboardUrl = request.nextUrl.clone();
-      dashboardUrl.pathname = "/dashboard";
-      dashboardUrl.search = "";
-      return NextResponse.redirect(dashboardUrl);
+      const nextPath = resolveSafeNextPath(
+        request.nextUrl.searchParams.get("next"),
+      );
+      const targetUrl = new URL(nextPath, request.url);
+      return NextResponse.redirect(targetUrl);
     }
 
     const response = NextResponse.next();

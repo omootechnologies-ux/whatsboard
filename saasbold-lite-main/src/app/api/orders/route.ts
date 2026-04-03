@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { BillingConstraintError } from "@/lib/billing/subscription";
 import { createOrder } from "@/lib/whatsboard-repository";
 
 export async function POST(request: Request) {
@@ -68,7 +69,17 @@ export async function POST(request: Request) {
       new URL(`/orders/${record.id}?created=1`, request.url),
       303,
     );
-  } catch {
+  } catch (error) {
+    if (
+      error instanceof BillingConstraintError &&
+      error.code === "ORDER_LIMIT_REACHED"
+    ) {
+      return NextResponse.redirect(
+        new URL("/orders/new?error=order-limit", request.url),
+        303,
+      );
+    }
+
     return NextResponse.redirect(
       new URL("/orders/new?error=persistence", request.url),
       303,
