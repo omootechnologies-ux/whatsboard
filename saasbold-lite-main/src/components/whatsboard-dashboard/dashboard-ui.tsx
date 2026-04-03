@@ -102,9 +102,11 @@ export function stageTone(stage: OrderRecord["stage"]) {
 export function DashboardShellFrame({
   children,
   workspaceName,
+  paymentsReconciledToday = 0,
 }: {
   children: React.ReactNode;
   workspaceName?: string | null;
+  paymentsReconciledToday?: number;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -252,6 +254,10 @@ export function DashboardShellFrame({
               </div>
 
               <div className="flex items-center gap-2 sm:gap-3">
+                <span className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700 lg:inline-flex">
+                  <Wallet className="h-3.5 w-3.5" />
+                  Reconciled today: {paymentsReconciledToday}
+                </span>
                 <span className="hidden items-center gap-2 rounded-full border border-[var(--color-wb-border)] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-primary)] xl:inline-flex">
                   <LayoutGrid className="h-3.5 w-3.5" />
                   <span className="max-w-[16rem] truncate">
@@ -819,6 +825,11 @@ export function OrderCard({ order }: { order: OrderRecord }) {
           <p className="break-words text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
             {reference ? `Order #${reference}` : "Untitled order"}
           </p>
+          {order.paymentReference ? (
+            <p className="mt-1 break-words text-xs font-semibold text-[var(--color-wb-primary)]">
+              Payment ref: {order.paymentReference}
+            </p>
+          ) : null}
           <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
             Updated {formatDate(order.updatedAt)}
           </p>

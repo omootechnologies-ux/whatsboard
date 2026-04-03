@@ -99,6 +99,8 @@ export default async function NewPaymentPage({
             </label>
             <select name="method" className="wb-input" defaultValue="M-Pesa">
               <option value="M-Pesa">M-Pesa</option>
+              <option value="Tigopesa">Tigopesa</option>
+              <option value="Airtel Money">Airtel Money</option>
               <option value="Bank">Bank</option>
               <option value="Cash">Cash</option>
             </select>

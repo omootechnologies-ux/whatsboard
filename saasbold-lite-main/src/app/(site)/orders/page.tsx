@@ -22,6 +22,7 @@ import {
   formatOrderReference,
   getPrimaryOrderLabel,
 } from "@/lib/display-labels";
+import { PaymentSmsModal } from "@/components/whatsboard-dashboard/payment-sms-modal";
 
 type OrdersPageSearchParams = Promise<{
   search?: string;
@@ -35,11 +36,24 @@ export default async function OrdersPage({
   searchParams: OrdersPageSearchParams;
 }) {
   const query = await searchParams;
-  const filteredOrders = await listOrders({
-    search: query.search,
-    stage: query.stage,
-    payment: query.payment,
-  });
+  const [filteredOrders, allOrders] = await Promise.all([
+    listOrders({
+      search: query.search,
+      stage: query.stage,
+      payment: query.payment,
+    }),
+    listOrders(),
+  ]);
+  const orderOptions = allOrders.map((order) => ({
+    id: order.id,
+    customerLabel: getPrimaryOrderLabel({
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      orderId: order.id,
+      kind: "customer",
+    }),
+    amount: order.amount,
+  }));
 
   return (
     <div className="space-y-5 lg:space-y-6">
@@ -51,6 +65,9 @@ export default async function OrdersPage({
             <Plus className="h-4 w-4" />
             Create Order
           </Link>
+        }
+        secondaryAction={
+          <PaymentSmsModal orderOptions={orderOptions} />
         }
       />
 

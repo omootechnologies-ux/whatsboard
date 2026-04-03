@@ -1,4 +1,7 @@
-import type { FollowUpRecord } from "@/data/whatsboard";
+import type {
+  FollowUpRecord,
+  PaymentReconciliationStatus,
+} from "@/data/whatsboard";
 import {
   createCustomer as createCustomerInStore,
   createFollowUp as createFollowUpInStore,
@@ -11,7 +14,15 @@ import {
   updatePayment as updatePaymentInStore,
 } from "@/lib/whatsboard-store";
 import { statusFromDueDate } from "@/lib/follow-up-status";
+import { parsePaymentSms } from "@/lib/payments/sms-parser";
+import {
+  matchBandFromConfidence,
+  providerToPaymentMethod,
+  rankPaymentMatches,
+} from "@/lib/payments/reconciliation";
+import { formatOrderReference } from "@/lib/display-labels";
 import type {
+  AssignPaymentInput,
   AnalyticsSnapshot,
   CreateCustomerInput,
   CreateFollowUpInput,
@@ -23,6 +34,8 @@ import type {
   FollowUpsQuery,
   OrdersQuery,
   PaymentsQuery,
+  ReconcileSmsInput,
+  ReconcileSmsResult,
   UpdateCustomerInput,
   UpdateFollowUpInput,
   UpdateOrderInput,
@@ -229,8 +242,11 @@ async function listPayments(query: PaymentsQuery = {}) {
     .filter((payment) => {
       if (!search) return true;
       const haystack = [
-        payment.orderId,
+        payment.orderId || "",
+        payment.suggestedOrderId || "",
         payment.customerName,
+        payment.senderName || "",
+        payment.senderPhone || "",
         payment.reference,
         payment.method,
       ].join(" ");
@@ -240,7 +256,12 @@ async function listPayments(query: PaymentsQuery = {}) {
 }
 
 async function createPayment(input: CreatePaymentInput) {
-  return createPaymentInStore(input);
+  return createPaymentInStore({
+    ...input,
+    reconciliationStatus: "matched",
+    provider: "manual",
+    matchedAt: new Date().toISOString(),
+  });
 }
 
 async function updatePayment(id: string, input: UpdatePaymentInput) {
@@ -252,6 +273,165 @@ async function listOrderPayments(orderId: string) {
   return state.payments
     .filter((item) => item.orderId === orderId)
     .sort((a, b) => (a.createdAt > b.createdAt ? -1 : 1));
+}
+
+async function listUnmatchedPayments() {
+  const records = await listPayments();
+  return records.filter(
+    (payment) =>
+      payment.reconciliationStatus === "pending" ||
+      payment.reconciliationStatus === "unmatched" ||
+      !payment.orderId,
+  );
+}
+
+async function reconcilePaymentSms(
+  input: ReconcileSmsInput,
+): Promise<ReconcileSmsResult> {
+  const parsed = parsePaymentSms(input.rawSms);
+  const orders = await listOrders();
+  const openOrders = orders.filter(
+    (order) =>
+      order.paymentStatus === "unpaid" || order.paymentStatus === "partial",
+  );
+  const ranked = rankPaymentMatches(
+    parsed,
+    openOrders.map((order) => ({
+      orderId: order.id,
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      amount: order.amount,
+    })),
+  );
+
+  const best = ranked[0];
+  const bestOrder = best
+    ? openOrders.find((order) => order.id === best.orderId) || null
+    : null;
+  const confidence = best?.confidence || 0;
+  const band = matchBandFromConfidence(confidence);
+  const now = new Date().toISOString();
+  const amount = parsed.amount ?? 0;
+  const method = providerToPaymentMethod(parsed.provider);
+  const reference = parsed.reference || `SMS-${Date.now()}`;
+  const provider =
+    parsed.provider === "unknown" ? ("unknown" as const) : parsed.provider;
+
+  let status: PaymentReconciliationStatus = "unmatched";
+  let autoMatched = false;
+  let created;
+
+  if (bestOrder && band === "high") {
+    status = "matched";
+    autoMatched = true;
+    created = await createPaymentInStore({
+      orderId: bestOrder.id,
+      customerId: bestOrder.customerId,
+      customerName: bestOrder.customerName,
+      amount,
+      method,
+      status: "paid",
+      reference,
+      provider,
+      senderName: parsed.senderName,
+      senderPhone: parsed.senderPhone,
+      rawSms: parsed.rawSms,
+      matchConfidence: confidence,
+      reconciliationStatus: "matched",
+      suggestedOrderId: null,
+      matchedAt: now,
+    });
+  } else if (bestOrder && band === "medium") {
+    status = "pending";
+    created = await createPaymentInStore({
+      orderId: null,
+      customerId: null,
+      customerName: parsed.senderName || "Unassigned payment",
+      amount,
+      method,
+      status: "unpaid",
+      reference,
+      provider,
+      senderName: parsed.senderName,
+      senderPhone: parsed.senderPhone,
+      rawSms: parsed.rawSms,
+      matchConfidence: confidence,
+      reconciliationStatus: "pending",
+      suggestedOrderId: bestOrder.id,
+      matchedAt: null,
+    });
+  } else {
+    status = "unmatched";
+    created = await createPaymentInStore({
+      orderId: null,
+      customerId: null,
+      customerName: parsed.senderName || "Unassigned payment",
+      amount,
+      method,
+      status: "unpaid",
+      reference,
+      provider,
+      senderName: parsed.senderName,
+      senderPhone: parsed.senderPhone,
+      rawSms: parsed.rawSms,
+      matchConfidence: confidence || null,
+      reconciliationStatus: "unmatched",
+      suggestedOrderId: null,
+      matchedAt: null,
+    });
+  }
+
+  return {
+    payment: created,
+    parsed,
+    status,
+    autoMatched,
+    suggestion:
+      bestOrder && best
+        ? {
+            orderId: bestOrder.id,
+            customerName: bestOrder.customerName,
+            amount: bestOrder.amount,
+            confidence: best.confidence,
+            amountDelta: best.amountDelta,
+          }
+        : null,
+  };
+}
+
+async function assignPaymentToOrder(input: AssignPaymentInput) {
+  const [payments, orders] = await Promise.all([listPayments(), listOrders()]);
+  const payment = payments.find((record) => record.id === input.paymentId);
+  const order = orders.find((record) => record.id === input.orderId);
+  if (!payment || !order) return null;
+
+  return updatePaymentInStore(input.paymentId, {
+    orderId: order.id,
+    customerId: order.customerId,
+    customerName: order.customerName,
+    status: "paid",
+    reference: payment.reference || formatOrderReference(order.id) || "WB-00000",
+    reconciliationStatus: "matched",
+    suggestedOrderId: null,
+    matchedAt: new Date().toISOString(),
+  });
+}
+
+async function getPaymentsReconciledTodayCount() {
+  const records = await listPayments();
+  const today = new Date();
+  const start = Date.UTC(
+    today.getUTCFullYear(),
+    today.getUTCMonth(),
+    today.getUTCDate(),
+  );
+  const end = start + 24 * 60 * 60 * 1000;
+
+  return records.filter((payment) => {
+    if (payment.reconciliationStatus !== "matched") return false;
+    const value = Date.parse(payment.matchedAt || payment.createdAt);
+    return Number.isFinite(value) && value >= start && value < end;
+  }).length;
 }
 
 async function getAnalyticsSnapshot(): Promise<AnalyticsSnapshot> {
@@ -292,6 +472,10 @@ export function createLocalRepository(): WhatsboardRepository {
     createPayment,
     updatePayment,
     listOrderPayments,
+    listUnmatchedPayments,
+    reconcilePaymentSms,
+    assignPaymentToOrder,
+    getPaymentsReconciledTodayCount,
     getAnalyticsSnapshot,
     getDashboardSnapshot,
   };

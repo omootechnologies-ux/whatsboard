@@ -8,6 +8,16 @@ export type OrderStage =
 
 export type PaymentStatus = "unpaid" | "partial" | "paid" | "cod";
 
+export type PaymentMethod =
+  | "M-Pesa"
+  | "Tigopesa"
+  | "Airtel Money"
+  | "Cash"
+  | "Bank";
+
+export type PaymentProvider = "mpesa" | "tigo" | "airtel" | "manual" | "unknown";
+export type PaymentReconciliationStatus = "matched" | "pending" | "unmatched";
+
 export type OrderRecord = {
   id: string;
   customerId: string;
@@ -53,11 +63,20 @@ export type FollowUpRecord = {
 
 export type PaymentRecord = {
   id: string;
-  orderId: string;
+  orderId: string | null;
+  customerId?: string | null;
   customerName: string;
   amount: number;
   status: PaymentStatus;
-  method: "M-Pesa" | "Cash" | "Bank";
+  method: PaymentMethod;
   reference: string;
   createdAt: string;
+  senderName?: string | null;
+  senderPhone?: string | null;
+  provider?: PaymentProvider;
+  rawSms?: string | null;
+  matchConfidence?: number | null;
+  reconciliationStatus?: PaymentReconciliationStatus;
+  suggestedOrderId?: string | null;
+  matchedAt?: string | null;
 };

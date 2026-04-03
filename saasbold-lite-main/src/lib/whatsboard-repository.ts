@@ -3,7 +3,9 @@ import type {
   FollowUpRecord,
   OrderRecord,
   PaymentRecord,
+  PaymentReconciliationStatus,
 } from "@/data/whatsboard";
+import type { ParsedSmsPayment } from "@/lib/payments/sms-parser";
 import { createLocalRepository } from "@/lib/repositories/local-repository";
 import {
   createSupabaseRepository,
@@ -114,6 +116,31 @@ export type CreatePaymentInput = {
 
 export type UpdatePaymentInput = Partial<CreatePaymentInput>;
 
+export type ReconcileSmsInput = {
+  rawSms: string;
+};
+
+export type PaymentMatchSuggestion = {
+  orderId: string;
+  customerName: string;
+  amount: number;
+  confidence: number;
+  amountDelta: number;
+};
+
+export type ReconcileSmsResult = {
+  payment: PaymentRecord;
+  parsed: ParsedSmsPayment;
+  status: PaymentReconciliationStatus;
+  autoMatched: boolean;
+  suggestion: PaymentMatchSuggestion | null;
+};
+
+export type AssignPaymentInput = {
+  paymentId: string;
+  orderId: string;
+};
+
 export interface WhatsboardRepository {
   listOrders(query?: OrdersQuery): Promise<OrderRecord[]>;
   getOrderById(id: string): Promise<OrderRecord | null>;
@@ -143,6 +170,10 @@ export interface WhatsboardRepository {
     input: UpdatePaymentInput,
   ): Promise<PaymentRecord | null>;
   listOrderPayments(orderId: string): Promise<PaymentRecord[]>;
+  listUnmatchedPayments(): Promise<PaymentRecord[]>;
+  reconcilePaymentSms(input: ReconcileSmsInput): Promise<ReconcileSmsResult>;
+  assignPaymentToOrder(input: AssignPaymentInput): Promise<PaymentRecord | null>;
+  getPaymentsReconciledTodayCount(): Promise<number>;
 
   getAnalyticsSnapshot(): Promise<AnalyticsSnapshot>;
   getDashboardSnapshot(): Promise<DashboardSnapshot>;
@@ -269,6 +300,22 @@ export async function updatePayment(id: string, input: UpdatePaymentInput) {
 
 export async function listOrderPayments(orderId: string) {
   return getRepository().listOrderPayments(orderId);
+}
+
+export async function listUnmatchedPayments() {
+  return getRepository().listUnmatchedPayments();
+}
+
+export async function reconcilePaymentSms(input: ReconcileSmsInput) {
+  return getRepository().reconcilePaymentSms(input);
+}
+
+export async function assignPaymentToOrder(input: AssignPaymentInput) {
+  return getRepository().assignPaymentToOrder(input);
+}
+
+export async function getPaymentsReconciledTodayCount() {
+  return getRepository().getPaymentsReconciledTodayCount();
 }
 
 export async function getAnalyticsSnapshot() {

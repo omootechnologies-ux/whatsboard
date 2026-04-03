@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { PaymentRecord } from "@/data/whatsboard";
 import { updatePayment } from "@/lib/whatsboard-repository";
 
 export async function POST(
@@ -29,9 +30,11 @@ export async function POST(
     const updated = await updatePayment(id, {
       orderId,
       amount,
-      method: (["M-Pesa", "Bank", "Cash"].includes(method)
+      method: (["M-Pesa", "Tigopesa", "Airtel Money", "Bank", "Cash"].includes(
+        method,
+      )
         ? method
-        : "M-Pesa") as "M-Pesa" | "Bank" | "Cash",
+        : "M-Pesa") as PaymentRecord["method"],
       status: (["unpaid", "partial", "paid", "cod"].includes(status)
         ? status
         : "paid") as "unpaid" | "partial" | "paid" | "cod",

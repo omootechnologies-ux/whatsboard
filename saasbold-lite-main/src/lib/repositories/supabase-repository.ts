@@ -1190,7 +1190,7 @@ async function listPayments(query: PaymentsQuery = {}) {
   return mapped.filter((payment) =>
     includesText(
       [
-        payment.orderId,
+        payment.orderId || "",
         payment.customerName,
         payment.reference,
         payment.method,
@@ -1365,7 +1365,10 @@ async function listOrderPayments(orderId: string) {
   const order = await getOrderRowByOrderNumber(workspaceId, orderId);
   if (!order) return [];
   const records = await listPayments();
-  return records.filter((payment) => payment.orderId === order.order_number);
+  return records.filter(
+    (payment) =>
+      payment.orderId === order.order_number || payment.orderId === order.id,
+  );
 }
 
 async function getAnalyticsSnapshot(): Promise<AnalyticsSnapshot> {

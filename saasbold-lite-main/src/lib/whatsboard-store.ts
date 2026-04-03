@@ -61,11 +61,21 @@ export type UpdateFollowUpInput = {
 };
 
 export type CreatePaymentInput = {
-  orderId: string;
+  orderId: string | null;
   amount: number;
   method: PaymentRecord["method"];
   status: PaymentRecord["status"];
   reference: string;
+  customerName?: string;
+  customerId?: string | null;
+  senderName?: string | null;
+  senderPhone?: string | null;
+  provider?: PaymentRecord["provider"];
+  rawSms?: string | null;
+  matchConfidence?: number | null;
+  reconciliationStatus?: PaymentRecord["reconciliationStatus"];
+  suggestedOrderId?: string | null;
+  matchedAt?: string | null;
 };
 
 export type UpdatePaymentInput = Partial<CreatePaymentInput>;
@@ -352,16 +362,32 @@ export function updateFollowUp(id: string, input: UpdateFollowUpInput) {
 
 export function createPayment(input: CreatePaymentInput) {
   const state = ensureStore();
-  const order = state.orders.find((item) => item.id === input.orderId);
+  const normalizedOrderId =
+    typeof input.orderId === "string" ? input.orderId.trim() : null;
+  const order = normalizedOrderId
+    ? state.orders.find((item) => item.id === normalizedOrderId)
+    : undefined;
   const payment: PaymentRecord = {
     id: nextPaymentId(state.payments),
-    orderId: input.orderId.trim(),
-    customerName: order?.customerName || "Unknown customer",
+    orderId: normalizedOrderId || null,
+    customerId: order?.customerId || input.customerId || null,
+    customerName:
+      input.customerName?.trim() || order?.customerName || "Unassigned payment",
     amount: input.amount,
     status: input.status,
     method: input.method,
     reference: input.reference.trim(),
     createdAt: new Date().toISOString(),
+    senderName: input.senderName || null,
+    senderPhone: input.senderPhone || null,
+    provider: input.provider || "manual",
+    rawSms: input.rawSms || null,
+    matchConfidence:
+      typeof input.matchConfidence === "number" ? input.matchConfidence : null,
+    reconciliationStatus:
+      input.reconciliationStatus || (normalizedOrderId ? "matched" : "unmatched"),
+    suggestedOrderId: input.suggestedOrderId || null,
+    matchedAt: input.matchedAt || (normalizedOrderId ? new Date().toISOString() : null),
   };
 
   state.payments.push(payment);
@@ -369,6 +395,12 @@ export function createPayment(input: CreatePaymentInput) {
   if (order) {
     order.paymentStatus = input.status;
     order.paymentReference = input.reference.trim();
+    if (
+      (input.status === "paid" || input.status === "cod") &&
+      (order.stage === "new_order" || order.stage === "waiting_payment")
+    ) {
+      order.stage = "paid";
+    }
     order.updatedAt = new Date().toISOString();
   }
 
@@ -383,24 +415,56 @@ export function updatePayment(id: string, input: UpdatePaymentInput) {
   if (index < 0) return null;
 
   const current = state.payments[index];
-  const nextOrderId = input.orderId?.trim() || current.orderId;
+  const nextOrderId =
+    typeof input.orderId === "string"
+      ? input.orderId.trim() || null
+      : input.orderId === null
+        ? null
+        : current.orderId;
   const updated: PaymentRecord = {
     ...current,
     orderId: nextOrderId,
+    customerId: input.customerId ?? current.customerId ?? null,
+    customerName: input.customerName?.trim() || current.customerName,
     amount: Number.isFinite(input.amount)
       ? Number(input.amount)
       : current.amount,
     method: input.method || current.method,
     status: input.status || current.status,
     reference: input.reference?.trim() || current.reference,
+    senderName:
+      input.senderName === undefined ? current.senderName : input.senderName,
+    senderPhone:
+      input.senderPhone === undefined ? current.senderPhone : input.senderPhone,
+    provider: input.provider || current.provider || "manual",
+    rawSms: input.rawSms === undefined ? current.rawSms : input.rawSms,
+    matchConfidence:
+      input.matchConfidence === undefined
+        ? current.matchConfidence
+        : input.matchConfidence,
+    reconciliationStatus:
+      input.reconciliationStatus || current.reconciliationStatus,
+    suggestedOrderId:
+      input.suggestedOrderId === undefined
+        ? current.suggestedOrderId
+        : input.suggestedOrderId,
+    matchedAt: input.matchedAt === undefined ? current.matchedAt : input.matchedAt,
   };
 
   state.payments[index] = updated;
 
-  const order = state.orders.find((item) => item.id === updated.orderId);
+  const order = updated.orderId
+    ? state.orders.find((item) => item.id === updated.orderId)
+    : undefined;
   if (order) {
     order.paymentStatus = updated.status;
     order.paymentReference = updated.reference;
+    if (
+      (updated.status === "paid" || updated.status === "cod") &&
+      (order.stage === "new_order" || order.stage === "waiting_payment")
+    ) {
+      order.stage = "paid";
+    }
     order.updatedAt = new Date().toISOString();
   }
 

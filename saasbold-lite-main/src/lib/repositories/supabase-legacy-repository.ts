@@ -1,4 +1,6 @@
 import type {
+  PaymentProvider,
+  PaymentReconciliationStatus,
   CustomerRecord,
   FollowUpRecord,
   OrderRecord,
@@ -9,6 +11,7 @@ import { WHATSBOARD_ACCESS_TOKEN_COOKIE } from "@/lib/auth/constants";
 import { formatOrderReference } from "@/lib/display-labels";
 import { statusFromDueDate } from "@/lib/follow-up-status";
 import type {
+  AssignPaymentInput,
   AnalyticsPoint,
   AnalyticsSnapshot,
   CreateCustomerInput,
@@ -21,12 +24,20 @@ import type {
   FollowUpsQuery,
   OrdersQuery,
   PaymentsQuery,
+  ReconcileSmsInput,
+  ReconcileSmsResult,
   UpdateCustomerInput,
   UpdateFollowUpInput,
   UpdateOrderInput,
   UpdatePaymentInput,
   WhatsboardRepository,
 } from "@/lib/whatsboard-repository";
+import { parsePaymentSms } from "@/lib/payments/sms-parser";
+import {
+  matchBandFromConfidence,
+  providerToPaymentMethod,
+  rankPaymentMatches,
+} from "@/lib/payments/reconciliation";
 import {
   BillingConstraintError,
   assertOrderCreationAllowedForBusiness,
@@ -62,6 +73,29 @@ type LegacyOrderRow = {
   notes: string | null;
   created_at: string;
   updated_at: string;
+};
+
+type LegacyPaymentRow = {
+  id: string;
+  business_id: string;
+  order_id: string | null;
+  customer_id: string | null;
+  amount: number | string | null;
+  method: PaymentRecord["method"] | string | null;
+  status: PaymentRecord["status"] | string | null;
+  reference: string | null;
+  paid_at: string | null;
+  created_at: string;
+  updated_at: string;
+  sender_name: string | null;
+  sender_phone: string | null;
+  provider: PaymentProvider | string | null;
+  raw_sms: string | null;
+  match_confidence: number | string | null;
+  reconciliation_status: PaymentReconciliationStatus | string | null;
+  suggested_order_id: string | null;
+  matched_at: string | null;
+  parsed_timestamp: string | null;
 };
 
 type LegacyFollowUpRow = {
@@ -116,12 +150,28 @@ const ORDER_STAGES = [
   "delivered",
 ] as const;
 const PAYMENT_STATUSES = ["unpaid", "partial", "paid", "cod"] as const;
-const PAYMENT_METHODS = ["M-Pesa", "Cash", "Bank"] as const;
+const PAYMENT_METHODS = [
+  "M-Pesa",
+  "Tigopesa",
+  "Airtel Money",
+  "Cash",
+  "Bank",
+] as const;
 const PRIORITIES = ["high", "medium", "low"] as const;
+const PAYMENT_PROVIDERS = [
+  "mpesa",
+  "tigo",
+  "airtel",
+  "manual",
+  "unknown",
+] as const;
+const RECONCILIATION_STATUSES = ["matched", "pending", "unmatched"] as const;
 const LEGACY_ORDER_SELECT =
   "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,created_at,updated_at";
 const LEGACY_FOLLOW_UP_SELECT =
   "id,order_id,business_id,title,priority,due_at,note,completed,completed_at,created_at";
+const LEGACY_PAYMENT_SELECT =
+  "id,business_id,order_id,customer_id,amount,method,status,reference,paid_at,created_at,updated_at,sender_name,sender_phone,provider,raw_sms,match_confidence,reconciliation_status,suggested_order_id,matched_at,parsed_timestamp";
 
 type EnsureBusinessOptions = {
   businessNameHint?: string | null;
@@ -172,6 +222,32 @@ function asPaymentMethod(
     return value as PaymentRecord["method"];
   }
   return "M-Pesa";
+}
+
+function asPaymentProvider(
+  value: string | null | undefined,
+): PaymentProvider {
+  if (
+    value &&
+    PAYMENT_PROVIDERS.includes(value as (typeof PAYMENT_PROVIDERS)[number])
+  ) {
+    return value as PaymentProvider;
+  }
+  return "unknown";
+}
+
+function asReconciliationStatus(
+  value: string | null | undefined,
+): PaymentReconciliationStatus {
+  if (
+    value &&
+    RECONCILIATION_STATUSES.includes(
+      value as (typeof RECONCILIATION_STATUSES)[number],
+    )
+  ) {
+    return value as PaymentReconciliationStatus;
+  }
+  return "matched";
 }
 
 function asCustomerStatus(
@@ -599,6 +675,65 @@ async function listLegacyFollowUpsByBusiness() {
   return (data || []) as LegacyFollowUpRow[];
 }
 
+async function listLegacyPaymentsByBusiness() {
+  const client = createSupabaseServiceClient();
+  const businessId = await resolveBusinessId();
+  const { data, error } = await client
+    .from("payments")
+    .select(LEGACY_PAYMENT_SELECT)
+    .eq("business_id", businessId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    const fallback = await client
+      .from("payments")
+      .select(
+        "id,business_id,order_id,customer_id,amount,method,status,reference,paid_at,created_at,updated_at",
+      )
+      .eq("business_id", businessId)
+      .order("created_at", { ascending: false });
+    if (fallback.error) {
+      throw new Error(
+        `Failed to list payments: ${JSON.stringify(error || fallback.error)}`,
+      );
+    }
+    return (fallback.data || []) as LegacyPaymentRow[];
+  }
+
+  return (data || []) as LegacyPaymentRow[];
+}
+
+async function getLegacyPaymentById(businessId: string, paymentId: string) {
+  const client = createSupabaseServiceClient();
+  const primary = await client
+    .from("payments")
+    .select(LEGACY_PAYMENT_SELECT)
+    .eq("business_id", businessId)
+    .eq("id", paymentId)
+    .maybeSingle();
+
+  if (!primary.error) {
+    return (primary.data || null) as LegacyPaymentRow | null;
+  }
+
+  const fallback = await client
+    .from("payments")
+    .select(
+      "id,business_id,order_id,customer_id,amount,method,status,reference,paid_at,created_at,updated_at",
+    )
+    .eq("business_id", businessId)
+    .eq("id", paymentId)
+    .maybeSingle();
+
+  if (fallback.error) {
+    throw new Error(
+      `Failed to fetch payment: ${JSON.stringify(primary.error || fallback.error)}`,
+    );
+  }
+
+  return (fallback.data || null) as LegacyPaymentRow | null;
+}
+
 function normalizeOrderIdentifier(value: string) {
   return value
     .trim()
@@ -686,13 +821,54 @@ function mapPaymentFromOrder(
     (row.customer_id ? customerMap.get(row.customer_id) : undefined) || null;
   return {
     id: `pay-${row.id}`,
-    orderId: row.id,
+    orderId: row.id || null,
+    customerId: row.customer_id || null,
     customerName: customer?.name || "Unknown customer",
     amount: asNumber(row.amount),
     status: asPaymentStatus(row.payment_status),
     method: asPaymentMethod(row.payment_method),
     reference: row.payment_reference || `ORDER-${row.id.slice(0, 8)}`,
     createdAt: row.payment_date || row.updated_at || row.created_at,
+    provider: "manual",
+    reconciliationStatus: "matched",
+    matchConfidence: 100,
+    matchedAt: row.payment_date || row.updated_at || row.created_at,
+  };
+}
+
+function mapPaymentRecord(
+  row: LegacyPaymentRow,
+  customerMap: Map<string, LegacyCustomerRow>,
+  orderMap: Map<string, LegacyOrderRow>,
+): PaymentRecord {
+  const order = row.order_id ? orderMap.get(row.order_id) : null;
+  const customer = row.customer_id
+    ? customerMap.get(row.customer_id)
+    : order?.customer_id
+      ? customerMap.get(order.customer_id)
+      : null;
+
+  return {
+    id: row.id,
+    orderId: row.order_id || null,
+    customerId: row.customer_id || order?.customer_id || null,
+    customerName: customer?.name || row.sender_name || "Unassigned payment",
+    amount: asNumber(row.amount),
+    status: asPaymentStatus(row.status),
+    method: asPaymentMethod(row.method),
+    reference: row.reference || `PAY-${row.id.slice(0, 8).toUpperCase()}`,
+    createdAt: row.paid_at || row.created_at,
+    senderName: row.sender_name || null,
+    senderPhone: row.sender_phone || null,
+    provider: asPaymentProvider(row.provider),
+    rawSms: row.raw_sms || null,
+    matchConfidence:
+      row.match_confidence === null || row.match_confidence === undefined
+        ? null
+        : asNumber(row.match_confidence),
+    reconciliationStatus: asReconciliationStatus(row.reconciliation_status),
+    suggestedOrderId: row.suggested_order_id || null,
+    matchedAt: row.matched_at || null,
   };
 }
 
@@ -1292,26 +1468,148 @@ async function listOrderFollowUps(orderId: string) {
   return records.filter((item) => item.orderId === orderId);
 }
 
+async function updateLegacyOrderPaymentState(input: {
+  businessId: string;
+  orderId: string;
+  status: PaymentRecord["status"];
+  method?: PaymentRecord["method"] | null;
+  reference?: string | null;
+}) {
+  const client = createSupabaseServiceClient();
+  const paymentDate =
+    input.status === "paid" || input.status === "cod"
+      ? new Date().toISOString()
+      : null;
+  const currentOrder = await client
+    .from("orders")
+    .select("stage")
+    .eq("business_id", input.businessId)
+    .eq("id", input.orderId)
+    .maybeSingle();
+  if (currentOrder.error) {
+    throw new Error(
+      `Failed to query order stage for payment sync: ${JSON.stringify(currentOrder.error)}`,
+    );
+  }
+
+  const shouldMoveToPaidStage =
+    (input.status === "paid" || input.status === "cod") &&
+    currentOrder.data?.stage &&
+    ["new_order", "waiting_payment"].includes(
+      asOrderStage(String(currentOrder.data.stage)),
+    );
+
+  const { data, error } = await client
+    .from("orders")
+    .update({
+      payment_status: input.status,
+      payment_method: input.method || null,
+      payment_reference: input.reference || null,
+      payment_date: paymentDate,
+      stage: shouldMoveToPaidStage ? "paid" : undefined,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("business_id", input.businessId)
+    .eq("id", input.orderId)
+    .select(LEGACY_ORDER_SELECT)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to sync order payment state: ${JSON.stringify(error)}`);
+  }
+
+  return (data || null) as LegacyOrderRow | null;
+}
+
+async function insertLegacyPaymentRow(
+  businessId: string,
+  payload: Record<string, unknown>,
+) {
+  const client = createSupabaseServiceClient();
+  const primary = await client
+    .from("payments")
+    .insert(payload)
+    .select(LEGACY_PAYMENT_SELECT)
+    .single();
+
+  if (!primary.error && primary.data) {
+    return primary.data as LegacyPaymentRow;
+  }
+
+  const fallback = await client
+    .from("payments")
+    .insert({
+      business_id: businessId,
+      order_id: payload.order_id ?? null,
+      customer_id: payload.customer_id ?? null,
+      amount: payload.amount ?? 0,
+      method: payload.method ?? "M-Pesa",
+      status: payload.status ?? "unpaid",
+      reference: payload.reference ?? null,
+      paid_at: payload.paid_at ?? null,
+    })
+    .select(
+      "id,business_id,order_id,customer_id,amount,method,status,reference,paid_at,created_at,updated_at",
+    )
+    .single();
+
+  if (fallback.error || !fallback.data) {
+    throw new Error(
+      `Failed to insert payment: ${JSON.stringify(primary.error || fallback.error)}`,
+    );
+  }
+
+  return fallback.data as LegacyPaymentRow;
+}
+
 async function listPayments(query: PaymentsQuery = {}) {
   const search = query.search?.trim() ?? "";
-  const orderRows = await listLegacyOrdersByBusiness();
-  const customersById = await getLegacyCustomersByIds(
-    Array.from(
-      new Set(
-        orderRows.map((row) => row.customer_id).filter(Boolean) as string[],
-      ),
+  const [paymentRows, orderRows] = await Promise.all([
+    listLegacyPaymentsByBusiness(),
+    listLegacyOrdersByBusiness(),
+  ]);
+
+  const customerIds = Array.from(
+    new Set(
+      [
+        ...orderRows.map((row) => row.customer_id),
+        ...paymentRows.map((row) => row.customer_id),
+      ].filter(Boolean) as string[],
     ),
   );
+  const customersById = await getLegacyCustomersByIds(customerIds);
+  const ordersById = new Map<string, LegacyOrderRow>(
+    orderRows.map((row) => [row.id, row]),
+  );
 
-  return orderRows
-    .map((row) => mapPaymentFromOrder(row, customersById))
+  const tablePayments = paymentRows.map((row) =>
+    mapPaymentRecord(row, customersById, ordersById),
+  );
+  const tableLinkedOrderIds = new Set(
+    tablePayments.map((item) => item.orderId).filter(Boolean) as string[],
+  );
+  const inferredPayments = orderRows
+    .filter(
+      (row) =>
+        !tableLinkedOrderIds.has(row.id) &&
+        (Boolean(row.payment_reference) ||
+          Boolean(row.payment_method) ||
+          Boolean(row.payment_date) ||
+          asPaymentStatus(row.payment_status) !== "unpaid"),
+    )
+    .map((row) => mapPaymentFromOrder(row, customersById));
+
+  return [...tablePayments, ...inferredPayments]
     .filter((item) => (query.status ? item.status === query.status : true))
     .filter((item) => (query.method ? item.method === query.method : true))
     .filter((item) => {
       if (!search) return true;
       const haystack = [
-        item.orderId,
+        item.orderId || "",
+        item.suggestedOrderId || "",
         item.customerName,
+        item.senderName || "",
+        item.senderPhone || "",
         item.reference,
         item.method,
       ].join(" ");
@@ -1322,7 +1620,6 @@ async function listPayments(query: PaymentsQuery = {}) {
 
 async function createPayment(input: CreatePaymentInput) {
   const businessId = await resolveBusinessId();
-  const client = createSupabaseServiceClient();
   const targetOrder = await findLegacyOrderByIdentifier(
     businessId,
     input.orderId,
@@ -1331,77 +1628,485 @@ async function createPayment(input: CreatePaymentInput) {
     throw new Error(`Order not found for payment: ${input.orderId}`);
   }
 
-  const { data, error } = await client
-    .from("orders")
-    .update({
-      payment_status: input.status,
-      payment_method: input.method,
-      payment_reference: input.reference,
-      payment_date: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
-    .eq("business_id", businessId)
-    .eq("id", targetOrder.id)
-    .select(LEGACY_ORDER_SELECT)
-    .maybeSingle();
+  const nowIso = new Date().toISOString();
+  const paymentRow = await insertLegacyPaymentRow(businessId, {
+    business_id: businessId,
+    order_id: targetOrder.id,
+    customer_id: targetOrder.customer_id || null,
+    amount: input.amount,
+    method: input.method,
+    status: input.status,
+    reference: input.reference,
+    paid_at: input.status === "paid" || input.status === "cod" ? nowIso : null,
+    provider: "manual",
+    sender_name: null,
+    sender_phone: null,
+    raw_sms: null,
+    match_confidence: 100,
+    reconciliation_status: "matched",
+    suggested_order_id: null,
+    matched_at: nowIso,
+    parsed_timestamp: null,
+  });
 
-  if (error) {
-    throw new Error(`Failed to create payment: ${JSON.stringify(error)}`);
-  }
-  if (!data) {
-    throw new Error(`Order not found for payment: ${input.orderId}`);
-  }
+  await updateLegacyOrderPaymentState({
+    businessId,
+    orderId: targetOrder.id,
+    status: input.status,
+    method: input.method,
+    reference: input.reference,
+  });
 
-  const customerMap = await getLegacyCustomersByIds(
-    data.customer_id ? [String(data.customer_id)] : [],
+  const [orderRows, customerMap] = await Promise.all([
+    listLegacyOrdersByBusiness(),
+    getLegacyCustomersByIds(
+      [targetOrder.customer_id].filter(Boolean) as string[],
+    ),
+  ]);
+  const orderMap = new Map<string, LegacyOrderRow>(
+    orderRows.map((row) => [row.id, row]),
   );
-  return mapPaymentFromOrder(data as LegacyOrderRow, customerMap);
+  return mapPaymentRecord(paymentRow, customerMap, orderMap);
 }
 
 async function updatePayment(id: string, input: UpdatePaymentInput) {
-  const orderIdentifier = (input.orderId || id.replace(/^pay-/, "")).trim();
-  if (!orderIdentifier) return null;
   const businessId = await resolveBusinessId();
   const client = createSupabaseServiceClient();
+
+  let paymentRow = await getLegacyPaymentById(businessId, id);
+
+  if (paymentRow) {
+    let resolvedOrderId: string | null = paymentRow.order_id;
+    if (input.orderId?.trim()) {
+      const targetOrder = await findLegacyOrderByIdentifier(
+        businessId,
+        input.orderId,
+      );
+      if (!targetOrder) return null;
+      resolvedOrderId = targetOrder.id;
+    }
+
+    const payload: Record<string, unknown> = {
+      order_id: resolvedOrderId,
+      amount:
+        typeof input.amount === "number" && Number.isFinite(input.amount)
+          ? input.amount
+          : undefined,
+      method: input.method || undefined,
+      status: input.status || undefined,
+      reference: input.reference || undefined,
+      paid_at:
+        input.status === "paid" || input.status === "cod"
+          ? new Date().toISOString()
+          : undefined,
+      updated_at: new Date().toISOString(),
+    };
+
+    const updatedResult = await client
+      .from("payments")
+      .update(payload)
+      .eq("business_id", businessId)
+      .eq("id", id)
+      .select(LEGACY_PAYMENT_SELECT)
+      .maybeSingle();
+
+    if (updatedResult.error) {
+      const fallbackResult = await client
+        .from("payments")
+        .update({
+          order_id: resolvedOrderId,
+          amount: payload.amount,
+          method: payload.method,
+          status: payload.status,
+          reference: payload.reference,
+          paid_at: payload.paid_at,
+          updated_at: payload.updated_at,
+        })
+        .eq("business_id", businessId)
+        .eq("id", id)
+        .select(
+          "id,business_id,order_id,customer_id,amount,method,status,reference,paid_at,created_at,updated_at",
+        )
+        .maybeSingle();
+      if (fallbackResult.error) {
+        throw new Error(
+          `Failed to update payment: ${JSON.stringify(updatedResult.error || fallbackResult.error)}`,
+        );
+      }
+      if (!fallbackResult.data) return null;
+      paymentRow = fallbackResult.data as LegacyPaymentRow;
+    } else {
+      if (!updatedResult.data) return null;
+      paymentRow = updatedResult.data as LegacyPaymentRow;
+    }
+
+    if (paymentRow.order_id) {
+      await updateLegacyOrderPaymentState({
+        businessId,
+        orderId: paymentRow.order_id,
+        status: asPaymentStatus(paymentRow.status),
+        method: asPaymentMethod(paymentRow.method),
+        reference: paymentRow.reference || null,
+      });
+    }
+
+    const [orderRows, customersById] = await Promise.all([
+      listLegacyOrdersByBusiness(),
+      getLegacyCustomersByIds(
+        [
+          paymentRow.customer_id,
+          paymentRow.order_id
+            ? (await findLegacyOrderByIdentifier(businessId, paymentRow.order_id))
+                ?.customer_id
+            : null,
+        ].filter(Boolean) as string[],
+      ),
+    ]);
+    const orderMap = new Map<string, LegacyOrderRow>(
+      orderRows.map((row) => [row.id, row]),
+    );
+
+    return mapPaymentRecord(paymentRow, customersById, orderMap);
+  }
+
+  // Compatibility path for older synthetic IDs (pay-<orderId>) generated from
+  // order records before the dedicated payments table was used.
+  const orderIdentifier = (input.orderId || id.replace(/^pay-/, "")).trim();
+  if (!orderIdentifier) return null;
   const targetOrder = await findLegacyOrderByIdentifier(
     businessId,
     orderIdentifier,
   );
   if (!targetOrder) return null;
 
-  const payload: Record<string, unknown> = {
-    payment_status: input.status || undefined,
-    payment_method: input.method || undefined,
-    payment_reference: input.reference || undefined,
-    payment_date:
-      input.status === "paid" || input.status === "cod"
-        ? new Date().toISOString()
-        : undefined,
-    updated_at: new Date().toISOString(),
-  };
+  const status = input.status || asPaymentStatus(targetOrder.payment_status);
+  const method = input.method || asPaymentMethod(targetOrder.payment_method);
+  const reference =
+    input.reference ||
+    targetOrder.payment_reference ||
+    `ORDER-${targetOrder.id.slice(0, 8).toUpperCase()}`;
+  const amount =
+    typeof input.amount === "number" && Number.isFinite(input.amount)
+      ? input.amount
+      : asNumber(targetOrder.amount);
 
-  const { data, error } = await client
-    .from("orders")
-    .update(payload)
-    .eq("business_id", businessId)
-    .eq("id", targetOrder.id)
-    .select(LEGACY_ORDER_SELECT)
-    .maybeSingle();
+  const nowIso = new Date().toISOString();
+  const inserted = await insertLegacyPaymentRow(businessId, {
+    business_id: businessId,
+    order_id: targetOrder.id,
+    customer_id: targetOrder.customer_id || null,
+    amount,
+    method,
+    status,
+    reference,
+    paid_at: status === "paid" || status === "cod" ? nowIso : null,
+    provider: "manual",
+    sender_name: null,
+    sender_phone: null,
+    raw_sms: null,
+    match_confidence: 100,
+    reconciliation_status: "matched",
+    suggested_order_id: null,
+    matched_at: nowIso,
+    parsed_timestamp: null,
+  });
 
-  if (error) {
-    throw new Error(`Failed to update payment: ${JSON.stringify(error)}`);
-  }
-  if (!data) return null;
+  await updateLegacyOrderPaymentState({
+    businessId,
+    orderId: targetOrder.id,
+    status,
+    method,
+    reference,
+  });
 
   const customerMap = await getLegacyCustomersByIds(
-    data.customer_id ? [String(data.customer_id)] : [],
+    [targetOrder.customer_id].filter(Boolean) as string[],
   );
-  return mapPaymentFromOrder(data as LegacyOrderRow, customerMap);
+  const orderMap = new Map<string, LegacyOrderRow>([[targetOrder.id, targetOrder]]);
+  return mapPaymentRecord(inserted, customerMap, orderMap);
 }
 
 async function listOrderPayments(orderId: string) {
+  const businessId = await resolveBusinessId();
+  const order = await findLegacyOrderByIdentifier(businessId, orderId);
+  const resolvedOrderId = order?.id || orderId;
   const records = await listPayments();
-  return records.filter((item) => item.orderId === orderId);
+  return records.filter((item) => item.orderId === resolvedOrderId);
+}
+
+async function listUnmatchedPayments() {
+  const payments = await listPayments();
+  return payments.filter(
+    (payment) =>
+      payment.reconciliationStatus === "pending" ||
+      payment.reconciliationStatus === "unmatched" ||
+      !payment.orderId,
+  );
+}
+
+async function reconcilePaymentSms(
+  input: ReconcileSmsInput,
+): Promise<ReconcileSmsResult> {
+  const businessId = await resolveBusinessId();
+  const parsed = parsePaymentSms(input.rawSms);
+  const [orderRows] = await Promise.all([listLegacyOrdersByBusiness()]);
+  const openOrderRows = orderRows.filter((row) => {
+    const paymentStatus = asPaymentStatus(row.payment_status);
+    const stage = asOrderStage(row.stage);
+    return (
+      paymentStatus === "unpaid" ||
+      paymentStatus === "partial" ||
+      stage === "new_order" ||
+      stage === "waiting_payment"
+    );
+  });
+
+  const customerMap = await getLegacyCustomersByIds(
+    Array.from(
+      new Set(
+        openOrderRows.map((row) => row.customer_id).filter(Boolean) as string[],
+      ),
+    ),
+  );
+
+  const ranked = rankPaymentMatches(
+    parsed,
+    openOrderRows.map((row) => ({
+      orderId: row.id,
+      customerName: (row.customer_id ? customerMap.get(row.customer_id)?.name : null) || "",
+      customerPhone: row.customer_id ? customerMap.get(row.customer_id)?.phone : null,
+      amount: asNumber(row.amount),
+    })),
+  );
+  const best = ranked[0];
+  const bestOrder = best
+    ? openOrderRows.find((row) => row.id === best.orderId) || null
+    : null;
+  const confidence = best?.confidence || 0;
+  const band = matchBandFromConfidence(confidence);
+  const nowIso = new Date().toISOString();
+  const amount = parsed.amount ?? 0;
+  const reference = parsed.reference || `SMS-${Date.now()}`;
+  const method = providerToPaymentMethod(parsed.provider);
+  const provider =
+    parsed.provider === "unknown" ? ("unknown" as const) : parsed.provider;
+
+  let row: LegacyPaymentRow;
+  let status: PaymentReconciliationStatus = "unmatched";
+  let autoMatched = false;
+
+  if (bestOrder && band === "high") {
+    status = "matched";
+    autoMatched = true;
+    row = await insertLegacyPaymentRow(businessId, {
+      business_id: businessId,
+      order_id: bestOrder.id,
+      customer_id: bestOrder.customer_id || null,
+      amount,
+      method,
+      status: "paid",
+      reference,
+      paid_at: nowIso,
+      sender_name: parsed.senderName,
+      sender_phone: parsed.senderPhone,
+      provider,
+      raw_sms: parsed.rawSms,
+      match_confidence: confidence,
+      reconciliation_status: "matched",
+      suggested_order_id: null,
+      matched_at: nowIso,
+      parsed_timestamp: parsed.timestamp,
+    });
+
+    await updateLegacyOrderPaymentState({
+      businessId,
+      orderId: bestOrder.id,
+      status: "paid",
+      method,
+      reference,
+    });
+  } else if (bestOrder && band === "medium") {
+    status = "pending";
+    row = await insertLegacyPaymentRow(businessId, {
+      business_id: businessId,
+      order_id: null,
+      customer_id: bestOrder.customer_id || null,
+      amount,
+      method,
+      status: "unpaid",
+      reference,
+      paid_at: null,
+      sender_name: parsed.senderName,
+      sender_phone: parsed.senderPhone,
+      provider,
+      raw_sms: parsed.rawSms,
+      match_confidence: confidence,
+      reconciliation_status: "pending",
+      suggested_order_id: bestOrder.id,
+      matched_at: null,
+      parsed_timestamp: parsed.timestamp,
+    });
+  } else {
+    status = "unmatched";
+    row = await insertLegacyPaymentRow(businessId, {
+      business_id: businessId,
+      order_id: null,
+      customer_id: null,
+      amount,
+      method,
+      status: "unpaid",
+      reference,
+      paid_at: null,
+      sender_name: parsed.senderName,
+      sender_phone: parsed.senderPhone,
+      provider,
+      raw_sms: parsed.rawSms,
+      match_confidence: confidence || null,
+      reconciliation_status: "unmatched",
+      suggested_order_id: null,
+      matched_at: null,
+      parsed_timestamp: parsed.timestamp,
+    });
+  }
+
+  const allOrders = await listLegacyOrdersByBusiness();
+  const orderMap = new Map<string, LegacyOrderRow>(
+    allOrders.map((item) => [item.id, item]),
+  );
+  const payment = mapPaymentRecord(row, customerMap, orderMap);
+
+  return {
+    payment,
+    parsed,
+    status,
+    autoMatched,
+    suggestion:
+      bestOrder && best
+        ? {
+            orderId: bestOrder.id,
+            customerName:
+              customerMap.get(bestOrder.customer_id || "")?.name ||
+              "Unknown customer",
+            amount: asNumber(bestOrder.amount),
+            confidence: best.confidence,
+            amountDelta: best.amountDelta,
+          }
+        : null,
+  };
+}
+
+async function assignPaymentToOrder(input: AssignPaymentInput) {
+  const businessId = await resolveBusinessId();
+  const client = createSupabaseServiceClient();
+  const targetOrder = await findLegacyOrderByIdentifier(
+    businessId,
+    input.orderId,
+  );
+  if (!targetOrder) return null;
+
+  const payment = await getLegacyPaymentById(businessId, input.paymentId);
+  if (!payment) return null;
+  const nowIso = new Date().toISOString();
+  const method = asPaymentMethod(payment.method);
+  const reference =
+    payment.reference || `ORDER-${targetOrder.id.slice(0, 8).toUpperCase()}`;
+
+  const updateResult = await client
+    .from("payments")
+    .update({
+      order_id: targetOrder.id,
+      customer_id: targetOrder.customer_id || null,
+      status: "paid",
+      method,
+      reference,
+      paid_at: nowIso,
+      reconciliation_status: "matched",
+      suggested_order_id: null,
+      matched_at: nowIso,
+      updated_at: nowIso,
+    })
+    .eq("business_id", businessId)
+    .eq("id", input.paymentId)
+    .select(LEGACY_PAYMENT_SELECT)
+    .maybeSingle();
+
+  let updatedPaymentRow: LegacyPaymentRow | null = null;
+  if (updateResult.error) {
+    const fallbackUpdate = await client
+      .from("payments")
+      .update({
+        order_id: targetOrder.id,
+        customer_id: targetOrder.customer_id || null,
+        status: "paid",
+        method,
+        reference,
+        paid_at: nowIso,
+        updated_at: nowIso,
+      })
+      .eq("business_id", businessId)
+      .eq("id", input.paymentId)
+      .select(
+        "id,business_id,order_id,customer_id,amount,method,status,reference,paid_at,created_at,updated_at",
+      )
+      .maybeSingle();
+    if (fallbackUpdate.error) {
+      throw new Error(
+        `Failed to assign payment to order: ${JSON.stringify(updateResult.error || fallbackUpdate.error)}`,
+      );
+    }
+    updatedPaymentRow = (fallbackUpdate.data || null) as LegacyPaymentRow | null;
+  } else {
+    updatedPaymentRow = (updateResult.data || null) as LegacyPaymentRow | null;
+  }
+  if (!updatedPaymentRow) return null;
+
+  await updateLegacyOrderPaymentState({
+    businessId,
+    orderId: targetOrder.id,
+    status: "paid",
+    method,
+    reference,
+  });
+
+  const [orderRows, customerMap] = await Promise.all([
+    listLegacyOrdersByBusiness(),
+    getLegacyCustomersByIds([targetOrder.customer_id].filter(Boolean) as string[]),
+  ]);
+  const orderMap = new Map<string, LegacyOrderRow>(
+    orderRows.map((row) => [row.id, row]),
+  );
+  return mapPaymentRecord(updatedPaymentRow, customerMap, orderMap);
+}
+
+async function getPaymentsReconciledTodayCount() {
+  const businessId = await resolveBusinessId();
+  const client = createSupabaseServiceClient();
+  const now = new Date();
+  const start = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+  ).toISOString();
+  const end = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1),
+  ).toISOString();
+
+  const { count, error } = await client
+    .from("payments")
+    .select("id", { head: true, count: "exact" })
+    .eq("business_id", businessId)
+    .eq("reconciliation_status", "matched")
+    .gte("matched_at", start)
+    .lt("matched_at", end);
+
+  if (error) {
+    const fallback = await listPayments();
+    return fallback.filter((payment) => {
+      if (payment.reconciliationStatus !== "matched") return false;
+      const matchedAt = Date.parse(payment.matchedAt || payment.createdAt);
+      return Number.isFinite(matchedAt) && matchedAt >= Date.parse(start) && matchedAt < Date.parse(end);
+    }).length;
+  }
+
+  return count || 0;
 }
 
 async function getAnalyticsSnapshot(): Promise<AnalyticsSnapshot> {
@@ -1524,6 +2229,10 @@ export function createSupabaseLegacyRepository(): WhatsboardRepository {
     createPayment,
     updatePayment,
     listOrderPayments,
+    listUnmatchedPayments,
+    reconcilePaymentSms,
+    assignPaymentToOrder,
+    getPaymentsReconciledTodayCount,
     getAnalyticsSnapshot,
     getDashboardSnapshot,
   };

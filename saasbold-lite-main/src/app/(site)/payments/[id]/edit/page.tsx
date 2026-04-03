@@ -29,9 +29,10 @@ export default async function EditPaymentPage({
   }
 
   const orderOptions = orders.slice(0, 200);
-  const hasCurrentOrder = orderOptions.some(
-    (order) => order.id === payment.orderId,
-  );
+  const currentOrderId = payment.orderId || payment.suggestedOrderId || "";
+  const hasCurrentOrder = currentOrderId
+    ? orderOptions.some((order) => order.id === currentOrderId)
+    : false;
 
   return (
     <div className="space-y-5 lg:space-y-6">
@@ -82,11 +83,11 @@ export default async function EditPaymentPage({
               name="orderId"
               required
               className="wb-input"
-              defaultValue={payment.orderId}
+              defaultValue={currentOrderId}
             >
-              {!hasCurrentOrder ? (
-                <option value={payment.orderId}>
-                  #{formatOrderReference(payment.orderId) || "WB-00000"} •
+              {currentOrderId && !hasCurrentOrder ? (
+                <option value={currentOrderId}>
+                  #{formatOrderReference(currentOrderId) || "WB-00000"} •
                   Current linked
                 </option>
               ) : null}
@@ -126,6 +127,8 @@ export default async function EditPaymentPage({
               defaultValue={payment.method}
             >
               <option value="M-Pesa">M-Pesa</option>
+              <option value="Tigopesa">Tigopesa</option>
+              <option value="Airtel Money">Airtel Money</option>
               <option value="Bank">Bank</option>
               <option value="Cash">Cash</option>
             </select>

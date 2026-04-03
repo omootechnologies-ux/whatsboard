@@ -18,12 +18,15 @@ import {
 } from "@/components/whatsboard-dashboard/formatting";
 import {
   getAnalyticsSnapshot,
+  listOrders,
   listPayments,
+  listUnmatchedPayments,
 } from "@/lib/whatsboard-repository";
 import {
   formatOrderReference,
   getPrimaryOrderLabel,
 } from "@/lib/display-labels";
+import { PaymentSmsModal } from "@/components/whatsboard-dashboard/payment-sms-modal";
 
 type PaymentsPageSearchParams = Promise<{
   search?: string;
@@ -31,6 +34,9 @@ type PaymentsPageSearchParams = Promise<{
   method?: string;
   created?: string;
   updated?: string;
+  assigned?: string;
+  assignError?: string;
+  assignNotFound?: string;
   error?: string;
 }>;
 
@@ -40,12 +46,28 @@ export default async function PaymentsPage({
   searchParams: PaymentsPageSearchParams;
 }) {
   const query = await searchParams;
-  const records = await listPayments({
-    search: query.search,
-    status: query.status,
-    method: query.method,
-  });
-  const { stats, series } = await getAnalyticsSnapshot();
+  const [records, unmatchedPayments, allOrders, { stats, series }] =
+    await Promise.all([
+      listPayments({
+        search: query.search,
+        status: query.status,
+        method: query.method,
+      }),
+      listUnmatchedPayments(),
+      listOrders(),
+      getAnalyticsSnapshot(),
+    ]);
+  const orderMap = new Map(allOrders.map((order) => [order.id, order]));
+  const orderOptions = allOrders.map((order) => ({
+    id: order.id,
+    customerLabel: getPrimaryOrderLabel({
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      orderId: order.id,
+      kind: "customer",
+    }),
+    amount: order.amount,
+  }));
 
   return (
     <div className="space-y-5 lg:space-y-6">
@@ -58,6 +80,7 @@ export default async function PaymentsPage({
             Record Payment
           </Link>
         }
+        secondaryAction={<PaymentSmsModal orderOptions={orderOptions} />}
       />
 
       {query.created === "1" || query.updated === "1" ? (
@@ -65,6 +88,20 @@ export default async function PaymentsPage({
           {query.created === "1"
             ? "Payment recorded successfully."
             : "Payment updated successfully."}
+        </div>
+      ) : null}
+
+      {query.assigned === "1" ? (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
+          Payment assigned to order and marked as paid.
+        </div>
+      ) : null}
+
+      {query.assignError === "1" || query.assignNotFound === "1" ? (
+        <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+          {query.assignNotFound === "1"
+            ? "Could not find that payment or order."
+            : "Could not assign payment. Try again."}
         </div>
       ) : null}
 
@@ -108,10 +145,96 @@ export default async function PaymentsPage({
           { key: "status", label: "Unpaid", value: "unpaid" },
           { key: "status", label: "COD", value: "cod" },
           { key: "method", label: "M-Pesa", value: "M-Pesa" },
+          { key: "method", label: "Tigopesa", value: "Tigopesa" },
+          { key: "method", label: "Airtel Money", value: "Airtel Money" },
           { key: "method", label: "Bank", value: "Bank" },
           { key: "method", label: "Cash", value: "Cash" },
         ]}
       />
+
+      <SectionCard
+        title="Unmatched payments inbox"
+        description="Pending or unmatched mobile money confirmations requiring manual assignment."
+      >
+        {unmatchedPayments.length ? (
+          <div className="space-y-3">
+            {unmatchedPayments.map((payment) => {
+              const suggestedOrder = payment.suggestedOrderId
+                ? orderMap.get(payment.suggestedOrderId)
+                : null;
+              return (
+                <article
+                  key={payment.id}
+                  className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-semibold text-[var(--color-wb-text)]">
+                        {getPrimaryOrderLabel({
+                          customerName:
+                            payment.senderName || payment.customerName,
+                          customerPhone: payment.senderPhone,
+                          orderId: payment.orderId || payment.suggestedOrderId,
+                          kind: "customer",
+                        })}
+                      </p>
+                      <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
+                        {payment.provider?.toUpperCase() || "UNKNOWN"} •{" "}
+                        {formatCurrency(payment.amount)} • Ref {payment.reference}
+                      </p>
+                      <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
+                        Confidence {Math.round(payment.matchConfidence || 0)}%
+                        {suggestedOrder
+                          ? ` • Suggested #${formatOrderReference(suggestedOrder.id) || "WB-00000"}`
+                          : ""}
+                      </p>
+                    </div>
+                    <span className="inline-flex rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-semibold capitalize text-amber-700">
+                      {payment.reconciliationStatus || "unmatched"}
+                    </span>
+                  </div>
+
+                  <form
+                    action="/api/payments/reconcile-assign"
+                    method="post"
+                    className="mt-3 flex flex-col gap-2 sm:flex-row"
+                  >
+                    <input type="hidden" name="paymentId" value={payment.id} />
+                    <select
+                      name="orderId"
+                      defaultValue={payment.suggestedOrderId || ""}
+                      required
+                      className="wb-input"
+                    >
+                      <option value="">Select order</option>
+                      {allOrders.map((order) => (
+                        <option key={order.id} value={order.id}>
+                          #{formatOrderReference(order.id) || "WB-00000"} •{" "}
+                          {getPrimaryOrderLabel({
+                            customerName: order.customerName,
+                            customerPhone: order.customerPhone,
+                            orderId: order.id,
+                            kind: "customer",
+                          })}{" "}
+                          • {formatCurrency(order.amount)}
+                        </option>
+                      ))}
+                    </select>
+                    <button type="submit" className="wb-button-primary whitespace-nowrap">
+                      Assign payment
+                    </button>
+                  </form>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <EmptyState
+            title="No unmatched payments"
+            detail="All parsed mobile money confirmations are currently matched."
+          />
+        )}
+      </SectionCard>
 
       <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
         <ChartCard
@@ -143,13 +266,15 @@ export default async function PaymentsPage({
                       <DataCell>
                         {getPrimaryOrderLabel({
                           customerName: payment.customerName,
-                          orderId: payment.orderId,
+                          orderId: payment.orderId || payment.suggestedOrderId,
                           kind: "customer",
                         })}
                       </DataCell>
                       <DataCell>
                         Order #
-                        {formatOrderReference(payment.orderId) || "WB-00000"}
+                        {formatOrderReference(
+                          payment.orderId || payment.suggestedOrderId,
+                        ) || "WB-00000"}
                       </DataCell>
                       <DataCell>{payment.method}</DataCell>
                       <DataCell>
@@ -189,13 +314,15 @@ export default async function PaymentsPage({
                         <p className="font-semibold text-[var(--color-wb-text)]">
                           {getPrimaryOrderLabel({
                             customerName: payment.customerName,
-                            orderId: payment.orderId,
+                            orderId: payment.orderId || payment.suggestedOrderId,
                             kind: "customer",
                           })}
                         </p>
                         <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
                           Order #
-                          {formatOrderReference(payment.orderId) || "WB-00000"}
+                          {formatOrderReference(
+                            payment.orderId || payment.suggestedOrderId,
+                          ) || "WB-00000"}
                         </p>
                       </div>
                       <PaymentBadge status={payment.status} />
