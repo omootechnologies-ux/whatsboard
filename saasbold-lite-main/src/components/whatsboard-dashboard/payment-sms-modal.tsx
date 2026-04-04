@@ -136,14 +136,18 @@ export function PaymentSmsModal({
 
   return (
     <>
-      <button className={triggerClassName} onClick={() => setOpen(true)}>
+      <button
+        type="button"
+        className={triggerClassName}
+        onClick={() => setOpen(true)}
+      >
         <MessageSquareText className="h-4 w-4" />
         {triggerLabel}
       </button>
 
       {open ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center sm:p-6">
-          <div className="wb-shell-card max-h-[90vh] w-full max-w-3xl overflow-y-auto p-5 sm:p-6">
+          <div className="wb-shell-card max-h-[92dvh] w-full max-w-3xl overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
@@ -157,6 +161,7 @@ export function PaymentSmsModal({
                 </p>
               </div>
               <button
+                type="button"
                 onClick={close}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)]"
               >
@@ -178,6 +183,7 @@ export function PaymentSmsModal({
 
                 <div className="mt-3 flex flex-wrap gap-3">
                   <button
+                    type="button"
                     className="wb-button-primary"
                     onClick={submit}
                     disabled={loading || assigning}
@@ -192,6 +198,7 @@ export function PaymentSmsModal({
                     )}
                   </button>
                   <button
+                    type="button"
                     className="wb-button-secondary"
                     onClick={close}
                     disabled={loading || assigning}
@@ -305,7 +312,8 @@ export function PaymentSmsModal({
                         ))}
                       </select>
                       <button
-                        className="wb-button-primary whitespace-nowrap"
+                        type="button"
+                        className="wb-button-primary w-full whitespace-nowrap sm:w-auto"
                         onClick={assign}
                         disabled={assigning || !selectedOrderId}
                       >

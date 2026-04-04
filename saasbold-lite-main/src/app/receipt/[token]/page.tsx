@@ -107,7 +107,7 @@ export default async function ReceiptPublicPage({
                 className="flex items-center justify-between gap-3 rounded-xl border border-[#e2e8e3] px-3 py-2"
               >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-[#111111]">
+                  <p className="break-words text-sm font-semibold text-[#111111]">
                     {item.name}
                   </p>
                   <p className="text-xs text-[#5f6368]">Qty {item.qty}</p>

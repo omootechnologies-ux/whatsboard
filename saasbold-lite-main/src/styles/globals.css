@@ -22,16 +22,22 @@
 @layer base {
   * {
     @apply border-transparent;
+    min-width: 0;
   }
 
   html {
     @apply scroll-smooth;
+    width: 100%;
+    max-width: 100%;
   }
 
   body {
     @apply bg-[var(--color-wb-background)] font-sans text-[var(--color-wb-text)] antialiased;
     font-family: var(--font-satoshi), var(--font-inter), sans-serif;
+    width: 100%;
+    max-width: 100%;
     overflow-x: hidden;
+    text-wrap: pretty;
   }
 
   a,
@@ -42,6 +48,17 @@
     @apply outline-none;
   }
 
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  li {
+    overflow-wrap: anywhere;
+  }
+
   ::selection {
     @apply bg-[var(--color-wb-primary)] text-white;
   }
@@ -49,23 +66,23 @@
 
 @layer components {
   .wb-shell-card {
-    @apply rounded-[28px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface)] shadow-[0_18px_44px_rgba(17,17,17,0.05)];
+    @apply rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface)] shadow-[0_18px_44px_rgba(17,17,17,0.05)] sm:rounded-[28px];
   }
 
   .wb-soft-card {
-    @apply rounded-[24px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)];
+    @apply rounded-[18px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] sm:rounded-[24px];
   }
 
   .wb-button-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-[var(--color-wb-primary)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-wb-primary-dark)];
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-[var(--color-wb-primary)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--color-wb-primary-dark)] sm:py-3;
   }
 
   .wb-button-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--color-wb-border)] bg-white px-4 py-3 text-sm font-semibold text-[var(--color-wb-primary)] transition hover:bg-[var(--color-wb-primary-soft)];
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-[var(--color-wb-border)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--color-wb-primary)] transition hover:bg-[var(--color-wb-primary-soft)] sm:py-3;
   }
 
   .wb-input {
-    @apply h-12 w-full rounded-2xl border border-[var(--color-wb-border)] bg-white px-4 text-sm text-[var(--color-wb-text)] placeholder:text-[var(--color-wb-text-muted)] focus:border-[color:rgba(15,93,70,0.35)];
+    @apply h-11 w-full rounded-2xl border border-[var(--color-wb-border)] bg-white px-4 text-sm text-[var(--color-wb-text)] placeholder:text-[var(--color-wb-text-muted)] focus:border-[color:rgba(15,93,70,0.35)] sm:h-12;
   }
 
   .wb-textarea {

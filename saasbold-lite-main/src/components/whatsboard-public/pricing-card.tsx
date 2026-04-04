@@ -47,7 +47,7 @@ export function PricingCard({ plan }: { plan: PricingPlan }) {
       </div>
 
       <p
-        className={`mt-5 min-h-[72px] text-sm leading-6 ${
+        className={`mt-5 text-sm leading-6 sm:min-h-[72px] ${
           plan.highlight ? "text-white/82" : "text-[var(--color-wb-text-muted)]"
         }`}
       >

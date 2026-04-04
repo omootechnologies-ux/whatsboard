@@ -220,7 +220,10 @@ export default async function PaymentsPage({
                         </option>
                       ))}
                     </select>
-                    <button type="submit" className="wb-button-primary whitespace-nowrap">
+                    <button
+                      type="submit"
+                      className="wb-button-primary w-full whitespace-nowrap sm:w-auto"
+                    >
                       Assign payment
                     </button>
                   </form>

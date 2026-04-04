@@ -47,7 +47,7 @@ export function PublicNav() {
               className="h-8 w-8 object-contain sm:h-9 sm:w-9"
             />
           </span>
-          <div className="leading-tight">
+          <div className="min-w-0 leading-tight">
             <p className="text-xs font-semibold tracking-[0.18em] text-white/75 sm:text-sm sm:tracking-[0.2em]">
               WHATSBOARD
             </p>
@@ -117,7 +117,7 @@ export function PublicNav() {
                 </Link>
               );
             })}
-            <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="mt-2 grid grid-cols-2 gap-2 max-[360px]:grid-cols-1">
               <Link
                 href="/login?next=%2Fdashboard"
                 className="inline-flex items-center justify-center rounded-xl border border-white/35 bg-transparent px-4 py-2 text-sm font-semibold text-white"

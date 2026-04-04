@@ -253,7 +253,7 @@ export function DashboardShellFrame({
 
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-30 border-b border-[var(--color-wb-border)] bg-[var(--color-wb-background)]/92 backdrop-blur-xl">
-            <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
+            <div className="mx-auto flex w-full max-w-[1600px] items-start justify-between gap-3 px-3 py-3 sm:items-center sm:px-6 lg:px-8">
               <div className="flex min-w-0 items-center gap-3">
                 <button
                   onClick={() => setMobileOpen(true)}
@@ -284,7 +284,7 @@ export function DashboardShellFrame({
                 </span>
                 <button
                   onClick={onSignOut}
-                  className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-[var(--color-wb-border)] bg-white px-3 text-sm font-semibold text-[var(--color-wb-text-muted)] transition hover:text-[var(--color-wb-text)]"
+                  className="inline-flex h-10 items-center justify-center gap-2 rounded-2xl border border-[var(--color-wb-border)] bg-white px-2.5 text-sm font-semibold text-[var(--color-wb-text-muted)] transition hover:text-[var(--color-wb-text)] sm:h-11 sm:px-3"
                   disabled={isSigningOut}
                 >
                   <LogOut className="h-4 w-4" />
@@ -302,13 +302,13 @@ export function DashboardShellFrame({
                 className="absolute inset-0 bg-black/30"
                 onClick={() => setMobileOpen(false)}
               />
-              <div className="absolute left-0 top-0 h-full w-[84vw] max-w-[22rem] border-r border-[var(--color-wb-border)] bg-white p-4 shadow-[0_30px_60px_rgba(17,17,17,0.18)]">
+              <div className="absolute left-0 top-0 h-full w-[86vw] max-w-[22rem] border-r border-[var(--color-wb-border)] bg-white p-4 shadow-[0_30px_60px_rgba(17,17,17,0.18)]">
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                       {workspaceLabel}
                     </p>
-                    <p className="text-sm text-[var(--color-wb-text-muted)]">
+                    <p className="break-words text-sm text-[var(--color-wb-text-muted)]">
                       {workspaceTagline}
                     </p>
                   </div>
@@ -352,21 +352,21 @@ export function DashboardShellFrame({
             </div>
           ) : null}
 
-          <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-4 pb-36 sm:px-6 sm:pb-40 lg:px-8 lg:py-6 lg:pb-12">
+          <main className="mx-auto w-full max-w-[1600px] flex-1 px-3 py-4 pb-36 sm:px-6 sm:pb-40 lg:px-8 lg:py-6 lg:pb-12">
             {children}
           </main>
 
           <Link
             href="/orders/new"
-            className="fixed bottom-[calc(5.05rem+env(safe-area-inset-bottom))] right-3 z-20 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--color-wb-primary)] px-4 text-sm font-semibold text-white shadow-[0_24px_40px_rgba(15,93,70,0.26)] transition hover:bg-[var(--color-wb-primary-dark)] sm:bottom-24 sm:right-4 sm:h-12 sm:px-5 lg:bottom-8 lg:right-8 lg:h-14 lg:px-6"
+            className="fixed bottom-[calc(5.05rem+env(safe-area-inset-bottom))] right-3 z-20 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--color-wb-primary)] px-4 text-sm font-semibold text-white shadow-[0_24px_40px_rgba(15,93,70,0.26)] transition hover:bg-[var(--color-wb-primary-dark)] max-[430px]:h-11 max-[430px]:w-11 max-[430px]:px-0 sm:bottom-24 sm:right-4 sm:h-12 sm:px-5 lg:bottom-8 lg:right-8 lg:h-14 lg:px-6"
           >
             <Plus className="h-4 w-4" />
-            Add order
-            <ArrowUpRight className="h-4 w-4" />
+            <span className="max-[430px]:hidden">Add order</span>
+            <ArrowUpRight className="h-4 w-4 max-[430px]:hidden" />
           </Link>
 
           <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-[var(--color-wb-border)] bg-white/96 backdrop-blur-xl lg:hidden">
-            <div className="mx-auto flex max-w-screen-sm items-stretch justify-between px-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] pt-2">
+            <div className="mx-auto flex max-w-screen-sm items-stretch justify-between px-1.5 pb-[max(0.55rem,env(safe-area-inset-bottom))] pt-2">
               {mobileNav.map((item) => {
                 const active = item.href === activeNavHref;
                 const Icon = item.icon;
@@ -417,7 +417,7 @@ function AppLink({
     <Link
       href={item.href}
       onClick={onClick}
-      className={`flex items-center gap-3 rounded-2xl border px-3 py-3 text-sm font-semibold transition-all ${
+      className={`flex items-center gap-3 rounded-2xl border px-3 py-2.5 text-sm font-semibold transition-all ${
         active
           ? "border-[var(--color-wb-border)] bg-[var(--color-wb-primary-soft)] text-[var(--color-wb-primary)]"
           : "border-transparent text-[var(--color-wb-text-muted)] hover:border-[var(--color-wb-border)] hover:bg-white hover:text-[var(--color-wb-text)]"
@@ -453,7 +453,7 @@ export function PageHeader({
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-wb-primary)]">
             WhatsBoard
           </p>
-          <h2 className="mt-3 text-3xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-4xl">
+          <h2 className="mt-3 break-words text-2xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-3xl lg:text-4xl">
             {title}
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--color-wb-text-muted)] sm:text-base">
@@ -461,14 +461,14 @@ export function PageHeader({
           </p>
         </div>
         {primaryAction || secondaryAction ? (
-          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:flex-wrap">
             {secondaryAction ? (
-              <div className="w-full sm:w-auto [&>*]:w-full [&>*]:justify-center sm:[&>*]:w-auto">
+              <div className="w-full min-w-0 sm:w-auto [&>*]:max-w-full [&>*]:w-full [&>*]:justify-center sm:[&>*]:w-auto">
                 {secondaryAction}
               </div>
             ) : null}
             {primaryAction ? (
-              <div className="w-full sm:w-auto [&>*]:w-full [&>*]:justify-center sm:[&>*]:w-auto">
+              <div className="w-full min-w-0 sm:w-auto [&>*]:max-w-full [&>*]:w-full [&>*]:justify-center sm:[&>*]:w-auto">
                 {primaryAction}
               </div>
             ) : null}
@@ -567,7 +567,7 @@ export function DataCell({
 }) {
   return (
     <td
-      className={`${compact ? "px-4 py-3" : "px-4 py-4"} text-sm text-[var(--color-wb-text)]`}
+      className={`${compact ? "px-4 py-3" : "px-4 py-4"} break-words text-sm text-[var(--color-wb-text)]`}
     >
       {children}
     </td>
@@ -623,13 +623,13 @@ export function KpiCard({
   accent?: React.ReactNode;
 }) {
   return (
-    <div className="wb-shell-card p-5">
+    <div className="wb-shell-card p-4 sm:p-5">
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
             {label}
           </p>
-          <p className="mt-3 text-2xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-3xl">
+          <p className="mt-3 break-words text-2xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-3xl">
             {value}
           </p>
           <p className="mt-2 text-sm leading-6 text-[var(--color-wb-text-muted)]">
@@ -660,8 +660,8 @@ export function SectionCard({
   return (
     <section className="wb-shell-card p-5 sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h3 className="text-xl font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
+        <div className="min-w-0">
+          <h3 className="break-words text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)] sm:text-xl">
             {title}
           </h3>
           {description ? (
@@ -671,7 +671,7 @@ export function SectionCard({
           ) : null}
         </div>
         {actions ? (
-          <div className="w-full sm:w-auto [&>*]:w-full [&>*]:justify-center sm:[&>*]:w-auto">
+          <div className="w-full min-w-0 sm:w-auto [&>*]:max-w-full [&>*]:w-full [&>*]:justify-center sm:[&>*]:w-auto">
             {actions}
           </div>
         ) : null}
@@ -690,7 +690,7 @@ export function FilterChip({
 }) {
   return (
     <span
-      className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
+      className={`inline-flex max-w-full items-center rounded-full border px-3 py-1.5 text-xs font-semibold transition sm:px-4 sm:py-2 sm:text-sm ${
         active
           ? "border-[var(--color-wb-border)] bg-[var(--color-wb-primary-soft)] text-[var(--color-wb-primary)]"
           : "border-[var(--color-wb-border)] bg-white text-[var(--color-wb-text-muted)]"
@@ -759,19 +759,22 @@ export function FilterToolbar({
           </button>
         </form>
         {chips.length ? (
-          <div className="flex flex-wrap gap-2">
-            {chips.map((chip) => {
-              const current = params.get(chip.key);
-              const active = chip.value ? current === chip.value : !current;
-              return (
-                <Link
-                  key={`${chip.key}-${chip.label}`}
-                  href={buildHref({ [chip.key]: chip.value ?? null })}
-                >
-                  <FilterChip label={chip.label} active={active} />
-                </Link>
-              );
-            })}
+          <div className="-mx-1 overflow-x-auto pb-1 sm:mx-0 sm:overflow-visible sm:pb-0">
+            <div className="flex min-w-max gap-2 px-1 sm:min-w-0 sm:flex-wrap sm:px-0">
+              {chips.map((chip) => {
+                const current = params.get(chip.key);
+                const active = chip.value ? current === chip.value : !current;
+                return (
+                  <Link
+                    key={`${chip.key}-${chip.label}`}
+                    href={buildHref({ [chip.key]: chip.value ?? null })}
+                    className="shrink-0"
+                  >
+                    <FilterChip label={chip.label} active={active} />
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         ) : null}
       </div>
@@ -866,7 +869,7 @@ export function OrderCard({ order }: { order: OrderRecord }) {
         </div>
         <StageBadge stage={order.stage} />
       </div>
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-[var(--color-wb-border)] pt-3">
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-3 border-t border-[var(--color-wb-border)] pt-3">
         <div className="min-w-0">
           <p className="break-words text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
             {reference ? `Order #${reference}` : "Untitled order"}
@@ -990,43 +993,45 @@ export function ChartCard({
   return (
     <SectionCard title={title} description={description}>
       <div className="rounded-[24px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-3 sm:p-4">
-        <div className="flex h-56 items-end gap-2 sm:gap-3">
-          {normalized.map((item) => {
-            const heightPercent =
-              item.value > 0 ? Math.max((item.value / max) * 100, 8) : 0;
+        <div className="-mx-1 overflow-x-auto pb-1">
+          <div className="flex h-56 min-w-[420px] items-end gap-2 px-1 sm:min-w-0 sm:gap-3 sm:px-0">
+            {normalized.map((item) => {
+              const heightPercent =
+                item.value > 0 ? Math.max((item.value / max) * 100, 8) : 0;
 
-            return (
-              <div
-                key={item.label}
-                className="group relative flex min-w-0 flex-1 flex-col items-center"
-              >
-                <div className="relative flex h-[calc(100%-1.5rem)] w-full items-end justify-center">
-                  <span className="absolute inset-x-0 bottom-0 border-t border-[var(--color-wb-border-strong)]" />
+              return (
+                <div
+                  key={item.label}
+                  className="group relative flex min-w-0 flex-1 flex-col items-center"
+                >
+                  <div className="relative flex h-[calc(100%-1.5rem)] w-full items-end justify-center">
+                    <span className="absolute inset-x-0 bottom-0 border-t border-[var(--color-wb-border-strong)]" />
 
-                  {item.value > 0 ? (
-                    <div
-                      className="relative h-full w-full max-w-[44px] overflow-hidden rounded-t-[14px] bg-[var(--color-wb-border)]/40"
-                    >
-                      <span
-                        className="absolute inset-x-0 bottom-0 block rounded-t-[14px] bg-gradient-to-b from-[#1f7c5d] to-[var(--color-wb-primary)] transition group-hover:brightness-110"
-                        style={{ height: `${heightPercent}%` }}
-                      />
-                    </div>
-                  ) : (
-                    <span className="relative mb-[1px] inline-flex h-1.5 w-1.5 rounded-full bg-[var(--color-wb-border-strong)]" />
-                  )}
+                    {item.value > 0 ? (
+                      <div
+                        className="relative h-full w-full max-w-[44px] overflow-hidden rounded-t-[14px] bg-[var(--color-wb-border)]/40"
+                      >
+                        <span
+                          className="absolute inset-x-0 bottom-0 block rounded-t-[14px] bg-gradient-to-b from-[#1f7c5d] to-[var(--color-wb-primary)] transition group-hover:brightness-110"
+                          style={{ height: `${heightPercent}%` }}
+                        />
+                      </div>
+                    ) : (
+                      <span className="relative mb-[1px] inline-flex h-1.5 w-1.5 rounded-full bg-[var(--color-wb-border-strong)]" />
+                    )}
 
-                  <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-[var(--color-wb-border)] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--color-wb-text)] shadow-[0_10px_24px_rgba(17,17,17,0.1)] group-hover:inline-flex">
-                    {formatValue(item.value)}
-                  </span>
+                    <span className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg border border-[var(--color-wb-border)] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--color-wb-text)] shadow-[0_10px_24px_rgba(17,17,17,0.1)] group-hover:inline-flex">
+                      {formatValue(item.value)}
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)] sm:text-xs">
+                    {item.label}
+                  </p>
                 </div>
-
-                <p className="mt-2 text-center text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)] sm:text-xs">
-                  {item.label}
-                </p>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       </div>
     </SectionCard>
@@ -1081,7 +1086,7 @@ export function CustomerRow({
           {customer.phone} • {customer.location}
         </p>
       </div>
-      <div className="flex flex-wrap items-center gap-3 text-sm">
+      <div className="flex flex-wrap items-center gap-2.5 text-sm sm:justify-end">
         <span className="font-semibold text-[var(--color-wb-primary)]">
           {formatCurrency(customer.totalSpend)}
         </span>
@@ -1149,7 +1154,7 @@ export function FollowUpCard({
         <span className="font-semibold text-[var(--color-wb-text)]">
           {formatDate(item.dueAt)}
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           <span className="rounded-full bg-[var(--color-wb-surface-alt)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-primary)]">
             {item.priority}
           </span>

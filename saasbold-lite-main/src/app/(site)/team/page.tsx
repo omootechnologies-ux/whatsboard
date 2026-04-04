@@ -213,7 +213,7 @@ export default async function TeamPage({
         <form
           action="/api/team/invite"
           method="post"
-          className="grid gap-4 sm:grid-cols-[1.4fr_0.8fr_auto]"
+          className="grid gap-4 md:grid-cols-[1.4fr_0.8fr_auto]"
         >
           <label className="block">
             <span className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">

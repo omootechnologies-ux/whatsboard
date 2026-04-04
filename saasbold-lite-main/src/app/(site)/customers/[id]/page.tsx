@@ -61,7 +61,7 @@ export default async function CustomerProfilePage({
           ) : undefined
         }
         secondaryAction={
-          <div className="flex gap-2">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
             <Link href={`/customers/${customer.id}/edit`} className="wb-button-secondary">
               <PencilLine className="h-4 w-4" />
               Edit
