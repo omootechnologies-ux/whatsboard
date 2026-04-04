@@ -233,7 +233,7 @@ begin
       new.status := new.stage::public.order_status;
     exception
       when others then
-        new.status := 'new_order';
+        new.status := 'new_order'::public.order_status;
     end;
   end if;
 
@@ -312,16 +312,16 @@ begin
   end if;
 
   if new.priority is null then
-    new.priority := 'medium';
+    new.priority := 'medium'::public.follow_up_priority;
   end if;
 
   if new.completed is true then
-    new.status := 'completed';
+    new.status := 'completed'::public.follow_up_status;
     if new.completed_at is null then
       new.completed_at := now();
     end if;
   else
-    if new.status = 'completed' then
+    if new.status = 'completed'::public.follow_up_status then
       new.completed := true;
       if new.completed_at is null then
         new.completed_at := now();
@@ -331,7 +331,7 @@ begin
       new.completed_at := null;
       v_due := coalesce(new.due_date, new.due_at);
       if new.status is null then
-        new.status := public.whatsboard_follow_up_status_from_due_date(v_due)::text;
+        new.status := public.whatsboard_follow_up_status_from_due_date(v_due);
       end if;
     end if;
   end if;
@@ -442,17 +442,17 @@ set
   note = coalesce(note, notes, ''),
   notes = coalesce(notes, note, ''),
   title = coalesce(nullif(title, ''), 'Customer follow-up'),
-  priority = coalesce(priority, 'medium'),
+  priority = coalesce(priority, 'medium'::public.follow_up_priority),
   status = case
-    when coalesce(completed, false) = true then 'completed'
-    else coalesce(status, public.whatsboard_follow_up_status_from_due_date(coalesce(due_date, due_at))::text)
+    when coalesce(completed, false) = true then 'completed'::public.follow_up_status
+    else coalesce(status, public.whatsboard_follow_up_status_from_due_date(coalesce(due_date, due_at)))
   end,
   completed = case
-    when status = 'completed' then true
+    when status = 'completed'::public.follow_up_status then true
     else coalesce(completed, false)
   end,
   completed_at = case
-    when status = 'completed' then coalesce(completed_at, now())
+    when status = 'completed'::public.follow_up_status then coalesce(completed_at, now())
     else completed_at
   end
 where
