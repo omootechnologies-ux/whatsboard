@@ -268,6 +268,29 @@ const demoBoardColumns = [
   { name: "Pending follow-up", count: 7, hint: "Needs action" },
 ] as const;
 
+const growthAnalyticsPreview = {
+  business: "Maua Fashion Studio",
+  city: "Dar es Salaam",
+  revenueThisMonth: 12340000,
+  revenueChangePercent: 18,
+  averageOrderValue: 68500,
+  bestChannelLine: "WhatsApp brings 67% of your revenue",
+  lineSeries: [1.3, 1.6, 1.8, 2.1, 2.6, 2.4, 3.0],
+  funnel: [
+    { stage: "New", value: 124 },
+    { stage: "Confirmed", value: 102 },
+    { stage: "Packed", value: 78 },
+    { stage: "Dispatched", value: 63 },
+    { stage: "Delivered", value: 58 },
+  ],
+  channels: [
+    { label: "WhatsApp", revenue: 8260000, orders: 98 },
+    { label: "Instagram", revenue: 2680000, orders: 31 },
+    { label: "Facebook", revenue: 840000, orders: 11 },
+    { label: "Other", revenue: 560000, orders: 9 },
+  ],
+} as const;
+
 type BadgeTone = "danger" | "warning" | "success" | "neutral";
 
 function stageLabel(stage: OrderRecord["stage"]) {
@@ -739,6 +762,133 @@ export default function HomePage() {
           {pricingPlans.map((plan) => (
             <PricingCard key={plan.key} plan={plan} />
           ))}
+        </div>
+
+        <div className="mt-8 wb-shell-card p-5 sm:p-6 lg:p-7">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
+                Growth plan analytics
+              </p>
+              <h3 className="mt-2 text-2xl font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
+                Here&apos;s what your data looks like
+              </h3>
+              <p className="mt-2 text-sm text-[var(--color-wb-text-muted)]">
+                {growthAnalyticsPreview.business} • {growthAnalyticsPreview.city}
+              </p>
+            </div>
+            <Link href="/dashboard/analytics" className="wb-button-secondary">
+              Watch Demo
+            </Link>
+          </div>
+
+          <div className="mt-5 overflow-x-auto rounded-[24px] border border-[var(--color-wb-border)] bg-[#FBFCFA] p-4 sm:p-5">
+            <div className="min-w-[760px] space-y-4">
+              <div className="grid gap-3 md:grid-cols-3">
+                <article className="rounded-2xl border border-[var(--color-wb-border)] bg-white p-3.5">
+                  <p className="text-xs uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
+                    Revenue this month
+                  </p>
+                  <p className="mt-2 text-xl font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
+                    {formatCurrency(growthAnalyticsPreview.revenueThisMonth)}
+                  </p>
+                  <p className="mt-1 text-xs font-semibold text-emerald-700">
+                    +{growthAnalyticsPreview.revenueChangePercent}% vs last month
+                  </p>
+                </article>
+                <article className="rounded-2xl border border-[var(--color-wb-border)] bg-white p-3.5">
+                  <p className="text-xs uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
+                    Average order value
+                  </p>
+                  <p className="mt-2 text-xl font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
+                    {formatCurrency(growthAnalyticsPreview.averageOrderValue)}
+                  </p>
+                  <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
+                    This month
+                  </p>
+                </article>
+                <article className="rounded-2xl border border-[var(--color-wb-border)] bg-white p-3.5">
+                  <p className="text-xs uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
+                    Best channel
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-[var(--color-wb-primary-dark)]">
+                    {growthAnalyticsPreview.bestChannelLine}
+                  </p>
+                </article>
+              </div>
+
+              <div className="grid gap-3 lg:grid-cols-[1.4fr_0.9fr]">
+                <article className="rounded-2xl border border-[var(--color-wb-border)] bg-white p-3.5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
+                    Revenue trend (weekly)
+                  </p>
+                  <div className="mt-3 flex h-32 items-end gap-2">
+                    {growthAnalyticsPreview.lineSeries.map((value, index) => {
+                      const maxValue = Math.max(...growthAnalyticsPreview.lineSeries);
+                      const height = Math.round((value / maxValue) * 100);
+                      return (
+                        <div key={`${value}-${index}`} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                          <div
+                            className="w-full rounded-t-md bg-[var(--color-wb-primary)]/85"
+                            style={{ height: `${Math.max(10, height)}%` }}
+                          />
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
+                            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index]}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </article>
+
+                <article className="rounded-2xl border border-[var(--color-wb-border)] bg-white p-3.5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
+                    Channel split
+                  </p>
+                  <div className="mt-3 grid gap-2">
+                    {growthAnalyticsPreview.channels.map((channel) => (
+                      <div
+                        key={channel.label}
+                        className="flex items-center justify-between rounded-xl border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] px-3 py-2 text-xs"
+                      >
+                        <span className="font-semibold text-[var(--color-wb-text)]">
+                          {channel.label}
+                        </span>
+                        <span className="text-[var(--color-wb-text-muted)]">
+                          {channel.orders} orders • {formatCurrency(channel.revenue)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              </div>
+
+              <article className="rounded-2xl border border-[var(--color-wb-border)] bg-white p-3.5">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
+                  Funnel
+                </p>
+                <div className="mt-3 grid gap-2 sm:grid-cols-5">
+                  {growthAnalyticsPreview.funnel.map((item) => (
+                    <div
+                      key={item.stage}
+                      className="rounded-xl border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] px-3 py-2"
+                    >
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
+                        {item.stage}
+                      </p>
+                      <p className="mt-1 text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
+                        {item.value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <p className="mt-4 text-sm font-semibold text-[var(--color-wb-primary-dark)]">
+            Know what&apos;s working. Know what&apos;s not. Every day.
+          </p>
         </div>
 
         <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">

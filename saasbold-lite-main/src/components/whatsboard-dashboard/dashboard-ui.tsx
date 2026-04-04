@@ -69,7 +69,12 @@ const desktopNav: NavItem[] = [
   { href: "/payments", label: "Payments", group: "Control", icon: Wallet },
   { href: "/team", label: "Team", group: "Control", icon: Users },
   { href: "/billing", label: "Billing", group: "Control", icon: CreditCard },
-  { href: "/analytics", label: "Analytics", group: "Control", icon: BarChart3 },
+  {
+    href: "/dashboard/analytics",
+    label: "Analytics",
+    group: "Control",
+    icon: BarChart3,
+  },
   { href: "/settings", label: "Settings", group: "Control", icon: Settings },
 ];
 
@@ -78,6 +83,18 @@ const mobileNav = desktopNav.filter((item) =>
     item.href,
   ),
 );
+
+function isPathMatch(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function getActiveNavHref(pathname: string) {
+  const normalized = pathname.replace(/\/+$/, "") || "/";
+  const matches = desktopNav
+    .filter((item) => isPathMatch(normalized, item.href))
+    .sort((a, b) => b.href.length - a.href.length);
+  return matches[0]?.href ?? "/dashboard";
+}
 
 export function paymentBadgeTone(status: PaymentStatus) {
   switch (status) {
@@ -114,9 +131,9 @@ export function DashboardShellFrame({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const activeNavHref = getActiveNavHref(pathname);
   const currentLabel =
-    desktopNav.find((item) => pathname.startsWith(item.href))?.label ??
-    "Overview";
+    desktopNav.find((item) => item.href === activeNavHref)?.label ?? "Overview";
   const groupedNav = useMemo(
     () =>
       (["Operations", "Control"] as const).map((group) => ({
@@ -223,7 +240,7 @@ export function DashboardShellFrame({
                       <AppLink
                         key={item.href}
                         item={item}
-                        pathname={pathname}
+                        activeHref={activeNavHref}
                         collapsed={collapsed}
                       />
                     ))}
@@ -313,7 +330,7 @@ export function DashboardShellFrame({
                           <AppLink
                             key={item.href}
                             item={item}
-                            pathname={pathname}
+                            activeHref={activeNavHref}
                             onClick={() => setMobileOpen(false)}
                           />
                         ))}
@@ -351,7 +368,7 @@ export function DashboardShellFrame({
           <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-[var(--color-wb-border)] bg-white/96 backdrop-blur-xl lg:hidden">
             <div className="mx-auto flex max-w-screen-sm items-stretch justify-between px-2 pb-[max(0.55rem,env(safe-area-inset-bottom))] pt-2">
               {mobileNav.map((item) => {
-                const active = pathname.startsWith(item.href);
+                const active = item.href === activeNavHref;
                 const Icon = item.icon;
                 return (
                   <Link
@@ -384,16 +401,16 @@ export function DashboardShellFrame({
 
 function AppLink({
   item,
-  pathname,
+  activeHref,
   collapsed = false,
   onClick,
 }: {
   item: NavItem;
-  pathname: string;
+  activeHref: string;
   collapsed?: boolean;
   onClick?: () => void;
 }) {
-  const active = pathname.startsWith(item.href);
+  const active = item.href === activeHref;
   const Icon = item.icon;
 
   return (
