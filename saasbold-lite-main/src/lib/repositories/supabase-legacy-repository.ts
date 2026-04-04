@@ -59,8 +59,8 @@ type LegacyCustomerRow = {
   business_id: string;
   name: string;
   phone: string | null;
-  whatsapp_number: string | null;
-  source_channel: SourceChannel | string | null;
+  whatsapp_number?: string | null;
+  source_channel?: SourceChannel | string | null;
   area: string | null;
   notes: string | null;
   status: "active" | "waiting" | "vip" | string | null;
@@ -181,8 +181,10 @@ const PAYMENT_PROVIDERS = [
 const RECONCILIATION_STATUSES = ["matched", "pending", "unmatched"] as const;
 const LEGACY_ORDER_SELECT =
   "id,business_id,customer_id,product_name,amount,delivery_area,area,stage,payment_status,payment_method,payment_reference,payment_date,notes,source,created_at,updated_at";
+const LEGACY_CUSTOMER_BASE_SELECT =
+  "id,business_id,name,phone,area,notes,status,created_at,updated_at";
 const LEGACY_CUSTOMER_SELECT =
-  "id,business_id,name,phone,whatsapp_number,source_channel,area,notes,status,created_at,updated_at";
+  LEGACY_CUSTOMER_BASE_SELECT;
 const LEGACY_FOLLOW_UP_SELECT =
   "id,order_id,business_id,title,priority,due_at,note,completed,completed_at,created_at";
 const LEGACY_PAYMENT_SELECT =
@@ -301,6 +303,57 @@ function parseItemList(productName: string | null | undefined) {
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function errorAsText(error: unknown) {
+  if (typeof error === "string") return error.toLowerCase();
+  if (error instanceof Error) return error.message.toLowerCase();
+  return JSON.stringify(error || {}).toLowerCase();
+}
+
+function isMissingLegacyCustomerOptionalColumn(error: unknown) {
+  const text = errorAsText(error);
+  const optionalColumn =
+    text.includes("whatsapp_number") || text.includes("source_channel");
+  const customerContext =
+    text.includes("customers") || text.includes("\"code\":\"42703\"");
+  return optionalColumn && customerContext;
+}
+
+function normalizeLegacyCustomerRow(row: LegacyCustomerRow): LegacyCustomerRow {
+  return {
+    ...row,
+    whatsapp_number: row.whatsapp_number ?? null,
+    source_channel: row.source_channel ?? null,
+  };
+}
+
+async function patchLegacyCustomerOptionalColumns(input: {
+  businessId: string;
+  customerId: string;
+  whatsappNumber?: string | null;
+  sourceChannel?: SourceChannel | null;
+}) {
+  const payload: Record<string, unknown> = {};
+  const whatsapp = cleanText(input.whatsappNumber);
+  const channel = cleanText(input.sourceChannel);
+  if (whatsapp) payload.whatsapp_number = whatsapp;
+  if (channel) payload.source_channel = channel;
+  if (Object.keys(payload).length === 0) return;
+
+  const client = createSupabaseServiceClient();
+  const { error } = await client
+    .from("customers")
+    .update(payload)
+    .eq("business_id", input.businessId)
+    .eq("id", input.customerId);
+
+  // Optional compatibility fields should never take down auth-protected pages.
+  if (error && !isMissingLegacyCustomerOptionalColumn(error)) {
+    throw new Error(
+      `Failed to update optional customer columns: ${JSON.stringify(error)}`,
+    );
+  }
 }
 
 function deriveFollowUpStatus(
@@ -666,7 +719,10 @@ async function getLegacyCustomersByIds(ids: string[]) {
   }
 
   return new Map<string, LegacyCustomerRow>(
-    ((data || []) as LegacyCustomerRow[]).map((row) => [row.id, row]),
+    ((data || []) as LegacyCustomerRow[]).map((row) => {
+      const normalized = normalizeLegacyCustomerRow(row);
+      return [normalized.id, normalized];
+    }),
   );
 }
 
@@ -1111,7 +1167,7 @@ async function findOrCreateCustomer(
       .eq("phone", phone.trim())
       .maybeSingle();
     if (!byPhone.error && byPhone.data)
-      return byPhone.data as LegacyCustomerRow;
+      return normalizeLegacyCustomerRow(byPhone.data as LegacyCustomerRow);
   }
 
   const byName = await client
@@ -1120,7 +1176,9 @@ async function findOrCreateCustomer(
     .eq("business_id", businessId)
     .eq("name", name.trim())
     .maybeSingle();
-  if (!byName.error && byName.data) return byName.data as LegacyCustomerRow;
+  if (!byName.error && byName.data) {
+    return normalizeLegacyCustomerRow(byName.data as LegacyCustomerRow);
+  }
 
   const { data, error } = await client
     .from("customers")
@@ -1128,8 +1186,6 @@ async function findOrCreateCustomer(
       business_id: businessId,
       name: name.trim(),
       phone: phone?.trim() || null,
-      whatsapp_number: phone?.trim() || null,
-      source_channel: sourceChannel || "WhatsApp",
       area: area?.trim() || null,
       notes: null,
       status: "active",
@@ -1140,7 +1196,14 @@ async function findOrCreateCustomer(
   if (error || !data) {
     throw new Error(`Failed to create customer: ${JSON.stringify(error)}`);
   }
-  return data as LegacyCustomerRow;
+  const row = normalizeLegacyCustomerRow(data as LegacyCustomerRow);
+  await patchLegacyCustomerOptionalColumns({
+    businessId,
+    customerId: row.id,
+    whatsappNumber: phone?.trim() || null,
+    sourceChannel: sourceChannel || "WhatsApp",
+  });
+  return row;
 }
 
 async function createOrder(input: CreateOrderInput) {
@@ -1319,6 +1382,7 @@ async function listCustomers(query: CustomersQuery = {}) {
     });
 
   const records = ((customersData || []) as LegacyCustomerRow[])
+    .map(normalizeLegacyCustomerRow)
     .map((row): CustomerRecord => {
       const stats = orderStatsByCustomer.get(row.id);
       const totalOrders = stats?.totalOrders || 0;
@@ -1418,7 +1482,9 @@ async function getCustomerProfileById(id: string): Promise<CustomerProfileRecord
   }
   if (!customerResult.data) return null;
 
-  const customerRow = customerResult.data as LegacyCustomerRow;
+  const customerRow = normalizeLegacyCustomerRow(
+    customerResult.data as LegacyCustomerRow,
+  );
   const [orderRows, followUpRows] = await Promise.all([
     listLegacyOrdersByBusiness(),
     listLegacyFollowUpsByBusiness(),
@@ -1535,8 +1601,6 @@ async function createCustomer(input: CreateCustomerInput) {
       business_id: businessId,
       name: input.name,
       phone: input.phone || null,
-      whatsapp_number: input.whatsappNumber || input.phone || null,
-      source_channel: input.sourceChannel || "Unknown",
       area: input.location || null,
       notes: input.notes || null,
       status: input.status,
@@ -1548,7 +1612,13 @@ async function createCustomer(input: CreateCustomerInput) {
     throw new Error(`Failed to create customer: ${JSON.stringify(error)}`);
   }
 
-  const row = data as LegacyCustomerRow;
+  const row = normalizeLegacyCustomerRow(data as LegacyCustomerRow);
+  await patchLegacyCustomerOptionalColumns({
+    businessId,
+    customerId: row.id,
+    whatsappNumber: input.whatsappNumber || input.phone || null,
+    sourceChannel: input.sourceChannel || "Unknown",
+  });
   return {
     id: row.id,
     name: row.name,
@@ -1578,8 +1648,6 @@ async function updateCustomer(id: string, input: UpdateCustomerInput) {
     .update({
       name: input.name || undefined,
       phone: input.phone || undefined,
-      whatsapp_number: input.whatsappNumber || undefined,
-      source_channel: input.sourceChannel || undefined,
       area: input.location || undefined,
       notes: input.notes === undefined ? undefined : input.notes || null,
       status: input.status || undefined,
@@ -1591,6 +1659,12 @@ async function updateCustomer(id: string, input: UpdateCustomerInput) {
   if (error) {
     throw new Error(`Failed to update customer: ${JSON.stringify(error)}`);
   }
+  await patchLegacyCustomerOptionalColumns({
+    businessId,
+    customerId: id,
+    whatsappNumber: input.whatsappNumber || null,
+    sourceChannel: input.sourceChannel || null,
+  });
   return getCustomerById(id);
 }
 
