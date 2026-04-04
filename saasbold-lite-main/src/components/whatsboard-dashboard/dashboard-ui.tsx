@@ -302,7 +302,7 @@ export function DashboardShellFrame({
                 className="absolute inset-0 bg-black/30"
                 onClick={() => setMobileOpen(false)}
               />
-              <div className="absolute left-0 top-0 h-full w-[86vw] max-w-[22rem] border-r border-[var(--color-wb-border)] bg-white p-4 shadow-[0_30px_60px_rgba(17,17,17,0.18)]">
+              <div className="absolute left-0 top-0 flex h-full w-[86vw] max-w-[22rem] flex-col overflow-hidden border-r border-[var(--color-wb-border)] bg-white p-4 shadow-[0_30px_60px_rgba(17,17,17,0.18)]">
                 <div className="flex items-center justify-between">
                   <div className="min-w-0">
                     <p className="text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
@@ -319,26 +319,28 @@ export function DashboardShellFrame({
                     <X className="h-4 w-4" />
                   </button>
                 </div>
-                <div className="mt-5 space-y-5">
-                  {groupedNav.map((section) => (
-                    <section key={section.group}>
-                      <p className="px-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
-                        {section.group}
-                      </p>
-                      <div className="mt-2 space-y-2">
-                        {section.items.map((item) => (
-                          <AppLink
-                            key={item.href}
-                            item={item}
-                            activeHref={activeNavHref}
-                            onClick={() => setMobileOpen(false)}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  ))}
+                <div className="mt-5 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+                  <div className="space-y-5 pb-3">
+                    {groupedNav.map((section) => (
+                      <section key={section.group}>
+                        <p className="px-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
+                          {section.group}
+                        </p>
+                        <div className="mt-2 space-y-2">
+                          {section.items.map((item) => (
+                            <AppLink
+                              key={item.href}
+                              item={item}
+                              activeHref={activeNavHref}
+                              onClick={() => setMobileOpen(false)}
+                            />
+                          ))}
+                        </div>
+                      </section>
+                    ))}
+                  </div>
                 </div>
-                <div className="mt-5 border-t border-[var(--color-wb-border)] pt-4">
+                <div className="mt-4 border-t border-[var(--color-wb-border)] pt-4">
                   <button
                     onClick={onSignOut}
                     className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[var(--color-wb-border)] bg-white text-sm font-semibold text-[var(--color-wb-text-muted)]"
