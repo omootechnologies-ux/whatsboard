@@ -9,6 +9,7 @@ import {
   SectionCard,
   TimelineList,
 } from "@/components/whatsboard-dashboard/dashboard-ui";
+import { ReceiptShareActions } from "@/components/whatsboard-dashboard/receipt-share-actions";
 import {
   formatCurrency,
   formatDate,
@@ -23,13 +24,21 @@ import {
   formatOrderReference,
   getPrimaryOrderLabel,
 } from "@/lib/display-labels";
+import { getReceiptComposerStateForOrder } from "@/lib/receipts/receipt-service";
 
 export default async function OrderDetailsPage({
   params,
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ created?: string; updated?: string }>;
+  searchParams: Promise<{
+    created?: string;
+    updated?: string;
+    receiptCreated?: string;
+    receiptToken?: string;
+    receiptError?: string;
+    receiptErrorCode?: string;
+  }>;
 }) {
   const { id } = await params;
   const query = await searchParams;
@@ -42,6 +51,18 @@ export default async function OrderDetailsPage({
   const customer = await getCustomerById(order.customerId);
   const orderPayments = await listOrderPayments(order.id);
   const orderFollowUps = await listOrderFollowUps(order.id);
+  let receiptState: Awaited<
+    ReturnType<typeof getReceiptComposerStateForOrder>
+  > | null = null;
+  let receiptStateLoadError: string | null = null;
+  try {
+    receiptState = await getReceiptComposerStateForOrder(order.id);
+  } catch (error) {
+    receiptStateLoadError =
+      error instanceof Error ? error.message : "Unable to load receipt state.";
+  }
+  const receiptToken =
+    query.receiptToken || receiptState?.existingReceipt?.token || null;
 
   return (
     <div className="space-y-5 lg:space-y-6">
@@ -68,6 +89,145 @@ export default async function OrderDetailsPage({
             ? "Order created successfully."
             : "Order updated successfully."}
         </div>
+      ) : null}
+
+      {query.receiptCreated === "1" && receiptToken ? (
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
+          Receipt is ready and shareable.
+          <ReceiptShareActions token={receiptToken} className="mt-3" />
+        </div>
+      ) : null}
+
+      {query.receiptError === "1" ? (
+        <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+          {query.receiptErrorCode === "missing-schema"
+            ? "Receipt schema is missing. Apply the latest Supabase receipt migration, then retry."
+            : query.receiptErrorCode === "not-eligible"
+              ? "Receipt is only available after payment is confirmed or the order is delivered."
+              : "Could not generate the receipt. Try again."}
+        </div>
+      ) : null}
+
+      {receiptStateLoadError ? (
+        <SectionCard
+          title="Send Receipt to Customer"
+          description="Issue a branded receipt link after paid or delivered orders."
+        >
+          <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+            Receipt module is unavailable right now.
+            <br />
+            <span className="font-semibold">
+              {receiptStateLoadError.toLowerCase().includes("relation") &&
+              (receiptStateLoadError.toLowerCase().includes("receipts") ||
+                receiptStateLoadError
+                  .toLowerCase()
+                  .includes("receipt_views"))
+                ? "Apply `saasbold-lite-main/supabase/manual_full_schema_sync.sql` in Supabase SQL Editor."
+                : "Check server logs and Supabase schema consistency."}
+            </span>
+          </div>
+        </SectionCard>
+      ) : null}
+
+      {receiptState ? (
+        <SectionCard
+          title="Send Receipt to Customer"
+          description="Issue a branded receipt link after paid or delivered orders."
+        >
+          <div className="space-y-4">
+            <div className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 text-sm text-[var(--color-wb-text-muted)]">
+              <p className="font-semibold text-[var(--color-wb-text)]">
+                Plan: {receiptState.capabilities.plan.toUpperCase()}
+              </p>
+              <p className="mt-1">
+                Your receipts were viewed {receiptState.monthlyViews} times this
+                month.
+              </p>
+            </div>
+
+            {!receiptState.eligible ? (
+              <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-700">
+                {receiptState.reason ||
+                  "Receipt is available once order is Paid, COD, or Delivered."}
+              </div>
+            ) : (
+              <form
+                action="/api/receipts/issue"
+                method="post"
+                className="grid gap-4 sm:grid-cols-2"
+              >
+                <input type="hidden" name="orderId" value={order.id} />
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
+                    Shop name
+                  </label>
+                  <input
+                    name="shopName"
+                    className="wb-input"
+                    defaultValue={receiptState.existingReceipt?.shopName || ""}
+                    placeholder="Amani Collections"
+                    disabled={!receiptState.capabilities.canSetShopName}
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
+                    Footer mode
+                  </label>
+                  <select
+                    name="footerMode"
+                    className="wb-input"
+                    defaultValue={receiptState.existingReceipt?.footerMode || "whatsboard_link"}
+                  >
+                    {receiptState.capabilities.allowedFooterModes.map((mode) => (
+                      <option key={mode} value={mode}>
+                        {mode === "whatsboard_link"
+                          ? "Order tracked with WhatsBoard"
+                          : mode === "powered_by_whatsboard"
+                            ? "Powered by WhatsBoard"
+                            : mode === "white_label"
+                              ? "White-label (no WhatsBoard footer)"
+                              : "Hide footer"}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
+                    Shop logo URL
+                  </label>
+                  <input
+                    name="shopLogoUrl"
+                    type="url"
+                    className="wb-input"
+                    defaultValue={receiptState.existingReceipt?.shopLogoUrl || ""}
+                    placeholder="https://..."
+                    disabled={!receiptState.capabilities.canSetLogo}
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
+                    Thank you message
+                  </label>
+                  <textarea
+                    name="thankYouMessage"
+                    className="wb-textarea"
+                    defaultValue={receiptState.existingReceipt?.thankYouMessage || ""}
+                    placeholder="Asante sana kwa ku-support biashara yetu."
+                    disabled={!receiptState.capabilities.canSetThankYouMessage}
+                  />
+                </div>
+                <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
+                  <button type="submit" className="wb-button-primary">
+                    Send Receipt to Customer
+                  </button>
+                  {receiptToken ? (
+                    <ReceiptShareActions token={receiptToken} />
+                  ) : null}
+                </div>
+              </form>
+            )}
+          </div>
+        </SectionCard>
       ) : null}
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">

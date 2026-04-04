@@ -20,6 +20,7 @@ const PROTECTED_PREFIXES = [
   "/api/orders",
   "/api/follow-ups",
   "/api/payments",
+  "/api/receipts",
   "/api/billing",
   "/api/team",
 ] as const;

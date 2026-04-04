@@ -888,7 +888,11 @@ export function OrderStageBoard({
       </div>
       <div className="mt-4 space-y-3">
         {orders.length ? (
-          orders.map((order) => <OrderCard key={order.id} order={order} />)
+          orders.map((order) => (
+            <Link key={order.id} href={`/orders/${order.id}`} className="block">
+              <OrderCard order={order} />
+            </Link>
+          ))
         ) : (
           <div className="rounded-[20px] border border-dashed border-[var(--color-wb-border)] bg-white px-4 py-8 text-center text-sm text-[var(--color-wb-text-muted)]">
             No orders in this stage.

@@ -20,6 +20,7 @@ import {
   getDashboardSnapshot,
   listPayments,
 } from "@/lib/whatsboard-repository";
+import { getReceiptViewsThisMonthForCurrentBusiness } from "@/lib/receipts/receipt-service";
 import {
   formatOrderReference,
   formatPaymentStatusLabel,
@@ -29,8 +30,15 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [{ stats: dashboardStats, customers, followUps, orders }, payments] =
-    await Promise.all([getDashboardSnapshot(), listPayments()]);
+  const [
+    { stats: dashboardStats, customers, followUps, orders },
+    payments,
+    receiptViewsThisMonth,
+  ] = await Promise.all([
+    getDashboardSnapshot(),
+    listPayments(),
+    getReceiptViewsThisMonthForCurrentBusiness().catch(() => 0),
+  ]);
   const totalUniqueCustomers = customers.length;
   const repeatCustomers = customers.filter((customer) => customer.isRepeatBuyer)
     .length;
@@ -247,6 +255,15 @@ export default async function DashboardPage() {
           description="Action prompts to protect repeat revenue."
         >
           <div className="space-y-3">
+            <div className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4">
+              <p className="text-sm font-semibold text-[var(--color-wb-text)]">
+                Receipts viewed
+              </p>
+              <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
+                Your receipts were viewed {receiptViewsThisMonth} times this
+                month.
+              </p>
+            </div>
             <div className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4">
               <p className="text-sm font-semibold text-[var(--color-wb-text)]">
                 Daily digest

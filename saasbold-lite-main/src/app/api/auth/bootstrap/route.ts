@@ -6,6 +6,7 @@ import {
   WHATSBOARD_REFRESH_TOKEN_COOKIE,
 } from "@/lib/auth/constants";
 import { provisionLegacyBusinessForAccessToken } from "@/lib/repositories/supabase-legacy-repository";
+import { attributeReceiptReferralConversion } from "@/lib/receipts/receipt-service";
 
 function extractBearerToken(value: string | null) {
   if (!value) return null;
@@ -44,11 +45,12 @@ export async function POST(request: Request) {
     const cookieStore = await cookies();
     const isJson = request.headers.get("content-type")?.includes("application/json");
     const payload = isJson
-      ? ((await request.json().catch(() => ({}))) as {
+        ? ((await request.json().catch(() => ({}))) as {
           businessName?: unknown;
           accessToken?: unknown;
           refreshToken?: unknown;
           expiresAt?: unknown;
+          referralToken?: unknown;
         })
       : {};
 
@@ -68,11 +70,23 @@ export async function POST(request: Request) {
     const businessNameHint = cleanBusinessName(payload.businessName);
     const refreshToken = cleanToken(payload.refreshToken);
     const expiresAt = parseExpiresAt(payload.expiresAt);
+    const referralToken = cleanToken(payload.referralToken);
 
     const context = await provisionLegacyBusinessForAccessToken({
       accessToken,
       businessNameHint,
     });
+
+    if (referralToken) {
+      try {
+        await attributeReceiptReferralConversion({
+          token: referralToken,
+          convertedUserId: context.userId,
+        });
+      } catch {
+        // Referral attribution must never block auth bootstrap.
+      }
+    }
 
     const response = NextResponse.json({
       ok: true,
