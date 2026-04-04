@@ -3,12 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Loader2, ShieldCheck } from "lucide-react";
+import type { Session } from "@supabase/supabase-js";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
-import {
-  clearAuthSessionCookies,
-  persistAuthSessionCookies,
-} from "@/lib/auth/cookies";
-import { WHATSBOARD_ACCESS_TOKEN_COOKIE } from "@/lib/auth/constants";
+import { clearAuthSessionCookies } from "@/lib/auth/cookies";
 
 type AuthMode = "login" | "register";
 
@@ -53,16 +50,18 @@ function getRedirectPath(nextParam: string | null) {
 }
 
 async function bootstrapBusinessContext(options: {
-  accessToken: string;
+  session: Session;
   businessName?: string;
 }) {
   const response = await fetch("/api/auth/bootstrap", {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      authorization: `Bearer ${options.accessToken}`,
     },
     body: JSON.stringify({
+      accessToken: options.session.access_token,
+      refreshToken: options.session.refresh_token,
+      expiresAt: options.session.expires_at,
       businessName: options.businessName || undefined,
     }),
   });
@@ -73,23 +72,6 @@ async function bootstrapBusinessContext(options: {
     error?: string;
   };
   throw new Error(payload.error || "Failed to prepare your business profile.");
-}
-
-function hasCookie(name: string) {
-  if (typeof document === "undefined") return false;
-  return document.cookie
-    .split(";")
-    .some((entry) => entry.trim().startsWith(`${name}=`));
-}
-
-async function persistSessionCookiesOrThrow(
-  session: Parameters<typeof persistAuthSessionCookies>[0],
-) {
-  persistAuthSessionCookies(session);
-  await new Promise((resolve) => setTimeout(resolve, 0));
-  if (!hasCookie(WHATSBOARD_ACCESS_TOKEN_COOKIE)) {
-    throw new Error("Could not persist session cookie.");
-  }
 }
 
 export function AuthForm({ mode }: { mode: AuthMode }) {
@@ -143,9 +125,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         }
 
         if (data.session) {
-          await persistSessionCookiesOrThrow(data.session);
           await bootstrapBusinessContext({
-            accessToken: data.session.access_token,
+            session: data.session,
           });
           if (!redirectInFlightRef.current) {
             redirectInFlightRef.current = true;
@@ -262,9 +243,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 return;
               }
 
-              await persistSessionCookiesOrThrow(data.session);
               await bootstrapBusinessContext({
-                accessToken: data.session.access_token,
+                session: data.session,
                 businessName,
               });
               window.location.assign(redirectPath);
@@ -290,14 +270,12 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 clearAuthSessionCookies();
                 return;
               }
-              await persistSessionCookiesOrThrow(sessionData.session);
               await bootstrapBusinessContext({
-                accessToken: sessionData.session.access_token,
+                session: sessionData.session,
               });
             } else {
-              await persistSessionCookiesOrThrow(data.session);
               await bootstrapBusinessContext({
-                accessToken: data.session.access_token,
+                session: data.session,
               });
             }
 

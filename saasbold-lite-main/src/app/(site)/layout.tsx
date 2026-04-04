@@ -1,7 +1,10 @@
 import { DashboardShell } from "@/components/whatsboard-dashboard/dashboard-shell";
 import { WHATSBOARD_ACCESS_TOKEN_COOKIE } from "@/lib/auth/constants";
 import { getPaymentsReconciledTodayCount } from "@/lib/whatsboard-repository";
-import { resolveLegacyBusinessContextForRequest } from "@/lib/repositories/supabase-legacy-repository";
+import {
+  provisionLegacyBusinessForAccessToken,
+  resolveLegacyBusinessContextForRequest,
+} from "@/lib/repositories/supabase-legacy-repository";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Providers } from "./providers";
@@ -18,17 +21,43 @@ export default async function SiteLayout({
     redirect("/login?next=%2Fdashboard");
   }
 
+  const isAuthSessionError = (error: unknown) => {
+    const message =
+      error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+    return (
+      message.includes("authentication") ||
+      message.includes("session") ||
+      message.includes("authenticated user is required") ||
+      message.includes("invalid or expired")
+    );
+  };
+
   let businessName: string | null = null;
   let paymentsReconciledToday = 0;
   try {
-    const [context, reconciledToday] = await Promise.all([
-      resolveLegacyBusinessContextForRequest(),
-      getPaymentsReconciledTodayCount(),
-    ]);
+    const context = await resolveLegacyBusinessContextForRequest();
     businessName = context.businessName;
-    paymentsReconciledToday = reconciledToday;
+  } catch (error) {
+    if (isAuthSessionError(error)) {
+      redirect("/login?force=1&next=%2Fdashboard");
+    }
+
+    try {
+      await provisionLegacyBusinessForAccessToken({ accessToken });
+      const context = await resolveLegacyBusinessContextForRequest();
+      businessName = context.businessName;
+    } catch (fallbackError) {
+      if (isAuthSessionError(fallbackError)) {
+        redirect("/login?force=1&next=%2Fdashboard");
+      }
+      throw fallbackError;
+    }
+  }
+
+  try {
+    paymentsReconciledToday = await getPaymentsReconciledTodayCount();
   } catch {
-    redirect("/login?force=1&next=%2Fdashboard");
+    paymentsReconciledToday = 0;
   }
 
   return (

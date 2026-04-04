@@ -1,6 +1,10 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { WHATSBOARD_ACCESS_TOKEN_COOKIE } from "@/lib/auth/constants";
+import {
+  WHATSBOARD_ACCESS_TOKEN_COOKIE,
+  WHATSBOARD_EXPIRES_AT_COOKIE,
+  WHATSBOARD_REFRESH_TOKEN_COOKIE,
+} from "@/lib/auth/constants";
 import { provisionLegacyBusinessForAccessToken } from "@/lib/repositories/supabase-legacy-repository";
 
 function extractBearerToken(value: string | null) {
@@ -16,15 +20,43 @@ function cleanBusinessName(value: unknown) {
   return parsed.length ? parsed : null;
 }
 
+function cleanToken(value: unknown) {
+  const parsed = String(value || "").trim();
+  return parsed.length ? parsed : null;
+}
+
+function parseExpiresAt(value: unknown) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  return Math.max(1, Math.floor(parsed));
+}
+
+function isSecureRequest(request: Request) {
+  try {
+    return new URL(request.url).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
-    const tokenFromHeader = extractBearerToken(
-      request.headers.get("authorization"),
-    );
+    const isJson = request.headers.get("content-type")?.includes("application/json");
+    const payload = isJson
+      ? ((await request.json().catch(() => ({}))) as {
+          businessName?: unknown;
+          accessToken?: unknown;
+          refreshToken?: unknown;
+          expiresAt?: unknown;
+        })
+      : {};
+
+    const tokenFromHeader = extractBearerToken(request.headers.get("authorization"));
+    const tokenFromBody = cleanToken(payload.accessToken);
     const tokenFromCookie =
       cookieStore.get(WHATSBOARD_ACCESS_TOKEN_COOKIE)?.value || null;
-    const accessToken = tokenFromHeader || tokenFromCookie;
+    const accessToken = tokenFromBody || tokenFromHeader || tokenFromCookie;
 
     if (!accessToken) {
       return NextResponse.json(
@@ -33,20 +65,16 @@ export async function POST(request: Request) {
       );
     }
 
-    let businessNameHint: string | null = null;
-    if (request.headers.get("content-type")?.includes("application/json")) {
-      const payload = (await request.json().catch(() => ({}))) as {
-        businessName?: unknown;
-      };
-      businessNameHint = cleanBusinessName(payload.businessName);
-    }
+    const businessNameHint = cleanBusinessName(payload.businessName);
+    const refreshToken = cleanToken(payload.refreshToken);
+    const expiresAt = parseExpiresAt(payload.expiresAt);
 
     const context = await provisionLegacyBusinessForAccessToken({
       accessToken,
       businessNameHint,
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       ok: true,
       business: {
         id: context.businessId,
@@ -57,6 +85,41 @@ export async function POST(request: Request) {
         email: context.profileEmail,
       },
     });
+
+    const secure = isSecureRequest(request);
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const effectiveExpiresAt = expiresAt && expiresAt > nowSeconds
+      ? expiresAt
+      : nowSeconds + 3600;
+    const accessMaxAge = Math.max(60, effectiveExpiresAt - nowSeconds);
+
+    response.cookies.set(WHATSBOARD_ACCESS_TOKEN_COOKIE, accessToken, {
+      path: "/",
+      maxAge: accessMaxAge,
+      sameSite: "lax",
+      secure,
+      httpOnly: false,
+    });
+
+    if (refreshToken) {
+      response.cookies.set(WHATSBOARD_REFRESH_TOKEN_COOKIE, refreshToken, {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 30,
+        sameSite: "lax",
+        secure,
+        httpOnly: false,
+      });
+    }
+
+    response.cookies.set(WHATSBOARD_EXPIRES_AT_COOKIE, String(effectiveExpiresAt), {
+      path: "/",
+      maxAge: accessMaxAge,
+      sameSite: "lax",
+      secure,
+      httpOnly: false,
+    });
+
+    return response;
   } catch (error) {
     const message =
       error instanceof Error
