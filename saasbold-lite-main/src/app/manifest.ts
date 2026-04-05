@@ -55,6 +55,13 @@ export default function manifest(): MetadataRoute.Manifest {
         icons: [{ src: "/icons/icon-192x192.png", sizes: "192x192" }],
       },
     ],
+    share_target: {
+      action: "/api/payments/reconcile-sms",
+      method: "POST",
+      enctype: "multipart/form-data",
+      params: {
+        text: "rawSms",
+      },
+    },
   };
 }
-

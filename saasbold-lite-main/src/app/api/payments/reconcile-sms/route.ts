@@ -6,11 +6,24 @@ export async function POST(request: Request) {
 
   const contentType = request.headers.get("content-type") || "";
   if (contentType.includes("application/json")) {
-    const body = (await request.json()) as { rawSms?: string };
-    rawSms = String(body.rawSms || "");
+    const body = (await request.json()) as {
+      rawSms?: string;
+      sms?: string;
+      message?: string;
+      text?: string;
+    };
+    rawSms = String(body.rawSms || body.sms || body.message || body.text || "");
+  } else if (contentType.startsWith("text/plain")) {
+    rawSms = String(await request.text());
   } else {
     const formData = await request.formData();
-    rawSms = String(formData.get("rawSms") || "");
+    rawSms = String(
+      formData.get("rawSms") ||
+        formData.get("sms") ||
+        formData.get("message") ||
+        formData.get("text") ||
+        "",
+    );
   }
 
   if (!rawSms.trim()) {

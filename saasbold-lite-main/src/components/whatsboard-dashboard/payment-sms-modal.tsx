@@ -92,6 +92,24 @@ export function PaymentSmsModal({
     }
   };
 
+  const pasteFromClipboard = async () => {
+    if (typeof navigator === "undefined" || !navigator.clipboard?.readText) {
+      setError("Clipboard paste is not supported in this browser.");
+      return;
+    }
+    try {
+      const clipboardText = await navigator.clipboard.readText();
+      if (!clipboardText.trim()) {
+        setError("Clipboard is empty. Copy an SMS first.");
+        return;
+      }
+      setSmsText(clipboardText);
+      setError(null);
+    } catch {
+      setError("Could not read clipboard. Paste manually in the SMS box.");
+    }
+  };
+
   const assign = async () => {
     if (!result?.payment.id || !selectedOrderId) {
       setError("Select an order to assign this payment.");
@@ -184,6 +202,14 @@ export function PaymentSmsModal({
                 <div className="mt-3 flex flex-wrap gap-3">
                   <button
                     type="button"
+                    className="wb-button-secondary"
+                    onClick={pasteFromClipboard}
+                    disabled={loading || assigning}
+                  >
+                    Paste from clipboard
+                  </button>
+                  <button
+                    type="button"
                     className="wb-button-primary"
                     onClick={submit}
                     disabled={loading || assigning}
@@ -249,7 +275,12 @@ export function PaymentSmsModal({
                 <div className="mt-3 rounded-xl border border-[var(--color-wb-border)] bg-white px-3 py-2 text-xs text-[var(--color-wb-text-muted)]">
                   {preview.parseable
                     ? "Format recognized. Ready to reconcile."
-                    : "Paste full SMS text to improve parsing."}
+                    : preview.amount !== null ||
+                        preview.reference ||
+                        preview.senderName ||
+                        preview.senderPhone
+                      ? "Partial details found. You can reconcile and confirm manually."
+                      : "Paste full SMS text to improve parsing."}
                 </div>
               </aside>
             </div>
