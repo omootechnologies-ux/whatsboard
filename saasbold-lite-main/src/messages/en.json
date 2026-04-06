@@ -197,5 +197,28 @@
       "contactPrefix": "Pricing, plan limits, and feature availability may vary by plan tier. Contact",
       "contactSuffix": "for enterprise terms."
     }
+  },
+  "pricing": {
+    "heroTagline": "Transparent TZS pricing",
+    "heroHeadline": "Plans built for East African sellers who treat chats as commerce",
+    "heroBody": "Folapp turns scattered WhatsApp, Instagram, and Facebook orders into a fintech-grade control room. Choose the tier that matches your order volume and team size.",
+    "ordersLimitCopy": "Free includes 30 tracked orders per month. Upgrade when you need unlimited flow.",
+    "comparisonTitle": "What each plan unlocks",
+    "comparisonSubtitle": "Predictable TZS pricing so you can scale orders, follow-ups, and teams with confidence.",
+    "comparisonContact": "Need help choosing the right tier? Reach out and we will guide you.",
+    "ordersLimit": "Orders tracked per month",
+    "ordersLimitValue": "{limit} orders per month",
+    "teamSeats": "Team seats",
+    "followUps": "Smarter follow-up reminders",
+    "paymentTracking": "Payment visibility",
+    "dispatchTracking": "Dispatch workflow",
+    "analytics": "Reports & analytics",
+    "prioritySupport": "Priority support",
+    "included": "Included",
+    "unlimited": "Unlimited",
+    "ctaHeadline": "Upgrade when your workflow needs more control",
+    "ctaBody": "Every plan unlocks customer tracking, payment transparency, and delivery visibility. Switch plans anytime from your dashboard.",
+    "ctaButtonPrimary": "Start Free",
+    "ctaSupport": "Contact support for custom billing"
   }
 }

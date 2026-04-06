@@ -197,5 +197,28 @@
       "contactPrefix": "Bei, mipaka ya plan na upatikanaji wa vipengele vinaweza kutofautiana kwa kila plan. Wasiliana na",
       "contactSuffix": "kwa masharti ya enterprise."
     }
+  },
+  "pricing": {
+    "heroTagline": "Bei za wazi kwa TZS",
+    "heroHeadline": "Mipango kwa wauzaji wa Afrika Mashariki wanaoitumia chat kama biashara",
+    "heroBody": "Folapp inabadilisha WhatsApp, Instagram, na Facebook kuwa chumba cha udhibiti cha kiwango cha fintech. Chagua mpango unaolingana na kiasi cha oda na timu yako.",
+    "ordersLimitCopy": "Mpango wa Bure unajumuisha oda 30 kwa mwezi. Boresha unapohitaji mtiririko usio na kikomo.",
+    "comparisonTitle": "Kila mpango unafungua nini",
+    "comparisonSubtitle": "Bei za TZS zilizopangwa kwa uwazi zinakuwezesha kupanga matumizi ya oda, follow-up, na timu.",
+    "comparisonContact": "Unahitaji msaada wa kuchagua? Tuma ujumbe tutakuelekeza.",
+    "ordersLimit": "Oda zinazofuatiliwa kwa mwezi",
+    "ordersLimitValue": "Oda {limit} kwa mwezi",
+    "teamSeats": "Viti vya timu",
+    "followUps": "Vikumbusho vya follow-up",
+    "paymentTracking": "Mwonekano wa malipo",
+    "dispatchTracking": "Mtiririko wa usafirishaji",
+    "analytics": "Ripoti na takwimu",
+    "prioritySupport": "Msaada wa kipaumbele",
+    "included": "Imejumuishwa",
+    "unlimited": "Hapana kikomo",
+    "ctaHeadline": "Boresha unapohitaji udhibiti zaidi",
+    "ctaBody": "Kila mpango unafungua dashibodi, mwonekano wa malipo, na ufuatiliaji wa utoaji. Badilisha mpango wakati wowote kupitia dashibodi.",
+    "ctaButtonPrimary": "Anza Bure",
+    "ctaSupport": "Wasiliana nasi kwa bili maalum"
   }
 }

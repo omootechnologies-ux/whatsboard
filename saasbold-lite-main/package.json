@@ -9,6 +9,8 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
+    "lint": "tsc --noEmit --incremental false",
+    "typecheck": "tsc --noEmit --incremental false",
     "migrate:local-to-supabase": "node scripts/migrate-local-to-supabase.mjs",
     "stripe:listen": "stripe listen --forward-to http://localhost:3000/api/stripe/webhook",
     "check-format": "prettier --check .",

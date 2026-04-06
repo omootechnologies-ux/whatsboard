@@ -42,10 +42,15 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const locale = await getLocale();
+  const messages = (await import(`@/messages/${locale}.json`)).default as Record<
+    string,
+    string
+  >;
+
   return (
     <html lang={locale}>
       <body>
-        <NextIntlClientProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
           <PwaRegister />
         </NextIntlClientProvider>
