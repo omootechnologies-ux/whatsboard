@@ -103,7 +103,8 @@
       "analytics": "Analytics",
       "settings": "Settings"
     },
-    "reconciledToday": "Reconciled today: {count}"
+    "reconciledToday": "Reconciled today: {count}",
+    "receiptViewsThisMonth": "Receipt views this month"
   },
   "shared": {
     "searchRecords": "Search records",

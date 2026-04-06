@@ -103,7 +103,8 @@
       "analytics": "Analytics",
       "settings": "Mipangilio"
     },
-    "reconciledToday": "Malipo yaliyolinganishwa leo: {count}"
+    "reconciledToday": "Malipo yaliyolinganishwa leo: {count}",
+    "receiptViewsThisMonth": "Maona ya risiti mwezi huu"
   },
   "shared": {
     "searchRecords": "Tafuta rekodi",
