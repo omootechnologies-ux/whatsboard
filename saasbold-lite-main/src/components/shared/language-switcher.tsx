@@ -1,8 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import { useLocale } from "next-intl";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useLanguage } from "@/components/i18n/language-provider";
 
 const LOCALES = [
   { code: "en", label: "English" },
@@ -15,12 +13,7 @@ type LanguageSwitcherProps = {
 };
 
 export function LanguageSwitcher({ compact = false, className = "" }: LanguageSwitcherProps) {
-  const locale = useLocale();
-  const pathname = usePathname() || "/";
-  const searchParams = useSearchParams();
-  const queryString = searchParams?.toString();
-
-  const currentSearch = queryString ? `?${queryString}` : "";
+  const { language, setLanguage } = useLanguage();
 
   return (
     <div
@@ -29,18 +22,18 @@ export function LanguageSwitcher({ compact = false, className = "" }: LanguageSw
       } ${className}`}
     >
       {LOCALES.map((item) => (
-        <Link
+        <button
           key={item.code}
-          href={`${pathname}${currentSearch}`}
-          locale={item.code}
-          className={`rounded-full px-3 py-1 transition ${
-            locale === item.code
+          type="button"
+          onClick={() => setLanguage(item.code as Parameters<typeof setLanguage>[0])}
+          className={`rounded-full px-3 py-1 transition focus:outline-none ${
+            language === item.code
               ? "bg-[var(--color-wb-primary)] text-white"
               : "hover:bg-white hover:text-[var(--color-wb-text)]"
           }`}
         >
           {item.label}
-        </Link>
+        </button>
       ))}
     </div>
   );
