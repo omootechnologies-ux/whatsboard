@@ -115,6 +115,28 @@ const swTranslations: Record<string, string> = {
   "face this chaos every single day.": "wanakabiliwa na vurugu hizi kila siku.",
   "The sellers who fix this early look faster, more trustworthy, and more professional. The ones who wait keep losing sales inside the same chats that bring them customers.":
     "Wauzaji wanaorekebisha hili mapema wanaonekana wa haraka, wa kuaminika, na wa kitaalamu zaidi. Wanaosubiri wanaendelea kupoteza mauzo ndani ya chat zilezile zinazowaletea wateja.",
+  "COST OF DOING NOTHING": "GHARAMA YA KUTOFANYA CHOCHOTE",
+  "How Much Is WhatsApp Chaos Costing You Every Week?": "Vurugu za WhatsApp Zinakugharimu Kiasi Gani Kila Wiki?",
+  "You do not need 100 lost customers to have a problem. Sometimes 2 forgotten orders, 3 delayed replies, and 1 unpaid delivery are already enough to quietly damage your business.":
+    "Huhitaji kupoteza wateja 100 ndipo ujue kuna tatizo. Wakati mwingine oda 2 zilizosahaulika, majibu 3 yaliyochelewa, na delivery 1 isiyolipwa tayari vinatosha kuharibu biashara yako kimya kimya.",
+  "Cost snapshot": "Muhtasari wa hasara",
+  "Lose just 2 orders a week worth TZS 20,000 each = TZS 160,000 lost per month":
+    "Poteza oda 2 tu kwa wiki zenye thamani ya TZS 20,000 kila moja = TZS 160,000 hupotea kwa mwezi",
+  "Two forgotten orders a week can quietly cost you more than you think.":
+    "Oda mbili zilizosahaulika kwa wiki zinaweza kukugharimu zaidi ya unavyofikiri kimya kimya.",
+  "Late Replies": "Majibu Yaliyochelewa",
+  "One slow reply can send a customer to another seller and reduce repeat business.":
+    "Jibu moja la polepole linaweza kumpeleka mteja kwa muuzaji mwingine na kupunguza mauzo ya kurudia.",
+  "Mental Overload": "Mzigo wa Akili",
+  "Every hour spent digging through chats is time not spent selling, packing, or delivering.":
+    "Kila saa unayotumia kuchimba chat ni muda ambao hautumiki kuuza, kupakia, au kusafirisha.",
+  "Most sellers do not have a marketing problem. They have a follow-up problem dressed like normal business.":
+    "Wauzaji wengi hawana tatizo la masoko. Wana tatizo la ufuatiliaji ambalo limejificha kama biashara ya kawaida.",
+  "WhatsBoard Starter is TZS 15,000/month. Losing even one order can cost more than that.":
+    "WhatsBoard Starter ni TZS 15,000 kwa mwezi. Kupoteza hata oda moja kunaweza kugharimu zaidi ya hapo.",
+  "Stop losing money in silence": "Acha kupoteza pesa kimya kimya",
+  "Track your first 30 orders free and see what organized selling feels like.":
+    "Fuatilia oda zako 30 za kwanza bure na uone kuuza kwa mpangilio kunavyojisikia.",
   "Simple & Powerful": "Rahisi na nguvu",
   "How WhatsBoard Works": "Jinsi WhatsBoard inavyofanya kazi",
   "Four simple steps to transform your WhatsApp selling into a professional operation.":

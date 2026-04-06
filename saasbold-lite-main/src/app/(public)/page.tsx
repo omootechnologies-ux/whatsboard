@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getLocale } from "next-intl/server";
 import {
   AlertTriangle,
   ArrowRight,
@@ -12,13 +13,14 @@ import type {
   PaymentRecord,
 } from "@/data/whatsboard";
 import { formatCurrency } from "@/components/whatsboard-dashboard/formatting";
-import { pricingPlans } from "@/data/pricing-plans";
+import { getPricingPlans } from "@/data/pricing-plans";
 import { PricingCard } from "@/components/whatsboard-public/pricing-card";
 import {
   formatOrderReference,
   formatPaymentStatusLabel,
   getPrimaryOrderLabel,
 } from "@/lib/display-labels";
+import { translateUiText } from "@/lib/ui-translations";
 
 export const dynamic = "force-static";
 
@@ -326,7 +328,27 @@ function paymentTone(status: PaymentRecord["status"]) {
   return "neutral";
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const locale = await getLocale();
+  const tr = (value: string) => translateUiText(value, locale as "en" | "sw");
+  const pricingPlans = getPricingPlans(locale);
+
+  const localizedPainPoints = painPoints.map((item) => tr(item));
+  const localizedWhoItIsFor = whoItIsFor.map((item) => tr(item));
+  const localizedHowItWorks = howItWorks.map((item) => tr(item));
+  const localizedBeforeWhatsBoard = beforeWhatsBoard.map((item) => tr(item));
+  const localizedAfterWhatsBoard = afterWhatsBoard.map((item) => tr(item));
+  const localizedCredibilityBlocks = credibilityBlocks.map((item) => tr(item));
+  const localizedTestimonials = testimonials.map((item) => ({
+    ...item,
+    quote: tr(item.quote),
+    role: tr(item.role)
+  }));
+  const localizedFaqs = faqs.map((item) => ({
+    question: tr(item.question),
+    answer: tr(item.answer)
+  }));
+
   const orderedByUpdate = [...demoOrders]
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     .slice(0, 4);
@@ -347,7 +369,7 @@ export default function HomePage() {
         customerName: item.customerName,
         orderId: item.orderId,
         kind: "customer",
-      })} follow-up`,
+      })} ${tr("follow-up")}`,
       subtitle: item.note,
       badge: item.status,
       tone:
@@ -375,49 +397,48 @@ export default function HomePage() {
         <div className="relative mx-auto grid w-full max-w-[1240px] gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:px-8 lg:py-20">
           <div>
             <p className="inline-flex rounded-full bg-[var(--color-wb-primary-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-              For WhatsApp and social sellers
+              {tr("For WhatsApp and social sellers")}
             </p>
             <h1 className="mt-5 text-4xl font-black leading-[1.05] tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-5xl lg:text-6xl">
-              Selling on WhatsApp should not be this confusing
+              {tr("Selling on WhatsApp should not be this confusing")}
             </h1>
             {/* Alternative: Manage WhatsApp orders before they manage you */}
             <p className="mt-5 max-w-xl text-base leading-8 text-[var(--color-wb-text-muted)] sm:text-lg">
-              If you sell through WhatsApp, Instagram, or status, you already
-              know the problem: chats move fast, orders get buried, payments get
-              forgotten, and follow-ups disappear. WhatsBoard gives you one
-              simple place to track orders, customers, payments, and deliveries.
+              {tr(
+                "If you sell through WhatsApp, Instagram, or status, you already know the problem: chats move fast, orders get buried, payments get forgotten, and follow-ups disappear. WhatsBoard gives you one simple place to track orders, customers, payments, and deliveries.",
+              )}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/register?force=1" className="wb-button-primary">
-                Start Free
+                {tr("Start Free")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/login?next=%2Fdashboard"
                 className="wb-button-secondary"
               >
-                Watch Demo
+                {tr("Watch Demo")}
               </Link>
             </div>
             <p className="mt-4 text-sm font-semibold text-[var(--color-wb-text-muted)]">
-              Built for East African online sellers
+              {tr("Built for East African online sellers")}
             </p>
           </div>
 
           <div className="wb-shell-card p-5 sm:p-6" id="product">
             <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-                Product preview
+                {tr("Product preview")}
               </p>
               <span className="rounded-full bg-[var(--color-wb-primary-soft)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-primary)]">
-                Demo sample
+                {tr("Demo sample")}
               </span>
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <article className="wb-soft-card p-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                  Active orders
+                  {tr("Active orders")}
                 </p>
                 <p className="mt-2 text-2xl font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                   {demoStats.activeOrders}
@@ -425,7 +446,7 @@ export default function HomePage() {
               </article>
               <article className="wb-soft-card p-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                  Pending payments
+                  {tr("Pending payments")}
                 </p>
                 <p className="mt-2 text-2xl font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                   {formatCurrency(demoStats.payoutPending)}
@@ -433,7 +454,7 @@ export default function HomePage() {
               </article>
               <article className="wb-soft-card p-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                  Follow-ups due
+                  {tr("Follow-ups due")}
                 </p>
                 <p className="mt-2 text-2xl font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                   {demoStats.followUpsDue}
@@ -457,24 +478,25 @@ export default function HomePage() {
                         })}
                       </p>
                       <span className="rounded-full bg-[var(--color-wb-primary-soft)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-primary)]">
-                        {stageLabel(order.stage)}
+                        {tr(stageLabel(order.stage))}
                       </span>
                     </div>
                     <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
                       {order.channel} • {formatCurrency(order.amount)} •{" "}
-                      {formatPaymentStatusLabel(order.paymentStatus)}
+                      {tr(formatPaymentStatusLabel(order.paymentStatus))}
                     </p>
                     <p className="mt-1 text-xs uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
                       {formatOrderReference(order.id)
-                        ? `Order #${formatOrderReference(order.id)}`
-                        : "Untitled order"}
+                        ? `${tr("Order #")}${formatOrderReference(order.id)}`
+                        : tr("Untitled order")}
                     </p>
                   </article>
                 ))
               ) : (
                 <article className="rounded-2xl border border-dashed border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 text-sm text-[var(--color-wb-text-muted)]">
-                  Demo preview cards appear here. Start Free to track your own
-                  real orders.
+                  {tr(
+                    "Demo preview cards appear here. Start Free to track your own real orders.",
+                  )}
                 </article>
               )}
             </div>
@@ -497,14 +519,15 @@ export default function HomePage() {
                     <span
                       className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] ${toneClass(item.tone)}`}
                     >
-                      {item.badge}
+                      {tr(item.badge)}
                     </span>
                   </article>
                 ))
               ) : (
                 <article className="rounded-2xl border border-dashed border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 text-sm text-[var(--color-wb-text-muted)]">
-                  Demo activity appears here. Your real updates start after
-                  signup.
+                  {tr(
+                    "Demo activity appears here. Your real updates start after signup.",
+                  )}
                 </article>
               )}
             </div>
@@ -515,15 +538,15 @@ export default function HomePage() {
       <section className="mx-auto w-full max-w-[1240px] px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-            Pain
+            {tr("Pain")}
           </p>
           <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-4xl">
-            What WhatsApp chaos quietly costs a seller
+            {tr("What WhatsApp chaos quietly costs a seller")}
           </h2>
         </div>
 
         <div className="mt-9 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-          {painPoints.map((point) => (
+            {localizedPainPoints.map((point) => (
             <article key={point} className="wb-shell-card p-5">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-50 text-rose-600">
                 <AlertTriangle className="h-5 w-5" />
@@ -536,7 +559,7 @@ export default function HomePage() {
         </div>
 
         <p className="mt-8 text-center text-lg font-semibold text-[var(--color-wb-primary-dark)] sm:text-xl">
-          Two missed orders a week can cost more than your monthly plan.
+          {tr("Two missed orders a week can cost more than your monthly plan.")}
         </p>
       </section>
 
@@ -544,33 +567,33 @@ export default function HomePage() {
         <div className="mx-auto grid w-full max-w-[1240px] gap-8 px-4 py-14 sm:px-6 lg:grid-cols-[1.08fr_0.92fr] lg:items-start lg:px-8 lg:py-20">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-wb-primary)]">
-              Relief
+              {tr("Relief")}
             </p>
             <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-4xl">
-              This is where the chaos stops
+              {tr("This is where the chaos stops")}
             </h2>
             <p className="mt-4 text-base leading-8 text-[var(--color-wb-text-muted)] sm:text-lg">
-              WhatsBoard turns scattered chats into a simple order system.
+              {tr("WhatsBoard turns scattered chats into a simple order system.")}
             </p>
 
             <ul className="mt-6 space-y-3">
               <li className="flex items-start gap-3 text-sm text-[var(--color-wb-text)] sm:text-base">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 text-[var(--color-wb-primary)]" />
-                See every order in one place
+                {tr("See every order in one place")}
               </li>
               <li className="flex items-start gap-3 text-sm text-[var(--color-wb-text)] sm:text-base">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 text-[var(--color-wb-primary)]" />
-                Know what is paid, packed, or pending
+                {tr("Know what is paid, packed, or pending")}
               </li>
               <li className="flex items-start gap-3 text-sm text-[var(--color-wb-text)] sm:text-base">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 text-[var(--color-wb-primary)]" />
-                Follow up before customers disappear
+                {tr("Follow up before customers disappear")}
               </li>
             </ul>
 
             <div className="mt-7">
               <Link href="/register?force=1" className="wb-button-primary">
-                Get Started Today
+                {tr("Get Started Today")}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -581,13 +604,13 @@ export default function HomePage() {
               {demoBoardColumns.map((column) => (
                 <article key={column.name} className="wb-soft-card p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-wb-text-muted)]">
-                    {column.name}
+                    {tr(column.name)}
                   </p>
                   <p className="mt-2 text-2xl font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                     {column.count}
                   </p>
                   <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-                    {column.hint}
+                    {tr(column.hint)}
                   </p>
                 </article>
               ))}
@@ -599,14 +622,14 @@ export default function HomePage() {
       <section className="mx-auto w-full max-w-[1240px] px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-            Who it is for
+            {tr("Who it is for")}
           </p>
           <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-4xl">
-            Made for sellers who are serious about growth
+            {tr("Made for sellers who are serious about growth")}
           </h2>
         </div>
         <div className="mt-9 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {whoItIsFor.map((item) => (
+          {localizedWhoItIsFor.map((item) => (
             <article key={item} className="wb-shell-card p-5">
               <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--color-wb-primary-soft)] text-[var(--color-wb-primary)]">
                 <Users className="h-5 w-5" />
@@ -623,18 +646,18 @@ export default function HomePage() {
         <div className="mx-auto w-full max-w-[1240px] px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-              How it works
+              {tr("How it works")}
             </p>
             <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-4xl">
-              How it works
+              {tr("How it works")}
             </h2>
           </div>
 
           <div className="mt-9 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {howItWorks.map((step, index) => (
+            {localizedHowItWorks.map((step, index) => (
               <article key={step} className="wb-shell-card p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-wb-text-muted)]">
-                  Step {index + 1}
+                  {tr("Step")} {index + 1}
                 </p>
                 <p className="mt-3 text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                   {step}
@@ -648,20 +671,20 @@ export default function HomePage() {
       <section className="mx-auto w-full max-w-[1240px] px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-            Before vs After
+            {tr("Before vs After")}
           </p>
           <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-4xl">
-            The difference your customers can feel
+            {tr("The difference your customers can feel")}
           </h2>
         </div>
 
         <div className="mt-9 grid gap-5 lg:grid-cols-2">
           <article className="wb-shell-card border-rose-200 p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">
-              Before WhatsBoard
+              {tr("Before WhatsBoard")}
             </p>
             <ul className="mt-5 space-y-3">
-              {beforeWhatsBoard.map((item) => (
+              {localizedBeforeWhatsBoard.map((item) => (
                 <li
                   key={item}
                   className="flex items-start gap-3 text-sm text-[var(--color-wb-text)] sm:text-base"
@@ -675,10 +698,10 @@ export default function HomePage() {
 
           <article className="wb-shell-card border-emerald-200 p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-              After WhatsBoard
+              {tr("After WhatsBoard")}
             </p>
             <ul className="mt-5 space-y-3">
-              {afterWhatsBoard.map((item) => (
+              {localizedAfterWhatsBoard.map((item) => (
                 <li
                   key={item}
                   className="flex items-start gap-3 text-sm text-[var(--color-wb-text)] sm:text-base"
@@ -696,15 +719,15 @@ export default function HomePage() {
         <div className="mx-auto w-full max-w-[1240px] px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-              Trust
+              {tr("Trust")}
             </p>
             <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-4xl">
-              Built for serious day-to-day selling
+              {tr("Built for serious day-to-day selling")}
             </h2>
           </div>
 
           <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {credibilityBlocks.map((item) => (
+            {localizedCredibilityBlocks.map((item) => (
               <article key={item} className="wb-soft-card p-5">
                 <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white text-[var(--color-wb-primary)]">
                   <ShieldCheck className="h-4 w-4" />
@@ -717,7 +740,7 @@ export default function HomePage() {
           </div>
 
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
-            {testimonials.map((item) => (
+            {localizedTestimonials.map((item) => (
               <article key={item.author} className="wb-shell-card p-5">
                 <p className="text-sm leading-7 text-[var(--color-wb-text)]">
                   “{item.quote}”
@@ -734,11 +757,12 @@ export default function HomePage() {
 
           <div className="mt-8 rounded-[28px] border border-[var(--color-wb-border)] bg-[var(--color-wb-primary-soft)] p-6">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-[var(--color-wb-primary)]">
-              Founder note
+              {tr("Founder note")}
             </p>
             <p className="mt-3 text-base leading-8 text-[var(--color-wb-primary-dark)] sm:text-lg">
-              “I built this because too many sellers are running real businesses
-              inside scattered chats and losing money quietly.”
+              {tr(
+                "I built this because too many sellers are running real businesses inside scattered chats and losing money quietly.",
+              )}
             </p>
           </div>
         </div>
@@ -747,14 +771,15 @@ export default function HomePage() {
       <section className="mx-auto w-full max-w-[1240px] px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
         <div className="mx-auto mb-10 max-w-3xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-            Pricing
+            {tr("Pricing")}
           </p>
           <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-4xl">
-            Simple plans for every stage of selling
+            {tr("Simple plans for every stage of selling")}
           </h2>
           <p className="mt-4 text-base leading-8 text-[var(--color-wb-text-muted)]">
-            Free — Try it first. Starter — Solo seller. Growth — Growing
-            business. Business — Team workflow.
+            {tr(
+              "Free — Try it first. Starter — Solo seller. Growth — Growing business. Business — Team workflow.",
+            )}
           </p>
         </div>
 
@@ -768,17 +793,17 @@ export default function HomePage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-                Growth plan analytics
+                {tr("Growth plan analytics")}
               </p>
               <h3 className="mt-2 text-2xl font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
-                Here&apos;s what your data looks like
+                {tr("Here's what your data looks like")}
               </h3>
               <p className="mt-2 text-sm text-[var(--color-wb-text-muted)]">
                 {growthAnalyticsPreview.business} • {growthAnalyticsPreview.city}
               </p>
             </div>
             <Link href="/dashboard/analytics" className="wb-button-secondary">
-              Watch Demo
+              {tr("Watch Demo")}
             </Link>
           </div>
 
@@ -787,32 +812,32 @@ export default function HomePage() {
               <div className="grid gap-3 md:grid-cols-3">
                 <article className="rounded-2xl border border-[var(--color-wb-border)] bg-white p-3.5">
                   <p className="text-xs uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                    Revenue this month
+                    {tr("Revenue this month")}
                   </p>
                   <p className="mt-2 text-xl font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                     {formatCurrency(growthAnalyticsPreview.revenueThisMonth)}
                   </p>
                   <p className="mt-1 text-xs font-semibold text-emerald-700">
-                    +{growthAnalyticsPreview.revenueChangePercent}% vs last month
+                    +{growthAnalyticsPreview.revenueChangePercent}% {tr("vs last month")}
                   </p>
                 </article>
                 <article className="rounded-2xl border border-[var(--color-wb-border)] bg-white p-3.5">
                   <p className="text-xs uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                    Average order value
+                    {tr("Average order value")}
                   </p>
                   <p className="mt-2 text-xl font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                     {formatCurrency(growthAnalyticsPreview.averageOrderValue)}
                   </p>
                   <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-                    This month
+                    {tr("This month")}
                   </p>
                 </article>
                 <article className="rounded-2xl border border-[var(--color-wb-border)] bg-white p-3.5">
                   <p className="text-xs uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                    Best channel
+                    {tr("Best channel")}
                   </p>
                   <p className="mt-2 text-sm font-semibold text-[var(--color-wb-primary-dark)]">
-                    {growthAnalyticsPreview.bestChannelLine}
+                    {tr(growthAnalyticsPreview.bestChannelLine)}
                   </p>
                 </article>
               </div>
@@ -820,7 +845,7 @@ export default function HomePage() {
               <div className="grid gap-3 lg:grid-cols-[1.4fr_0.9fr]">
                 <article className="rounded-2xl border border-[var(--color-wb-border)] bg-white p-3.5">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                    Revenue trend (weekly)
+                    {tr("Revenue trend (weekly)")}
                   </p>
                   <div className="mt-3 flex h-32 items-end gap-2">
                     {growthAnalyticsPreview.lineSeries.map((value, index) => {
@@ -833,7 +858,15 @@ export default function HomePage() {
                             style={{ height: `${Math.max(10, height)}%` }}
                           />
                           <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
-                            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][index]}
+                            {[
+                              tr("Mon"),
+                              tr("Tue"),
+                              tr("Wed"),
+                              tr("Thu"),
+                              tr("Fri"),
+                              tr("Sat"),
+                              tr("Sun"),
+                            ][index]}
                           </span>
                         </div>
                       );
@@ -843,7 +876,7 @@ export default function HomePage() {
 
                 <article className="rounded-2xl border border-[var(--color-wb-border)] bg-white p-3.5">
                   <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                    Channel split
+                    {tr("Channel split")}
                   </p>
                   <div className="mt-3 grid gap-2">
                     {growthAnalyticsPreview.channels.map((channel) => (
@@ -855,7 +888,7 @@ export default function HomePage() {
                           {channel.label}
                         </span>
                         <span className="text-[var(--color-wb-text-muted)]">
-                          {channel.orders} orders • {formatCurrency(channel.revenue)}
+                          {channel.orders} {tr("orders")} • {formatCurrency(channel.revenue)}
                         </span>
                       </div>
                     ))}
@@ -865,7 +898,7 @@ export default function HomePage() {
 
               <article className="rounded-2xl border border-[var(--color-wb-border)] bg-white p-3.5">
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                  Funnel
+                  {tr("Funnel")}
                 </p>
                 <div className="mt-3 grid gap-2 sm:grid-cols-5">
                   {growthAnalyticsPreview.funnel.map((item) => (
@@ -874,7 +907,7 @@ export default function HomePage() {
                       className="rounded-xl border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] px-3 py-2"
                     >
                       <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
-                        {item.stage}
+                        {tr(item.stage)}
                       </p>
                       <p className="mt-1 text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                         {item.value}
@@ -887,16 +920,16 @@ export default function HomePage() {
           </div>
 
           <p className="mt-4 text-sm font-semibold text-[var(--color-wb-primary-dark)]">
-            Know what&apos;s working. Know what&apos;s not. Every day.
+            {tr("Know what's working. Know what's not. Every day.")}
           </p>
         </div>
 
         <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link href="/register?force=1" className="wb-button-primary">
-            Get Started Today
+            {tr("Get Started Today")}
           </Link>
           <Link href="/login?next=%2Fdashboard" className="wb-button-secondary">
-            Watch Demo
+            {tr("Watch Demo")}
           </Link>
         </div>
       </section>
@@ -905,15 +938,15 @@ export default function HomePage() {
         <div className="mx-auto w-full max-w-[1240px] px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-              FAQ
+              {tr("FAQ")}
             </p>
             <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-4xl">
-              Quick answers before you start
+              {tr("Quick answers before you start")}
             </h2>
           </div>
 
           <div className="mx-auto mt-9 grid max-w-4xl gap-4">
-            {faqs.map((item) => (
+            {localizedFaqs.map((item) => (
               <article key={item.question} className="wb-shell-card p-5 sm:p-6">
                 <p className="text-base font-semibold text-[var(--color-wb-text)] sm:text-lg">
                   {item.question}
@@ -930,28 +963,29 @@ export default function HomePage() {
       <section className="mx-auto w-full max-w-[1240px] px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
         <div className="wb-shell-card bg-[var(--color-wb-primary-dark)] px-6 py-10 text-center text-white sm:px-10">
           <p className="inline-flex rounded-full bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white/85">
-            Final step
+            {tr("Final step")}
           </p>
           <h2 className="mt-4 text-3xl font-black tracking-[-0.04em] sm:text-4xl lg:text-5xl">
-            Stop running your business from lost chats
+            {tr("Stop running your business from lost chats")}
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-white/80 sm:text-lg">
-            Use one simple board to manage orders, payments, deliveries, and
-            follow-ups.
+            {tr(
+              "Use one simple board to manage orders, payments, deliveries, and follow-ups.",
+            )}
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               href="/register?force=1"
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[var(--color-wb-primary-dark)] transition hover:bg-white/90"
             >
-              Start Free
+              {tr("Start Free")}
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="/login?next=%2Fdashboard"
               className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/40 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
             >
-              Watch Demo
+              {tr("Watch Demo")}
             </Link>
           </div>
         </div>

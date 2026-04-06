@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Edit3 } from "lucide-react";
+import { getLocale } from "next-intl/server";
 import {
   BuyerBadge,
   PaymentBadge,
@@ -25,6 +26,7 @@ import {
   getPrimaryOrderLabel,
 } from "@/lib/display-labels";
 import { getReceiptComposerStateForOrder } from "@/lib/receipts/receipt-service";
+import { translateUiText } from "@/lib/ui-translations";
 
 export default async function OrderDetailsPage({
   params,
@@ -42,6 +44,8 @@ export default async function OrderDetailsPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
+  const locale = await getLocale();
+  const tr = (value: string) => translateUiText(value, locale as "en" | "sw");
   const order = await getOrderById(id);
 
   if (!order) {
@@ -59,7 +63,7 @@ export default async function OrderDetailsPage({
     receiptState = await getReceiptComposerStateForOrder(order.id);
   } catch (error) {
     receiptStateLoadError =
-      error instanceof Error ? error.message : "Unable to load receipt state.";
+      error instanceof Error ? error.message : tr("Unable to load receipt state.");
   }
   const receiptToken =
     query.receiptToken || receiptState?.existingReceipt?.token || null;
@@ -68,17 +72,19 @@ export default async function OrderDetailsPage({
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
         title={`Order #${formatOrderReference(order.id) || "WB-00000"}`}
-        description="Complete order context: customer, payment trail, dispatch status, and next follow-up actions."
+        description={tr(
+          "Complete order context: customer, payment trail, dispatch status, and next follow-up actions.",
+        )}
         primaryAction={
           <Link href={`/orders/${order.id}/edit`} className="wb-button-primary">
             <Edit3 className="h-4 w-4" />
-            Edit Order
+            {tr("Edit Order")}
           </Link>
         }
         secondaryAction={
           <Link href="/orders" className="wb-button-secondary">
             <ArrowLeft className="h-4 w-4" />
-            Back to Orders
+            {tr("Back to Orders")}
           </Link>
         }
       />
@@ -86,14 +92,14 @@ export default async function OrderDetailsPage({
       {query.created === "1" || query.updated === "1" ? (
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
           {query.created === "1"
-            ? "Order created successfully."
-            : "Order updated successfully."}
+            ? tr("Order created successfully.")
+            : tr("Order updated successfully.")}
         </div>
       ) : null}
 
       {query.receiptCreated === "1" && receiptToken ? (
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
-          Receipt is ready and shareable.
+          {tr("Receipt is ready and shareable.")}
           <ReceiptShareActions token={receiptToken} className="mt-3" />
         </div>
       ) : null}
@@ -101,20 +107,26 @@ export default async function OrderDetailsPage({
       {query.receiptError === "1" ? (
         <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
           {query.receiptErrorCode === "missing-schema"
-            ? "Receipt schema is missing. Apply the latest Supabase receipt migration, then retry."
+            ? tr(
+                "Receipt schema is missing. Apply the latest Supabase receipt migration, then retry.",
+              )
             : query.receiptErrorCode === "not-eligible"
-              ? "Receipt is only available after payment is confirmed or the order is delivered."
-              : "Could not generate the receipt. Try again."}
+              ? tr(
+                  "Receipt is only available after payment is confirmed or the order is delivered.",
+                )
+              : tr("Could not generate the receipt. Try again.")}
         </div>
       ) : null}
 
       {receiptStateLoadError ? (
         <SectionCard
-          title="Send Receipt to Customer"
-          description="Issue a branded receipt link after paid or delivered orders."
+          title={tr("Send Receipt to Customer")}
+          description={tr(
+            "Issue a branded receipt link after paid or delivered orders.",
+          )}
         >
           <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
-            Receipt module is unavailable right now.
+            {tr("Receipt module is unavailable right now.")}
             <br />
             <span className="font-semibold">
               {receiptStateLoadError.toLowerCase().includes("relation") &&
@@ -122,8 +134,10 @@ export default async function OrderDetailsPage({
                 receiptStateLoadError
                   .toLowerCase()
                   .includes("receipt_views"))
-                ? "Apply `saasbold-lite-main/supabase/manual_full_schema_sync.sql` in Supabase SQL Editor."
-                : "Check server logs and Supabase schema consistency."}
+                ? tr(
+                    "Apply `saasbold-lite-main/supabase/manual_full_schema_sync.sql` in Supabase SQL Editor.",
+                  )
+                : tr("Check server logs and Supabase schema consistency.")}
             </span>
           </div>
         </SectionCard>
@@ -131,24 +145,26 @@ export default async function OrderDetailsPage({
 
       {receiptState ? (
         <SectionCard
-          title="Send Receipt to Customer"
-          description="Issue a branded receipt link after paid or delivered orders."
+          title={tr("Send Receipt to Customer")}
+          description={tr(
+            "Issue a branded receipt link after paid or delivered orders.",
+          )}
         >
           <div className="space-y-4">
             <div className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 text-sm text-[var(--color-wb-text-muted)]">
               <p className="font-semibold text-[var(--color-wb-text)]">
-                Plan: {receiptState.capabilities.plan.toUpperCase()}
+                {tr("Plan")}: {receiptState.capabilities.plan.toUpperCase()}
               </p>
               <p className="mt-1">
-                Your receipts were viewed {receiptState.monthlyViews} times this
-                month.
+                {tr("Your receipts were viewed")} {receiptState.monthlyViews}{" "}
+                {tr("times this month.")}
               </p>
             </div>
 
             {!receiptState.eligible ? (
               <div className="rounded-2xl border border-amber-100 bg-amber-50 p-4 text-sm text-amber-700">
                 {receiptState.reason ||
-                  "Receipt is available once order is Paid, COD, or Delivered."}
+                  tr("Receipt is available once order is Paid, COD, or Delivered.")}
               </div>
             ) : (
               <form
@@ -159,7 +175,7 @@ export default async function OrderDetailsPage({
                 <input type="hidden" name="orderId" value={order.id} />
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-                    Shop name
+                    {tr("Shop name")}
                   </label>
                   <input
                     name="shopName"
@@ -171,7 +187,7 @@ export default async function OrderDetailsPage({
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-                    Footer mode
+                    {tr("Footer mode")}
                   </label>
                   <select
                     name="footerMode"
@@ -181,19 +197,19 @@ export default async function OrderDetailsPage({
                     {receiptState.capabilities.allowedFooterModes.map((mode) => (
                       <option key={mode} value={mode}>
                         {mode === "whatsboard_link"
-                          ? "Order tracked with WhatsBoard"
+                          ? tr("Order tracked with WhatsBoard")
                           : mode === "powered_by_whatsboard"
-                            ? "Powered by WhatsBoard"
+                            ? tr("Powered by WhatsBoard")
                             : mode === "white_label"
-                              ? "White-label (no WhatsBoard footer)"
-                              : "Hide footer"}
+                              ? tr("White-label (no WhatsBoard footer)")
+                              : tr("Hide footer")}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-                    Shop logo URL
+                    {tr("Shop logo URL")}
                   </label>
                   <input
                     name="shopLogoUrl"
@@ -206,7 +222,7 @@ export default async function OrderDetailsPage({
                 </div>
                 <div className="sm:col-span-2">
                   <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-                    Thank you message
+                    {tr("Thank you message")}
                   </label>
                   <textarea
                     name="thankYouMessage"
@@ -218,7 +234,7 @@ export default async function OrderDetailsPage({
                 </div>
                 <div className="sm:col-span-2 flex flex-wrap items-center gap-3">
                   <button type="submit" className="wb-button-primary">
-                    Send Receipt to Customer
+                    {tr("Send Receipt to Customer")}
                   </button>
                   {receiptToken ? (
                     <ReceiptShareActions token={receiptToken} />
@@ -232,13 +248,13 @@ export default async function OrderDetailsPage({
 
       <section className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
         <SectionCard
-          title="Order summary"
-          description="Operational details for this specific sale."
+          title={tr("Order summary")}
+          description={tr("Operational details for this specific sale.")}
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="wb-soft-card p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
-                Customer
+                {tr("Customer")}
               </p>
               <p className="mt-3 text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                 {getPrimaryOrderLabel({
@@ -249,7 +265,7 @@ export default async function OrderDetailsPage({
                 })}
               </p>
               <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-                {customer?.phone || "No phone"} • {order.deliveryArea}
+                {customer?.phone || tr("No phone")} • {order.deliveryArea}
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <BuyerBadge status={order.customerBuyerStatus} compact />
@@ -260,18 +276,18 @@ export default async function OrderDetailsPage({
             </div>
             <div className="wb-soft-card p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
-                Amount
+                {tr("Amount")}
               </p>
               <p className="mt-3 text-lg font-black tracking-[-0.03em] text-[var(--color-wb-primary)]">
                 {formatCurrency(order.amount)}
               </p>
               <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-                {order.channel} order
+                {order.channel} {tr("order")}
               </p>
             </div>
             <div className="wb-soft-card p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
-                Stage
+                {tr("Stage")}
               </p>
               <div className="mt-3">
                 <StageBadge stage={order.stage} />

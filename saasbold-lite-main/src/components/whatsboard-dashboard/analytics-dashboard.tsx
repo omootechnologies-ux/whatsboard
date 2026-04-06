@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import {
   ArrowDownRight,
   ArrowUpRight,
@@ -30,6 +31,7 @@ import type {
   PaymentRecord,
 } from "@/data/whatsboard";
 import { formatCurrency, formatDate } from "@/components/whatsboard-dashboard/formatting";
+import { translateUiText } from "@/lib/ui-translations";
 
 type FilterPreset = "this_week" | "this_month" | "last_month" | "last_3_months" | "custom";
 type ChartGranularity = "daily" | "weekly" | "monthly";
@@ -52,12 +54,12 @@ type TimeBucket = {
   end: Date;
 };
 
-const FILTER_PRESETS: Array<{ key: FilterPreset; label: string }> = [
-  { key: "this_week", label: "This week" },
-  { key: "this_month", label: "This month" },
-  { key: "last_month", label: "Last month" },
-  { key: "last_3_months", label: "Last 3 months" },
-  { key: "custom", label: "Custom range" },
+const FILTER_PRESETS: FilterPreset[] = [
+  "this_week",
+  "this_month",
+  "last_month",
+  "last_3_months",
+  "custom",
 ];
 
 const CHANNELS = ["WhatsApp", "Instagram", "Facebook", "Other"] as const;
@@ -200,26 +202,34 @@ function getTimeBucketKey(date: Date, granularity: ChartGranularity) {
   return `${date.getFullYear()}-${date.getMonth() + 1}`;
 }
 
-function formatBucketLabel(date: Date, granularity: ChartGranularity) {
+function formatBucketLabel(
+  date: Date,
+  granularity: ChartGranularity,
+  localeTag: "en-TZ" | "sw-TZ",
+) {
   if (granularity === "daily") {
-    return new Intl.DateTimeFormat("en-TZ", {
+    return new Intl.DateTimeFormat(localeTag, {
       day: "2-digit",
       month: "short",
     }).format(date);
   }
   if (granularity === "weekly") {
-    return `Wk ${new Intl.DateTimeFormat("en-TZ", {
+    return `Wk ${new Intl.DateTimeFormat(localeTag, {
       day: "2-digit",
       month: "short",
     }).format(startOfWeek(date))}`;
   }
-  return new Intl.DateTimeFormat("en-TZ", {
+  return new Intl.DateTimeFormat(localeTag, {
     month: "short",
     year: "2-digit",
   }).format(date);
 }
 
-function buildBuckets(range: DateRange, granularity: ChartGranularity): TimeBucket[] {
+function buildBuckets(
+  range: DateRange,
+  granularity: ChartGranularity,
+  localeTag: "en-TZ" | "sw-TZ",
+): TimeBucket[] {
   const buckets: TimeBucket[] = [];
 
   if (granularity === "daily") {
@@ -229,7 +239,7 @@ function buildBuckets(range: DateRange, granularity: ChartGranularity): TimeBuck
       const end = toDayEnd(cursor);
       buckets.push({
         key: getTimeBucketKey(start, granularity),
-        label: formatBucketLabel(start, granularity),
+        label: formatBucketLabel(start, granularity, localeTag),
         start,
         end,
       });
@@ -245,7 +255,7 @@ function buildBuckets(range: DateRange, granularity: ChartGranularity): TimeBuck
       const end = toDayEnd(addDays(start, 6));
       buckets.push({
         key: getTimeBucketKey(start, granularity),
-        label: formatBucketLabel(start, granularity),
+        label: formatBucketLabel(start, granularity, localeTag),
         start,
         end,
       });
@@ -260,7 +270,7 @@ function buildBuckets(range: DateRange, granularity: ChartGranularity): TimeBuck
     const end = endOfMonth(cursor);
     buckets.push({
       key: getTimeBucketKey(start, granularity),
-      label: formatBucketLabel(start, granularity),
+      label: formatBucketLabel(start, granularity, localeTag),
       start,
       end,
     });
@@ -273,8 +283,8 @@ function sum<T>(list: T[], getter: (item: T) => number) {
   return list.reduce((total, item) => total + getter(item), 0);
 }
 
-function formatCompactNumber(value: number) {
-  return new Intl.NumberFormat("en-TZ", {
+function formatCompactNumber(value: number, localeTag: "en-TZ" | "sw-TZ") {
+  return new Intl.NumberFormat(localeTag, {
     notation: "compact",
     maximumFractionDigits: 1,
   }).format(value);
@@ -284,11 +294,31 @@ function formatPercent(value: number) {
   return `${Math.round(value)}%`;
 }
 
+const FILTER_PRESET_LABELS: Record<FilterPreset, string> = {
+  this_week: "This week",
+  this_month: "This month",
+  last_month: "Last month",
+  last_3_months: "Last 3 months",
+  custom: "Custom range",
+};
+
+const GRANULARITY_LABELS: Record<ChartGranularity, string> = {
+  daily: "Daily",
+  weekly: "Weekly",
+  monthly: "Monthly",
+};
+
 export function AnalyticsDashboard({
   orders,
   payments,
   customers,
 }: AnalyticsDashboardProps) {
+  const locale = useLocale() as "en" | "sw";
+  const tr = useCallback(
+    (value: string) => translateUiText(value, locale),
+    [locale],
+  );
+  const localeTag = locale === "sw" ? "sw-TZ" : "en-TZ";
   const now = useMemo(() => new Date(), []);
   const [preset, setPreset] = useState<FilterPreset>("this_month");
   const [granularity, setGranularity] = useState<ChartGranularity>("daily");
@@ -366,8 +396,8 @@ export function AnalyticsDashboard({
   }, [orders, thisMonthRange]);
 
   const revenueBuckets = useMemo(
-    () => buildBuckets(activeRange, granularity),
-    [activeRange, granularity],
+    () => buildBuckets(activeRange, granularity, localeTag),
+    [activeRange, granularity, localeTag],
   );
 
   const revenueSeries = useMemo(() => {
@@ -549,7 +579,8 @@ export function AnalyticsDashboard({
     filteredOrders.forEach((order) => {
       const key = order.customerId || order.customerName || `customer-${order.id}`;
       const lookup = customerLookup.get(order.customerId);
-      const name = lookup?.name || order.customerName || "Unknown customer";
+      const name =
+        lookup?.name || order.customerName || tr("Unknown customer");
       const current = map.get(key) || {
         id: order.customerId,
         name,
@@ -568,13 +599,15 @@ export function AnalyticsDashboard({
     return Array.from(map.values())
       .sort((a, b) => b.totalAmount - a.totalAmount)
       .slice(0, 8);
-  }, [filteredOrders, customers]);
+  }, [filteredOrders, customers, tr]);
 
   const itemInsights = useMemo(() => {
     const map = new Map<string, { name: string; revenue: number; frequency: number }>();
 
     filteredOrders.forEach((order) => {
-      const items = order.items?.length ? order.items : [order.notes || "Order item"];
+      const items = order.items?.length
+        ? order.items
+        : [order.notes || tr("Order item")];
       const normalized = items.map((item) => item.trim()).filter(Boolean);
       if (!normalized.length) return;
       const splitRevenue = order.amount / normalized.length;
@@ -595,7 +628,7 @@ export function AnalyticsDashboard({
       byRevenue: [...values].sort((a, b) => b.revenue - a.revenue).slice(0, 5),
       byFrequency: [...values].sort((a, b) => b.frequency - a.frequency).slice(0, 5),
     };
-  }, [filteredOrders]);
+  }, [filteredOrders, tr]);
 
   const chartTooltipStyle = {
     borderRadius: "12px",
@@ -609,21 +642,21 @@ export function AnalyticsDashboard({
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-              Date range
+              {tr("Date range")}
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               {FILTER_PRESETS.map((option) => (
                 <button
-                  key={option.key}
+                  key={option}
                   type="button"
-                  onClick={() => setPreset(option.key)}
+                  onClick={() => setPreset(option)}
                   className={`rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] transition ${
-                    preset === option.key
+                    preset === option
                       ? "border-[var(--color-wb-primary)] bg-[var(--color-wb-primary-soft)] text-[var(--color-wb-primary)]"
                       : "border-[var(--color-wb-border)] bg-white text-[var(--color-wb-text-muted)] hover:text-[var(--color-wb-text)]"
                   }`}
                 >
-                  {option.label}
+                  {tr(FILTER_PRESET_LABELS[option])}
                 </button>
               ))}
             </div>
@@ -633,7 +666,7 @@ export function AnalyticsDashboard({
             {preset === "custom" ? (
               <>
                 <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                  Start
+                  {tr("Start")}
                   <input
                     type="date"
                     value={customStart}
@@ -642,7 +675,7 @@ export function AnalyticsDashboard({
                   />
                 </label>
                 <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                  End
+                  {tr("End")}
                   <input
                     type="date"
                     value={customEnd}
@@ -654,15 +687,15 @@ export function AnalyticsDashboard({
             ) : null}
 
             <label className="grid gap-1 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-              Revenue chart
+              {tr("Revenue chart")}
               <select
                 value={granularity}
                 onChange={(event) => setGranularity(event.target.value as ChartGranularity)}
                 className="wb-input min-w-[10rem]"
               >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
+                <option value="daily">{tr(GRANULARITY_LABELS.daily)}</option>
+                <option value="weekly">{tr(GRANULARITY_LABELS.weekly)}</option>
+                <option value="monthly">{tr(GRANULARITY_LABELS.monthly)}</option>
               </select>
             </label>
           </div>
@@ -678,20 +711,20 @@ export function AnalyticsDashboard({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-              Revenue Overview
+              {tr("Revenue overview")}
             </p>
             <h2 className="mt-2 text-xl font-black tracking-[-0.03em] text-[var(--color-wb-text)] sm:text-2xl">
               {formatCurrency(thisMonthRevenue)}
             </h2>
             <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-              Total revenue this month
+              {tr("Total revenue this month")}
             </p>
           </div>
 
           <div className="grid gap-2 sm:grid-cols-2">
             <article className="wb-soft-card min-w-[13rem] p-3">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                Vs last month
+                {tr("Vs last month")}
               </p>
               <p className="mt-2 flex items-center gap-2 text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                 {revenueDeltaPercent >= 0 ? (
@@ -702,19 +735,19 @@ export function AnalyticsDashboard({
                 {formatPercent(Math.abs(revenueDeltaPercent))}
               </p>
               <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-                Last month: {formatCurrency(lastMonthRevenue)}
+                {tr("Last month:")} {formatCurrency(lastMonthRevenue)}
               </p>
             </article>
 
             <article className="wb-soft-card min-w-[13rem] p-3">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                Avg order value
+                {tr("Avg order value")}
               </p>
               <p className="mt-2 text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                 {formatCurrency(averageOrderValueThisMonth)}
               </p>
               <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-                This month
+                {tr("This month")}
               </p>
             </article>
           </div>
@@ -729,7 +762,9 @@ export function AnalyticsDashboard({
                 <YAxis
                   stroke="#5E6461"
                   fontSize={11}
-                  tickFormatter={(value) => formatCompactNumber(Number(value))}
+                  tickFormatter={(value) =>
+                    formatCompactNumber(Number(value), localeTag)
+                  }
                 />
                 <Tooltip
                   formatter={(value) => formatCurrency(Number(value ?? 0))}
@@ -751,7 +786,7 @@ export function AnalyticsDashboard({
 
       <section className="space-y-4 rounded-[24px] border border-[var(--color-wb-border)] bg-white p-4 sm:p-5">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-          Order Funnel
+          {tr("Order funnel")}
         </p>
         <div className="overflow-x-auto">
           <div className="grid min-w-[760px] grid-cols-5 gap-3">
@@ -765,18 +800,18 @@ export function AnalyticsDashboard({
                 }`}
               >
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                  {stage.label}
+                  {tr(stage.label)}
                 </p>
                 <p className="mt-2 text-2xl font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                   {stage.count}
                 </p>
                 <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-                  {stage.conversion}% conversion
+                  {stage.conversion}% {tr("conversion")}
                 </p>
                 {funnel.dropIndex === index ? (
                   <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">
                     <AlertTriangle className="h-3 w-3" />
-                    Biggest drop-off
+                    {tr("Biggest drop-off")}
                   </p>
                 ) : null}
               </article>
@@ -788,7 +823,7 @@ export function AnalyticsDashboard({
       <section className="grid gap-4 xl:grid-cols-2">
         <article className="space-y-4 rounded-[24px] border border-[var(--color-wb-border)] bg-white p-4 sm:p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-            Channel Breakdown
+            {tr("Channel breakdown")}
           </p>
           <div className="grid gap-4 sm:grid-cols-[1fr_0.95fr] sm:items-center">
             <div className="overflow-x-auto">
@@ -840,18 +875,18 @@ export function AnalyticsDashboard({
 
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
             <p className="text-sm font-semibold text-emerald-800">
-              Best channel
+              {tr("Best channel")}
             </p>
             <p className="mt-1 text-base font-black tracking-[-0.02em] text-emerald-900">
-              {channelBreakdown.best.channel} brings {channelBreakdown.bestPercent}%
-              {" "}of your revenue
+              {channelBreakdown.best.channel} {tr("brings")} {channelBreakdown.bestPercent}%
+              {" "}{tr("of your revenue")}
             </p>
           </div>
         </article>
 
         <article className="space-y-4 rounded-[24px] border border-[var(--color-wb-border)] bg-white p-4 sm:p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-            Payment Health
+            {tr("Payment health")}
           </p>
 
           <div className="overflow-x-auto">
@@ -863,15 +898,17 @@ export function AnalyticsDashboard({
                   <YAxis
                     stroke="#5E6461"
                     fontSize={11}
-                    tickFormatter={(value) => formatCompactNumber(Number(value))}
+                    tickFormatter={(value) =>
+                      formatCompactNumber(Number(value), localeTag)
+                    }
                   />
                   <Tooltip
                     formatter={(value) => formatCurrency(Number(value ?? 0))}
                     contentStyle={chartTooltipStyle}
                   />
-                  <Bar dataKey="paid" stackId="payments" fill={STATUS_COLORS.paid} name="Paid" />
-                  <Bar dataKey="partial" stackId="payments" fill={STATUS_COLORS.partial} name="Partial" />
-                  <Bar dataKey="unpaid" stackId="payments" fill={STATUS_COLORS.unpaid} name="Unpaid" />
+                  <Bar dataKey="paid" stackId="payments" fill={STATUS_COLORS.paid} name={tr("Paid")} />
+                  <Bar dataKey="partial" stackId="payments" fill={STATUS_COLORS.partial} name={tr("Partial")} />
+                  <Bar dataKey="unpaid" stackId="payments" fill={STATUS_COLORS.unpaid} name={tr("Unpaid")} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -880,7 +917,7 @@ export function AnalyticsDashboard({
           <div className="grid gap-3 sm:grid-cols-2">
             <article className="rounded-2xl border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                Outstanding amount
+                {tr("Outstanding amount")}
               </p>
               <p className={`mt-2 text-2xl font-black tracking-[-0.03em] ${outstandingAmount > 0 ? "text-rose-700" : "text-emerald-700"}`}>
                 {formatCurrency(outstandingAmount)}
@@ -888,13 +925,15 @@ export function AnalyticsDashboard({
             </article>
             <article className="rounded-2xl border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                Avg days to payment
+                {tr("Avg days to payment")}
               </p>
               <div className="mt-2 space-y-1 text-sm text-[var(--color-wb-text)]">
                 {avgPaymentDaysByChannel.map((row) => (
                   <p key={row.channel} className="flex items-center justify-between gap-2">
                     <span>{row.channel}</span>
-                    <span className="font-semibold">{row.avgDays.toFixed(1)} days</span>
+                    <span className="font-semibold">
+                      {row.avgDays.toFixed(1)} {tr("days")}
+                    </span>
                   </p>
                 ))}
               </div>
@@ -906,10 +945,10 @@ export function AnalyticsDashboard({
       <section className="rounded-[24px] border border-[var(--color-wb-border)] bg-white p-4 sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-            Top Customers
+            {tr("Top customers")}
           </p>
           <p className="text-xs text-[var(--color-wb-text-muted)]">
-            Mini CRM view
+            {tr("Mini CRM view")}
           </p>
         </div>
 
@@ -917,11 +956,11 @@ export function AnalyticsDashboard({
           <table className="min-w-[700px] w-full border-collapse">
             <thead>
               <tr className="text-left text-xs uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
-                <th className="border-b border-[var(--color-wb-border)] px-3 py-2">Customer</th>
-                <th className="border-b border-[var(--color-wb-border)] px-3 py-2">Total orders</th>
-                <th className="border-b border-[var(--color-wb-border)] px-3 py-2">Total TZS</th>
-                <th className="border-b border-[var(--color-wb-border)] px-3 py-2">Last order</th>
-                <th className="border-b border-[var(--color-wb-border)] px-3 py-2">Profile</th>
+                <th className="border-b border-[var(--color-wb-border)] px-3 py-2">{tr("Customer")}</th>
+                <th className="border-b border-[var(--color-wb-border)] px-3 py-2">{tr("Total orders")}</th>
+                <th className="border-b border-[var(--color-wb-border)] px-3 py-2">{tr("Total TZS")}</th>
+                <th className="border-b border-[var(--color-wb-border)] px-3 py-2">{tr("Last order")}</th>
+                <th className="border-b border-[var(--color-wb-border)] px-3 py-2">{tr("Profile")}</th>
               </tr>
             </thead>
             <tbody>
@@ -946,10 +985,10 @@ export function AnalyticsDashboard({
                           href={`/customers/${customer.id}`}
                           className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
                         >
-                          Open profile
+                          {tr("Open profile")}
                         </Link>
                       ) : (
-                        <span className="text-[var(--color-wb-text-muted)]">N/A</span>
+                        <span className="text-[var(--color-wb-text-muted)]">{tr("N/A")}</span>
                       )}
                     </td>
                   </tr>
@@ -960,7 +999,7 @@ export function AnalyticsDashboard({
                     colSpan={5}
                     className="border-b border-[var(--color-wb-border)] px-3 py-6 text-center text-sm text-[var(--color-wb-text-muted)]"
                   >
-                    No customer activity in this date range yet.
+                    {tr("No customer activity in this date range yet.")}
                   </td>
                 </tr>
               )}
@@ -972,10 +1011,10 @@ export function AnalyticsDashboard({
       <section className="grid gap-4 xl:grid-cols-2">
         <article className="rounded-[24px] border border-[var(--color-wb-border)] bg-white p-4 sm:p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-            Product / Item Insights
+            {tr("Product / Item Insights")}
           </p>
           <p className="mt-2 text-sm text-[var(--color-wb-text-muted)]">
-            Top 5 items by revenue
+            {tr("Top 5 items by revenue")}
           </p>
           <div className="mt-3 space-y-2">
             {itemInsights.byRevenue.length ? (
@@ -994,7 +1033,7 @@ export function AnalyticsDashboard({
               ))
             ) : (
               <p className="rounded-xl border border-dashed border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] px-3 py-4 text-sm text-[var(--color-wb-text-muted)]">
-                No item-level revenue data in this date range.
+                {tr("No item-level revenue data in this date range.")}
               </p>
             )}
           </div>
@@ -1002,10 +1041,10 @@ export function AnalyticsDashboard({
 
         <article className="rounded-[24px] border border-[var(--color-wb-border)] bg-white p-4 sm:p-5">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-wb-primary)]">
-            Product / Item Insights
+            {tr("Product / Item Insights")}
           </p>
           <p className="mt-2 text-sm text-[var(--color-wb-text-muted)]">
-            Top 5 items by order frequency
+            {tr("Top 5 items by order frequency")}
           </p>
           <div className="mt-3 space-y-2">
             {itemInsights.byFrequency.length ? (
@@ -1018,13 +1057,13 @@ export function AnalyticsDashboard({
                     {index + 1}. {item.name}
                   </span>
                   <span className="font-semibold text-[var(--color-wb-text)]">
-                    {item.frequency} orders
+                    {item.frequency} {tr("orders")}
                   </span>
                 </div>
               ))
             ) : (
               <p className="rounded-xl border border-dashed border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] px-3 py-4 text-sm text-[var(--color-wb-text-muted)]">
-                No item frequency data in this date range.
+                {tr("No item frequency data in this date range.")}
               </p>
             )}
           </div>
@@ -1034,10 +1073,12 @@ export function AnalyticsDashboard({
       <section className="rounded-[24px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4 text-sm text-[var(--color-wb-text-muted)] sm:p-5">
         <p className="flex items-center gap-2 font-semibold text-[var(--color-wb-text)]">
           <TrendingUp className="h-4 w-4 text-[var(--color-wb-primary)]" />
-          Analytics in Growth plan
+          {tr("Analytics in Growth plan")}
         </p>
         <p className="mt-2 leading-7">
-          These metrics update from your real orders, payments, and customer history so you can spot drop-offs, chase outstanding payments, and scale what is already working.
+          {tr(
+            "These metrics update from your real orders, payments, and customer history so you can spot drop-offs, chase outstanding payments, and scale what is already working.",
+          )}
         </p>
       </section>
     </div>
