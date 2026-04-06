@@ -1,0 +1,200 @@
+{
+  "app": {
+    "name": "WhatsBoard",
+    "description": "Dashibodi ya kisasa ya wauzaji wa Afrika Mashariki inayobadilisha vurugu za chat za WhatsApp kuwa udhibiti wa mauzo."
+  },
+  "locale": {
+    "label": "Lugha",
+    "english": "English",
+    "swahili": "Kiswahili"
+  },
+  "actions": {
+    "startFree": "Anza Bure",
+    "watchDemo": "Angalia Demo",
+    "login": "Ingia",
+    "logout": "Toka",
+    "signingOut": "Inatoka...",
+    "apply": "Tumia",
+    "create": "Unda",
+    "save": "Hifadhi",
+    "cancel": "Ghairi",
+    "back": "Rudi",
+    "view": "Tazama",
+    "edit": "Hariri",
+    "addOrder": "Ongeza Order",
+    "addCustomer": "Ongeza Mteja",
+    "getStartedToday": "Anza Leo",
+    "tryAgain": "Jaribu tena"
+  },
+  "publicNav": {
+    "home": "Nyumbani",
+    "product": "Bidhaa",
+    "pricing": "Bei",
+    "login": "Ingia",
+    "salesControl": "Udhibiti wa Mauzo",
+    "toggleNavigation": "Fungua menu"
+  },
+  "footer": {
+    "tagline": "Kutoka vurugu za chat hadi udhibiti wa mauzo.",
+    "builtFor": "Imetengenezwa kwa wauzaji wa mtandaoni Afrika Mashariki",
+    "product": "Bidhaa",
+    "pricing": "Bei",
+    "demo": "Demo",
+    "login": "Ingia",
+    "startFree": "Anza Bure",
+    "contact": "Wasiliana",
+    "privacyPolicy": "Sera ya Faragha",
+    "terms": "Masharti"
+  },
+  "auth": {
+    "checkingSession": "Tunaangalia session yako...",
+    "createAccount": "Fungua akaunti",
+    "welcomeBack": "Karibu tena",
+    "openWorkspace": "Fungua workspace yako ya WhatsBoard",
+    "signInTitle": "Ingia kwenye WhatsBoard",
+    "registerDescription": "Weka workspace ya biashara yako kwa orders, payments, follow-ups, na ufuatiliaji wa wateja.",
+    "loginDescription": "Fungua control room yako na endelea kusimamia shughuli za kila siku.",
+    "businessName": "Jina la Biashara",
+    "email": "Barua pepe",
+    "password": "Nenosiri",
+    "confirmPassword": "Thibitisha Nenosiri",
+    "createAccountButton": "Fungua akaunti",
+    "loginButton": "Ingia",
+    "pleaseWait": "Subiri kidogo...",
+    "poweredBy": "Inaendeshwa na Supabase Auth",
+    "alreadyHaveAccount": "Una akaunti tayari?",
+    "switchToCreate": "Fungua akaunti",
+    "errors": {
+      "invalidCredentials": "Barua pepe au nenosiri si sahihi. Jaribu tena.",
+      "emailNotConfirmed": "Thibitisha barua pepe kwanza kisha ingia.",
+      "alreadyRegistered": "Barua pepe hii imesajiliwa tayari. Ingia badala yake.",
+      "passwordMinLength": "Nenosiri lazima liwe angalau herufi 8.",
+      "authNotConfigured": "Authentication haijawekwa sawa. Wasiliana na support.",
+      "cookiesBlocked": "Kuingia hakukukamilika kwa sababu cookies za session zimezuiwa. Ruhusu cookies kwa tovuti hii kisha jaribu tena.",
+      "generic": "Kuna tatizo limetokea. Jaribu tena.",
+      "bootstrapFailed": "Imeshindikana kuandaa profile ya biashara yako.",
+      "emailPasswordRequired": "Barua pepe na nenosiri vinahitajika.",
+      "invalidEmail": "Weka barua pepe sahihi.",
+      "passwordMismatch": "Manenosiri hayalingani.",
+      "sessionNotActive": "Umeingia lakini session bado haijawa active. Refresh kisha jaribu tena."
+    },
+    "messages": {
+      "checkEmail": "Akaunti imeundwa. Angalia barua pepe yako uthibitishe kabla ya kuingia."
+    }
+  },
+  "dashboardShell": {
+    "defaultWorkspace": "Biashara Yangu",
+    "tagline": "Control room ya muuzaji • {workspace}",
+    "builtForTitle": "Imetengenezwa kwa wauzaji Afrika Mashariki",
+    "builtForBody": "Badilisha orders za WhatsApp, Instagram, TikTok na Facebook kuwa mfumo mmoja safi wa kila siku.",
+    "groups": {
+      "operations": "Operesheni",
+      "control": "Udhibiti"
+    },
+    "nav": {
+      "overview": "Muhtasari",
+      "orders": "Orders",
+      "products": "Bidhaa",
+      "customers": "Wateja",
+      "followUps": "Follow-ups",
+      "payments": "Malipo",
+      "team": "Timu",
+      "billing": "Billing",
+      "analytics": "Analytics",
+      "settings": "Mipangilio"
+    },
+    "reconciledToday": "Malipo yaliyolinganishwa leo: {count}"
+  },
+  "shared": {
+    "searchRecords": "Tafuta rekodi",
+    "searchEverything": "Tafuta orders, wateja, au malipo",
+    "searchOrders": "Tafuta kwa order ID, mteja, bidhaa au eneo",
+    "searchCustomers": "Tafuta kwa jina, simu, WhatsApp, channel au note",
+    "searchPayments": "Tafuta kwa order reference, mteja, njia au status",
+    "searchFollowUps": "Tafuta kichwa cha follow-up, note, mteja au order reference",
+    "searchProducts": "Tafuta bidhaa kwa jina, SKU, category au notes",
+    "searchTeam": "Tafuta washiriki wa timu kwa jina, email, simu au role",
+    "searchSettings": "Tafuta setting labels au values",
+    "noRecords": "Hakuna rekodi zilizopatikana",
+    "na": "Hakuna",
+    "orderUntitled": "Order bila jina",
+    "customerUntitled": "Mteja bila jina",
+    "updatedAt": "Imeboreshwa {date}",
+    "paymentRef": "Rejea ya malipo: {reference}",
+    "ordersCount": "Order {count}",
+    "noOrdersStage": "Hakuna order katika hatua hii.",
+    "loading": "Inapakia...",
+    "whatsBoard": "WhatsBoard"
+  },
+  "badges": {
+    "payment": {
+      "paid": "Imelipwa",
+      "partial": "Sehemu imelipwa",
+      "unpaid": "Haijalipwa",
+      "cod": "Lipa ukipokea"
+    },
+    "stage": {
+      "new_order": "Order Mpya",
+      "waiting_payment": "Inasubiri Malipo",
+      "paid": "Imelipwa",
+      "packing": "Inapakiwa",
+      "dispatched": "Imetumwa",
+      "delivered": "Imefika"
+    },
+    "buyer": {
+      "new": "Mteja mpya",
+      "repeat": "Mteja wa kurudia",
+      "at_risk": "Mteja wa hatari",
+      "lost": "Mteja aliyepotea"
+    },
+    "followUpStatus": {
+      "overdue": "Imechelewa",
+      "today": "Leo",
+      "upcoming": "Inakuja",
+      "completed": "Imekamilika"
+    },
+    "priority": {
+      "high": "Juu",
+      "medium": "Wastani",
+      "low": "Chini"
+    }
+  },
+  "notFound": {
+    "title": "Ukurasa haujapatikana",
+    "description": "Ukurasa huu haupo au umehamishwa. Rudi nyumbani au fungua dashibodi yako kuendelea kusimamia orders, malipo na follow-ups.",
+    "openDashboard": "Fungua dashibodi",
+    "backHome": "Rudi nyumbani"
+  },
+  "receipt": {
+    "title": "Receipt",
+    "total": "Jumla",
+    "payment": "Malipo",
+    "orderTrackedWith": "Order imefuatiliwa na WhatsBoard"
+  },
+  "pages": {
+    "login": {
+      "title": "Ingia | WhatsBoard",
+      "description": "Ingia kufikia workspace yako ya WhatsBoard."
+    },
+    "register": {
+      "title": "Jisajili | WhatsBoard",
+      "description": "Fungua akaunti ya WhatsBoard na anza kufuatilia orders."
+    },
+    "pricing": {
+      "title": "Bei | WhatsBoard",
+      "description": "Bei wazi za kila mwezi kwa TZS kwa wauzaji wa mtandaoni Afrika Mashariki."
+    },
+    "privacy": {
+      "title": "Sera ya Faragha",
+      "description": "WhatsBoard huhifadhi data za uendeshaji wa muuzaji kama orders, wateja, follow-ups na malipo ili kutoa mwonekano wa kazi na uratibu wa timu. Hatuuzi data ya biashara yako.",
+      "contactPrefix": "Kwa support ya production au maombi ya faragha, wasiliana na",
+      "contactSuffix": "."
+    },
+    "terms": {
+      "title": "Masharti ya Matumizi",
+      "description": "WhatsBoard husaidia wauzaji wa mtandaoni kuendesha operesheni zenye mpangilio. Kwa kutumia bidhaa hii, unakubali kuitumia kwa shughuli halali za biashara na kulinda akaunti na workspace yako.",
+      "contactPrefix": "Bei, mipaka ya plan na upatikanaji wa vipengele vinaweza kutofautiana kwa kila plan. Wasiliana na",
+      "contactSuffix": "kwa masharti ya enterprise."
+    }
+  }
+}

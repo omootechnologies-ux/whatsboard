@@ -1,0 +1,200 @@
+{
+  "app": {
+    "name": "WhatsBoard",
+    "description": "Premium fintech-style seller dashboard for East African online sellers turning WhatsApp chat chaos into sales control."
+  },
+  "locale": {
+    "label": "Language",
+    "english": "English",
+    "swahili": "Kiswahili"
+  },
+  "actions": {
+    "startFree": "Start Free",
+    "watchDemo": "Watch Demo",
+    "login": "Login",
+    "logout": "Sign out",
+    "signingOut": "Signing out...",
+    "apply": "Apply",
+    "create": "Create",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "view": "View",
+    "edit": "Edit",
+    "addOrder": "Add order",
+    "addCustomer": "Add customer",
+    "getStartedToday": "Get Started Today",
+    "tryAgain": "Try again"
+  },
+  "publicNav": {
+    "home": "Home",
+    "product": "Product",
+    "pricing": "Pricing",
+    "login": "Login",
+    "salesControl": "Sales Control",
+    "toggleNavigation": "Toggle navigation"
+  },
+  "footer": {
+    "tagline": "From chat chaos to sales control.",
+    "builtFor": "Built for East African online sellers",
+    "product": "Product",
+    "pricing": "Pricing",
+    "demo": "Demo",
+    "login": "Login",
+    "startFree": "Start Free",
+    "contact": "Contact",
+    "privacyPolicy": "Privacy Policy",
+    "terms": "Terms"
+  },
+  "auth": {
+    "checkingSession": "Checking your session...",
+    "createAccount": "Create account",
+    "welcomeBack": "Welcome back",
+    "openWorkspace": "Open your WhatsBoard workspace",
+    "signInTitle": "Sign in to WhatsBoard",
+    "registerDescription": "Set up your seller workspace for orders, payments, follow-ups, and customer tracking.",
+    "loginDescription": "Access your seller control room and continue managing daily operations.",
+    "businessName": "Business Name",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "createAccountButton": "Create account",
+    "loginButton": "Login",
+    "pleaseWait": "Please wait...",
+    "poweredBy": "Powered by Supabase Auth",
+    "alreadyHaveAccount": "Already have an account?",
+    "switchToCreate": "Create account",
+    "errors": {
+      "invalidCredentials": "Email or password is incorrect. Please try again.",
+      "emailNotConfirmed": "Please confirm your email first, then sign in.",
+      "alreadyRegistered": "This email is already registered. Please sign in instead.",
+      "passwordMinLength": "Password must be at least 8 characters.",
+      "authNotConfigured": "Authentication is not configured correctly. Contact support.",
+      "cookiesBlocked": "Login could not be completed because session cookies were blocked. Enable cookies for this site and try again.",
+      "generic": "Something went wrong. Please try again.",
+      "bootstrapFailed": "Failed to prepare your business profile.",
+      "emailPasswordRequired": "Email and password are required.",
+      "invalidEmail": "Enter a valid email address.",
+      "passwordMismatch": "Passwords do not match.",
+      "sessionNotActive": "Login succeeded but session is not active yet. Refresh and try again."
+    },
+    "messages": {
+      "checkEmail": "Account created. Check your email to verify before signing in."
+    }
+  },
+  "dashboardShell": {
+    "defaultWorkspace": "My Business",
+    "tagline": "Seller control room • {workspace}",
+    "builtForTitle": "Built for East African sellers",
+    "builtForBody": "Turn WhatsApp, Instagram, TikTok, and Facebook orders into one clean daily workflow.",
+    "groups": {
+      "operations": "Operations",
+      "control": "Control"
+    },
+    "nav": {
+      "overview": "Overview",
+      "orders": "Orders",
+      "products": "Products",
+      "customers": "Customers",
+      "followUps": "Follow-ups",
+      "payments": "Payments",
+      "team": "Team",
+      "billing": "Billing",
+      "analytics": "Analytics",
+      "settings": "Settings"
+    },
+    "reconciledToday": "Reconciled today: {count}"
+  },
+  "shared": {
+    "searchRecords": "Search records",
+    "searchEverything": "Search orders, customers, or payments",
+    "searchOrders": "Search by order ID, customer, product, or area",
+    "searchCustomers": "Search by name, phone, WhatsApp, source channel, or notes",
+    "searchPayments": "Search by order reference, customer, method, or status",
+    "searchFollowUps": "Search follow-up title, note, customer, or order reference",
+    "searchProducts": "Search products by name, SKU, category, or notes",
+    "searchTeam": "Search team members by name, email, phone, or role",
+    "searchSettings": "Search setting labels or values",
+    "noRecords": "No records found",
+    "na": "N/A",
+    "orderUntitled": "Untitled order",
+    "customerUntitled": "Untitled customer",
+    "updatedAt": "Updated {date}",
+    "paymentRef": "Payment ref: {reference}",
+    "ordersCount": "{count} orders",
+    "noOrdersStage": "No orders in this stage.",
+    "loading": "Loading...",
+    "whatsBoard": "WhatsBoard"
+  },
+  "badges": {
+    "payment": {
+      "paid": "Paid",
+      "partial": "Partial",
+      "unpaid": "Unpaid",
+      "cod": "COD"
+    },
+    "stage": {
+      "new_order": "New order",
+      "waiting_payment": "Awaiting payment",
+      "paid": "Paid",
+      "packing": "Packing",
+      "dispatched": "Dispatched",
+      "delivered": "Delivered"
+    },
+    "buyer": {
+      "new": "New customer",
+      "repeat": "Repeat customer",
+      "at_risk": "At-risk customer",
+      "lost": "Lost customer"
+    },
+    "followUpStatus": {
+      "overdue": "Overdue",
+      "today": "Today",
+      "upcoming": "Upcoming",
+      "completed": "Completed"
+    },
+    "priority": {
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "This page does not exist or was moved. Go back to the homepage or open your dashboard workspace to continue managing orders, payments, and follow-ups.",
+    "openDashboard": "Open dashboard",
+    "backHome": "Back home"
+  },
+  "receipt": {
+    "title": "Receipt",
+    "total": "Total",
+    "payment": "Payment",
+    "orderTrackedWith": "Order tracked with WhatsBoard"
+  },
+  "pages": {
+    "login": {
+      "title": "Login | WhatsBoard",
+      "description": "Sign in to access your WhatsBoard workspace."
+    },
+    "register": {
+      "title": "Register | WhatsBoard",
+      "description": "Create your WhatsBoard account and start tracking orders."
+    },
+    "pricing": {
+      "title": "Pricing | WhatsBoard",
+      "description": "Clear monthly TZS pricing for East African online sellers using WhatsBoard."
+    },
+    "privacy": {
+      "title": "Privacy Policy",
+      "description": "WhatsBoard stores seller operations data such as orders, customers, follow-ups, and payments to provide workflow visibility and team coordination. We do not sell your business data.",
+      "contactPrefix": "For production support or privacy requests, contact",
+      "contactSuffix": "."
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "description": "WhatsBoard helps online sellers run structured operations. By using the product, you agree to use it for lawful business activities and keep account and workspace access secure.",
+      "contactPrefix": "Pricing, plan limits, and feature availability may vary by plan tier. Contact",
+      "contactSuffix": "for enterprise terms."
+    }
+  }
+}
