@@ -94,6 +94,10 @@ export function PublicNav() {
           </Link>
         </div>
 
+        <div className="flex items-center gap-2 md:hidden">
+          <LanguageSwitcher compact className="border-white/35 bg-white/95" />
+        </div>
+
         <button
           onClick={() => setOpen((prev) => !prev)}
           className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/30 bg-white/10 text-white md:hidden"
