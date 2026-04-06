@@ -54,7 +54,7 @@ export function CostOfChaosSection() {
             </p>
           </div>
 
-          <div className="mt-8 grid gap-4 lg:grid-cols-3">
+          <div className="mt-8 wb-responsive-grid">
             {cards.map((card) => {
               const Icon = card.icon
 

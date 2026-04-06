@@ -122,4 +122,40 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    min-height: 100vh;
+    font-size: clamp(14px, 1vw + 12px, 18px);
+  }
+
+  img,
+  picture,
+  svg,
+  video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+}
+
+@layer utilities {
+  .wb-responsive-grid {
+    display: grid;
+    grid-gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
 }

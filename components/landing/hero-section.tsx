@@ -20,7 +20,7 @@ export function HeroSection() {
   return (
     <section
       ref={sectionRef}
-      className="relative min-h-screen flex items-center pt-20 lg:pt-0 overflow-hidden"
+      className="relative min-h-screen flex flex-col justify-center pt-20 lg:pt-0 overflow-hidden"
     >
       {/* Background Elements */}
       <div className="absolute inset-0 bg-gradient-to-b from-secondary/30 to-background" />
@@ -28,7 +28,7 @@ export function HeroSection() {
       <div className="absolute bottom-20 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-20 items-center">
           {/* Content */}
           <div
             className={cn(
@@ -70,7 +70,7 @@ export function HeroSection() {
               </Button>
             </div>
 
-            <div className="flex items-center gap-8 pt-4">
+            <div className="flex flex-wrap items-center gap-6 pt-4 text-center sm:text-left">
               <div>
                 <p className="text-2xl font-bold text-foreground">2,500+</p>
                 <p className="text-sm text-muted-foreground">{t("Waiting Sellers")}</p>
