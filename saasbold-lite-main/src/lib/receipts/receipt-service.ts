@@ -240,7 +240,7 @@ function enforceCustomization(
 
   const shopName = capabilities.canSetShopName
     ? cleanText(input.shopName) || currentShopName || businessName
-    : currentShopName || "WhatsBoard Seller";
+    : currentShopName || "Folapp Seller";
 
   const shopLogoUrl = capabilities.canSetLogo
     ? cleanText(input.shopLogoUrl) || currentLogo
@@ -472,7 +472,7 @@ export async function issueReceiptForOrder(
   const customization = enforceCustomization(
     plan,
     input,
-    cleanText(business.name) || "WhatsBoard Seller",
+    cleanText(business.name) || "Folapp Seller",
     currentReceipt,
   );
   const snapshot = buildSnapshot(order, customer);
@@ -626,9 +626,9 @@ export async function getPublicReceiptByToken(
 
   let footerText: string | null = null;
   if (footerMode === "whatsboard_link") {
-    footerText = "Order tracked with WhatsBoard · whatsboard.vercel.app";
+    footerText = "Order tracked with Folapp · whatsboard.vercel.app";
   } else if (footerMode === "powered_by_whatsboard") {
-    footerText = "Powered by WhatsBoard";
+    footerText = "Powered by Folapp";
   } else {
     footerText = null;
   }
@@ -648,7 +648,7 @@ export async function getPublicReceiptByToken(
     shopName:
       cleanText(receipt.shop_name) ||
       cleanText(business.name) ||
-      "WhatsBoard Seller",
+      "Folapp Seller",
     shopLogoUrl: cleanText(receipt.shop_logo_url),
     thankYouMessage: cleanText(receipt.thank_you_message),
     footerMode,

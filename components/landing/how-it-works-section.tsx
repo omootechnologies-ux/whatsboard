@@ -19,9 +19,9 @@ const steps = [
     number: "02",
     icon: ClipboardList,
     title: "Log It Instantly",
-    description: "With one click, add the order to your WhatsBoard. Customer details, products, everything organized.",
+    description: "With one click, add the order to your Folapp. Customer details, products, everything organized.",
     image: "/images/step-log.jpg",
-    alt: "Logging order into WhatsBoard"
+    alt: "Logging order into Folapp"
   },
   {
     number: "03",
@@ -85,7 +85,7 @@ export function HowItWorksSection() {
             className="mt-4 text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground text-balance"
             style={{ fontFamily: 'var(--font-display)' }}
           >
-            {t("How WhatsBoard Works")}
+            {t("How Folapp Works")}
           </h2>
           <p className="mt-6 text-lg text-muted-foreground text-pretty">
             {t("Four simple steps to transform your WhatsApp selling into a professional operation.")}

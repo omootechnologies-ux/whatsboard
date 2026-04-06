@@ -4,8 +4,8 @@ import { LanguageProvider } from '@/components/i18n/language-provider'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'WhatsBoard - From Chat Chaos to Sales Control',
-  description: 'Transform your WhatsApp business from overwhelming chaos to organized success. WhatsBoard helps African entrepreneurs manage orders, payments, and deliveries with ease.',
+  title: 'Folapp - From Chat Chaos to Sales Control',
+  description: 'Transform your WhatsApp business from overwhelming chaos to organized success. Folapp helps African entrepreneurs manage orders, payments, and deliveries with ease.',
   generator: 'v0.app',
   keywords: ['WhatsApp business', 'order management', 'African entrepreneurs', 'e-commerce', 'Tanzania', 'Kenya'],
   icons: {

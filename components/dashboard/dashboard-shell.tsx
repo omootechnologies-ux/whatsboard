@@ -214,7 +214,7 @@ export function DashboardShell({
               </span>
               {!desktopCollapsed ? (
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#5e6461]">WhatsBoard</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#5e6461]">Folapp</p>
                   <p className="text-sm font-black tracking-[-0.03em] text-[#111111]">
                     Chat chaos to control
                   </p>
@@ -368,7 +368,7 @@ export function DashboardShell({
                       <ShoppingBag className="h-5 w-5" />
                     </span>
                     <div>
-                      <p className="text-sm font-black text-[#111111]">WhatsBoard</p>
+                      <p className="text-sm font-black text-[#111111]">Folapp</p>
                       <p className="text-xs text-[#5e6461]">{business?.name || "Seller workspace"}</p>
                     </div>
                   </div>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { getLocale } from "next-intl/server";
 import {
   BuyerBadge,
   CustomerRow,
@@ -36,6 +37,8 @@ export default async function CustomersPage({
   searchParams: CustomersPageSearchParams;
 }) {
   const query = await searchParams;
+  const locale = await getLocale();
+  const isSw = locale === "sw";
   const customerRecords = await listCustomers({
     search: query.search,
     status: query.status,
@@ -65,12 +68,16 @@ export default async function CustomersPage({
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
-        title="Customers"
-        description="Customer records connected to orders, follow-ups, and spend history so repeat sales are easier to manage."
+        title={isSw ? "Wateja" : "Customers"}
+        description={
+          isSw
+            ? "Rekodi za wateja zilizounganishwa na orders, follow-ups, na historia ya matumizi ili mauzo ya kurudia yasimamiwe kwa urahisi."
+            : "Customer records connected to orders, follow-ups, and spend history so repeat sales are easier to manage."
+        }
         primaryAction={
           <Link href="/customers/new" className="wb-button-primary">
             <Plus className="h-4 w-4" />
-            Add Customer
+            {isSw ? "Ongeza Mteja" : "Add Customer"}
           </Link>
         }
       />
@@ -78,79 +85,111 @@ export default async function CustomersPage({
       {query.created === "1" || query.updated === "1" ? (
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
           {query.created === "1"
-            ? "Customer created successfully."
-            : "Customer updated successfully."}
+            ? isSw
+              ? "Mteja ameundwa kikamilifu."
+              : "Customer created successfully."
+            : isSw
+              ? "Mteja amehaririwa kikamilifu."
+              : "Customer updated successfully."}
         </div>
       ) : null}
 
       {query.error === "not-found" ? (
         <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
-          Customer was not found.
+          {isSw ? "Mteja hakupatikana." : "Customer was not found."}
         </div>
       ) : null}
 
       <section className="grid gap-4 md:grid-cols-3">
         <KpiCard
-          label="Tracked customers"
+          label={isSw ? "Wateja wanaofuatiliwa" : "Tracked customers"}
           value={String(customerRecords.length)}
-          detail="Records captured from daily selling activity."
+          detail={
+            isSw
+              ? "Rekodi zilizochukuliwa kutoka shughuli za kila siku za mauzo."
+              : "Records captured from daily selling activity."
+          }
         />
         <KpiCard
-          label="Repeat buyers"
+          label={isSw ? "Wanunuzi wa kurudia" : "Repeat buyers"}
           value={String(
             customerRecords.filter((customer) => customer.buyerStatus === "repeat")
               .length,
           )}
-          detail="Customers with 2+ recorded orders."
+          detail={
+            isSw
+              ? "Wateja wenye order 2 au zaidi."
+              : "Customers with 2+ recorded orders."
+          }
         />
         <KpiCard
-          label="At-risk buyers"
+          label={isSw ? "Wanunuzi wa hatari" : "At-risk buyers"}
           value={String(
             customerRecords.filter((customer) => customer.buyerStatus === "at_risk")
               .length,
           )}
-          detail="Repeat buyers inactive for 21+ days."
+          detail={
+            isSw
+              ? "Wanunuzi wa kurudia wasio-active kwa siku 21+."
+              : "Repeat buyers inactive for 21+ days."
+          }
         />
       </section>
 
       <FilterToolbar
-        searchPlaceholder="Search by name, phone, WhatsApp, source channel, or notes"
+        searchPlaceholder={
+          isSw
+            ? "Tafuta kwa jina, simu, WhatsApp, channel au note"
+            : "Search by name, phone, WhatsApp, source channel, or notes"
+        }
         chips={[
-          { key: "status", label: "All customers" },
-          { key: "status", label: "New", value: "new" },
-          { key: "status", label: "Repeat", value: "repeat" },
-          { key: "status", label: "At-risk", value: "at_risk" },
-          { key: "status", label: "Lost", value: "lost" },
+          { key: "status", label: isSw ? "Wateja wote" : "All customers" },
+          { key: "status", label: isSw ? "Mpya" : "New", value: "new" },
+          { key: "status", label: isSw ? "Wa kurudia" : "Repeat", value: "repeat" },
+          { key: "status", label: isSw ? "Wa hatari" : "At-risk", value: "at_risk" },
+          { key: "status", label: isSw ? "Waliopotea" : "Lost", value: "lost" },
           { key: "sourceChannel", label: "WhatsApp", value: "WhatsApp" },
           { key: "sourceChannel", label: "Instagram", value: "Instagram" },
           { key: "sourceChannel", label: "Facebook", value: "Facebook" },
-          { key: "sort", label: "Sort: LTV", value: "ltv" },
-          { key: "sort", label: "Sort: Last order", value: "last_order" },
-          { key: "sort", label: "Sort: Total orders", value: "total_orders" },
+          { key: "sort", label: isSw ? "Panga: LTV" : "Sort: LTV", value: "ltv" },
           {
             key: "sort",
-            label: "Sort: Days since order",
+            label: isSw ? "Panga: Order ya mwisho" : "Sort: Last order",
+            value: "last_order",
+          },
+          {
+            key: "sort",
+            label: isSw ? "Panga: Jumla ya order" : "Sort: Total orders",
+            value: "total_orders",
+          },
+          {
+            key: "sort",
+            label: isSw ? "Panga: Siku tangu order" : "Sort: Days since order",
             value: "days_since_last_order",
           },
         ]}
       />
 
       <SectionCard
-        title="Customer records"
-        description="Desktop table with mobile cards for quick customer actions."
+        title={isSw ? "Rekodi za wateja" : "Customer records"}
+        description={
+          isSw
+            ? "Jedwali la desktop na kadi za simu kwa vitendo vya haraka vya mteja."
+            : "Desktop table with mobile cards for quick customer actions."
+        }
       >
         <div className="hidden lg:block">
           {customerRecords.length ? (
             <DataTable
               headers={[
-                "Customer",
-                "Phone",
-                "Location",
-                "Last order",
-                "Days since last order",
-                "Total spend",
-                "Buyer status",
-                "Action",
+                isSw ? "Mteja" : "Customer",
+                isSw ? "Simu" : "Phone",
+                isSw ? "Eneo" : "Location",
+                isSw ? "Order ya mwisho" : "Last order",
+                isSw ? "Siku tangu order ya mwisho" : "Days since last order",
+                isSw ? "Jumla ya matumizi" : "Total spend",
+                isSw ? "Hali ya mnunuzi" : "Buyer status",
+                isSw ? "Kitendo" : "Action",
               ]}
             >
               {customerRecords.map((customer) => (
@@ -164,7 +203,9 @@ export default async function CustomersPage({
                       })}
                     </p>
                     <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-                      {customer.totalOrders} total orders
+                      {isSw
+                        ? `${customer.totalOrders} order kwa jumla`
+                        : `${customer.totalOrders} total orders`}
                     </p>
                   </DataCell>
                   <DataCell>{customer.phone}</DataCell>
@@ -176,7 +217,9 @@ export default async function CustomersPage({
                   </DataCell>
                   <DataCell>
                     <span className="text-sm font-semibold text-[var(--color-wb-text)]">
-                      {customer.daysSinceLastOrder || 0} days
+                      {isSw
+                        ? `${customer.daysSinceLastOrder || 0} siku`
+                        : `${customer.daysSinceLastOrder || 0} days`}
                     </span>
                   </DataCell>
                   <DataCell>
@@ -193,14 +236,14 @@ export default async function CustomersPage({
                         href={`/customers/${customer.id}`}
                         className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
                       >
-                        View
+                        {isSw ? "Tazama" : "View"}
                       </Link>
                       <span className="text-[var(--color-wb-text-muted)]">•</span>
                       <Link
                         href={`/customers/${customer.id}/edit`}
                         className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
                       >
-                        Edit
+                        {isSw ? "Hariri" : "Edit"}
                       </Link>
                     </div>
                   </DataCell>
@@ -209,11 +252,15 @@ export default async function CustomersPage({
             </DataTable>
           ) : (
             <EmptyState
-              title="No customers yet"
-              detail="Start by adding your first customer or creating an order."
+              title={isSw ? "Bado hakuna wateja" : "No customers yet"}
+              detail={
+                isSw
+                  ? "Anza kwa kuongeza mteja wako wa kwanza au kuunda order."
+                  : "Start by adding your first customer or creating an order."
+              }
               action={
                 <Link href="/customers/new" className="wb-button-secondary">
-                  Add customer
+                  {isSw ? "Ongeza mteja" : "Add customer"}
                 </Link>
               }
             />
@@ -227,13 +274,17 @@ export default async function CustomersPage({
                 key={customer.id}
                 customer={customer}
                 actionHref={`/customers/${customer.id}`}
-                actionLabel="View"
+                actionLabel={isSw ? "Tazama" : "View"}
               />
             ))
           ) : (
             <EmptyState
-              title="No customers yet"
-              detail="Start by adding your first customer or creating an order."
+              title={isSw ? "Bado hakuna wateja" : "No customers yet"}
+              detail={
+                isSw
+                  ? "Anza kwa kuongeza mteja wako wa kwanza au kuunda order."
+                  : "Start by adding your first customer or creating an order."
+              }
             />
           )}
         </div>

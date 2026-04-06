@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Bell, CreditCard, Package2, Users } from "lucide-react";
+import { getLocale } from "next-intl/server";
 import {
   BuyerBadge,
   ChartCard,
@@ -30,6 +31,8 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
+  const locale = await getLocale();
+  const isSw = locale === "sw";
   const [
     { stats: dashboardStats, customers, followUps, orders },
     payments,
@@ -100,7 +103,7 @@ export default async function DashboardPage() {
   const recentActivity = [
     ...orders.map((order) => ({
       at: order.updatedAt,
-      title: `Order #${formatOrderReference(order.id) || "WB-00000"} is ${order.stage.replaceAll("_", " ")}`,
+      title: `${isSw ? "Order #" : "Order #"}${formatOrderReference(order.id) || "WB-00000"} ${isSw ? "ipo" : "is"} ${order.stage.replaceAll("_", " ")}`,
       detail: `${getPrimaryOrderLabel({
         customerName: order.customerName,
         customerPhone: order.customerPhone,
@@ -109,7 +112,7 @@ export default async function DashboardPage() {
     })),
     ...followUps.map((item) => ({
       at: item.dueAt,
-      title: `${item.status.toUpperCase()} follow-up: ${item.title}`,
+      title: `${item.status.toUpperCase()} ${isSw ? "follow-up" : "follow-up"}: ${item.title}`,
       detail: `${getPrimaryOrderLabel({
         customerName: item.customerName,
         orderId: item.orderId,
@@ -118,12 +121,12 @@ export default async function DashboardPage() {
     })),
     ...payments.map((payment) => ({
       at: payment.createdAt,
-      title: `Payment ${formatPaymentStatusLabel(payment.status)} • ${formatOrderReference(payment.orderId) || "WB-00000"}`,
+      title: `${isSw ? "Malipo" : "Payment"} ${formatPaymentStatusLabel(payment.status)} • ${formatOrderReference(payment.orderId) || "WB-00000"}`,
       detail: `${getPrimaryOrderLabel({
         customerName: payment.customerName,
         orderId: payment.orderId,
         kind: "customer",
-      })} • ${formatCurrency(payment.amount)} via ${payment.method}`,
+      })} • ${formatCurrency(payment.amount)} ${isSw ? "kupitia" : "via"} ${payment.method}`,
     })),
   ]
     .sort((a, b) => (a.at < b.at ? 1 : -1))
@@ -137,38 +140,58 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
-        title="Dashboard"
-        description="Your daily control room for orders, payments, customers, and follow-ups across WhatsApp and social channels."
+        title={isSw ? "Dashibodi" : "Dashboard"}
+        description={
+          isSw
+            ? "Control room yako ya kila siku kwa orders, malipo, wateja, na follow-ups kwenye WhatsApp na channels za social."
+            : "Your daily control room for orders, payments, customers, and follow-ups across WhatsApp and social channels."
+        }
         secondaryAction={
           <Link href="/orders" className="wb-button-secondary">
-            Open Orders Board
+            {isSw ? "Fungua Board ya Orders" : "Open Orders Board"}
           </Link>
         }
       />
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <KpiCard
-          label="Active orders"
+          label={isSw ? "Orders active" : "Active orders"}
           value={String(dashboardStats.activeOrders)}
-          detail="Orders currently in motion across all stages."
+          detail={
+            isSw
+              ? "Orders zinazoendelea kwenye hatua zote."
+              : "Orders currently in motion across all stages."
+          }
           accent={<Package2 className="h-5 w-5" />}
         />
         <KpiCard
-          label="Overdue follow-ups"
+          label={isSw ? "Follow-ups zilizochelewa" : "Overdue follow-ups"}
           value={String(dashboardStats.overdueFollowUps)}
-          detail="Customers waiting for your next reply or payment reminder."
+          detail={
+            isSw
+              ? "Wateja wanaosubiri jibu lako au ukumbusho wa malipo."
+              : "Customers waiting for your next reply or payment reminder."
+          }
           accent={<Bell className="h-5 w-5" />}
         />
         <KpiCard
-          label="Sales this month"
+          label={isSw ? "Mauzo mwezi huu" : "Sales this month"}
           value={formatCurrency(dashboardStats.revenueMonth)}
-          detail="Confirmed revenue tracked inside WhatsBoard."
+          detail={
+            isSw
+              ? "Mapato yaliyothibitishwa ndani ya Folapp."
+              : "Confirmed revenue tracked inside Folapp."
+          }
           accent={<CreditCard className="h-5 w-5" />}
         />
         <KpiCard
-          label="Customers added"
+          label={isSw ? "Wateja walioongezwa" : "Customers added"}
           value={String(dashboardStats.customersThisMonth)}
-          detail={`${dashboardStats.conversionRate}% conversion from chat inquiry to tracked order.`}
+          detail={
+            isSw
+              ? `${dashboardStats.conversionRate}% conversion kutoka inquiry ya chat hadi order iliyofuatiliwa.`
+              : `${dashboardStats.conversionRate}% conversion from chat inquiry to tracked order.`
+          }
           accent={<Users className="h-5 w-5" />}
         />
       </section>
@@ -176,17 +199,17 @@ export default async function DashboardPage() {
       <StatStrip
         items={[
           {
-            label: "Awaiting payment",
+            label: isSw ? "Inasubiri malipo" : "Awaiting payment",
             value: String(stageGroups.waitingPayment.length),
             tone: "warning",
           },
           {
-            label: "Ready to dispatch",
+            label: isSw ? "Tayari kutuma" : "Ready to dispatch",
             value: String(stageGroups.packing.length),
             tone: "neutral",
           },
           {
-            label: "Delivered",
+            label: isSw ? "Imefika" : "Delivered",
             value: String(
               stageGroups.dispatch.filter(
                 (order) => order.stage === "delivered",
@@ -195,7 +218,7 @@ export default async function DashboardPage() {
             tone: "success",
           },
           {
-            label: "Payout pending",
+            label: isSw ? "Malipo yanayosubiri" : "Payout pending",
             value: formatCurrency(dashboardStats.payoutPending),
             tone: "danger",
           },
@@ -204,18 +227,22 @@ export default async function DashboardPage() {
 
       <section className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         <SectionCard
-          title="Customer Insights"
-          description="Retention and growth snapshot from real buyer behavior."
+          title={isSw ? "Insights za Wateja" : "Customer Insights"}
+          description={
+            isSw
+              ? "Muhtasari wa retention na ukuaji kutoka tabia halisi ya wanunuzi."
+              : "Retention and growth snapshot from real buyer behavior."
+          }
           actions={
             <Link href="/customers?status=at_risk" className="wb-button-secondary">
-              View at-risk buyers
+              {isSw ? "Tazama wanunuzi wa hatari" : "View at-risk buyers"}
             </Link>
           }
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="wb-soft-card p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                Total unique customers
+                {isSw ? "Jumla ya wateja wa kipekee" : "Total unique customers"}
               </p>
               <p className="mt-2 text-2xl font-black tracking-[-0.04em] text-[var(--color-wb-text)]">
                 {totalUniqueCustomers}
@@ -223,7 +250,7 @@ export default async function DashboardPage() {
             </div>
             <div className="wb-soft-card p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                Repeat buyer %
+                {isSw ? "Asilimia ya wanunuzi wa kurudia" : "Repeat buyer %"}
               </p>
               <p className="mt-2 text-2xl font-black tracking-[-0.04em] text-[var(--color-wb-primary)]">
                 {repeatBuyerPercentage}%
@@ -231,7 +258,7 @@ export default async function DashboardPage() {
             </div>
             <div className="wb-soft-card p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                At-risk customers
+                {isSw ? "Wateja wa hatari" : "At-risk customers"}
               </p>
               <p className="mt-2 text-2xl font-black tracking-[-0.04em] text-[var(--color-wb-warning)]">
                 {atRiskCustomers}
@@ -239,52 +266,63 @@ export default async function DashboardPage() {
             </div>
             <div className="wb-soft-card p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]">
-                Best customer this month
+                {isSw ? "Mteja bora mwezi huu" : "Best customer this month"}
               </p>
               <p className="mt-2 text-sm font-semibold text-[var(--color-wb-text)]">
                 {bestCustomerThisMonth
                   ? `${bestCustomerThisMonth.name} • LTV ${formatCurrency(bestCustomerThisMonth.totalSpend)}`
-                  : "No customer activity yet"}
+                  : isSw
+                    ? "Bado hakuna shughuli za wateja"
+                    : "No customer activity yet"}
               </p>
             </div>
           </div>
         </SectionCard>
 
         <SectionCard
-          title="CRM nudges"
-          description="Action prompts to protect repeat revenue."
+          title={isSw ? "Vikumbusho vya CRM" : "CRM nudges"}
+          description={
+            isSw
+              ? "Mapendekezo ya hatua kulinda mapato ya wanunuzi wa kurudia."
+              : "Action prompts to protect repeat revenue."
+          }
         >
           <div className="space-y-3">
             <div className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4">
               <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-                Receipts viewed
+                {isSw ? "Receipts zilizotazamwa" : "Receipts viewed"}
               </p>
               <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-                Your receipts were viewed {receiptViewsThisMonth} times this
-                month.
+                {isSw
+                  ? `Receipt zako zimetazamwa mara ${receiptViewsThisMonth} mwezi huu.`
+                  : `Your receipts were viewed ${receiptViewsThisMonth} times this month.`}
               </p>
             </div>
             <div className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4">
               <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-                Daily digest
+                {isSw ? "Muhtasari wa leo" : "Daily digest"}
               </p>
               <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
                 {atRiskCustomers > 0
                   ? `${atRiskCustomers} repeat buyers haven't ordered in 3 weeks — follow up today.`
-                  : "No repeat buyers at-risk today. Keep momentum with proactive follow-ups."}
+                  : isSw
+                    ? "Hakuna wanunuzi wa kurudia walio hatarini leo. Endelea na follow-up za mapema."
+                    : "No repeat buyers at-risk today. Keep momentum with proactive follow-ups."}
               </p>
             </div>
             <div className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4">
               <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-                Retention focus
+                {isSw ? "Lengo la retention" : "Retention focus"}
               </p>
               <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-                Prioritize repeat buyers with low recent activity to recover silent revenue.
+                {isSw
+                  ? "Weka kipaumbele kwa wanunuzi wa kurudia wenye shughuli ndogo hivi karibuni ili kurejesha mapato yaliyonyamaza."
+                  : "Prioritize repeat buyers with low recent activity to recover silent revenue."}
               </p>
             </div>
             <div className="rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4">
               <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-                Buyer health
+                {isSw ? "Afya ya wanunuzi" : "Buyer health"}
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <BuyerBadge status="repeat" compact />
@@ -298,8 +336,12 @@ export default async function DashboardPage() {
 
       <section className="grid gap-4 xl:grid-cols-2">
         <SectionCard
-          title="Urgent follow-ups"
-          description="Overdue and due-today customer actions."
+          title={isSw ? "Follow-ups za haraka" : "Urgent follow-ups"}
+          description={
+            isSw
+              ? "Vitendo vya wateja vilivyochelewa na vinavyodaiwa leo."
+              : "Overdue and due-today customer actions."
+          }
         >
           <div className="space-y-3">
             {urgentFollowUps.length ? (
@@ -328,11 +370,17 @@ export default async function DashboardPage() {
               ))
             ) : (
               <EmptyState
-                title="No urgent follow-ups"
-                detail="You have no overdue or due-today reminders right now."
+                title={
+                  isSw ? "Hakuna follow-up za haraka" : "No urgent follow-ups"
+                }
+                detail={
+                  isSw
+                    ? "Kwa sasa huna vikumbusho vilivyochelewa au vya leo."
+                    : "You have no overdue or due-today reminders right now."
+                }
                 action={
                   <Link href="/follow-ups/new" className="wb-button-secondary">
-                    Add follow-up
+                    {isSw ? "Ongeza follow-up" : "Add follow-up"}
                   </Link>
                 }
               />
@@ -341,8 +389,12 @@ export default async function DashboardPage() {
         </SectionCard>
 
         <SectionCard
-          title="Orders needing action"
-          description="New or unpaid orders that can block daily cash flow."
+          title={isSw ? "Orders zinazohitaji hatua" : "Orders needing action"}
+          description={
+            isSw
+              ? "Orders mpya au zisizolipwa zinazoweza kuzuia mzunguko wa fedha wa kila siku."
+              : "New or unpaid orders that can block daily cash flow."
+          }
         >
           <div className="space-y-3">
             {ordersNeedingAction.length ? (
@@ -374,19 +426,23 @@ export default async function DashboardPage() {
                     </span>
                   </div>
                   <p className="mt-2 text-xs uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
-                    {order.stage.replaceAll("_", " ")} • Order #
+                    {order.stage.replaceAll("_", " ")} • {isSw ? "Order #" : "Order #"}
                     {formatOrderReference(order.id) || "WB-00000"} • Updated{" "}
-                    {formatDate(order.updatedAt)}
+                    {isSw ? "Imeboreshwa" : "Updated"} {formatDate(order.updatedAt)}
                   </p>
                 </Link>
               ))
             ) : (
               <EmptyState
-                title="No blocked orders"
-                detail="No new or awaiting-payment orders need immediate action."
+                title={isSw ? "Hakuna orders zilizokwama" : "No blocked orders"}
+                detail={
+                  isSw
+                    ? "Hakuna orders mpya au zinazosubiri malipo zinazohitaji hatua ya haraka."
+                    : "No new or awaiting-payment orders need immediate action."
+                }
                 action={
                   <Link href="/orders/new" className="wb-button-secondary">
-                    Create order
+                    {isSw ? "Unda order" : "Create order"}
                   </Link>
                 }
               />
@@ -396,26 +452,33 @@ export default async function DashboardPage() {
       </section>
 
       <SectionCard
-        title="Orders Board"
-        description="The hero workflow for sellers moving orders from inquiry to delivery."
+        title={isSw ? "Board ya Orders" : "Orders Board"}
+        description={
+          isSw
+            ? "Workflow kuu kwa wauzaji wanaosogeza orders kutoka inquiry hadi delivery."
+            : "The hero workflow for sellers moving orders from inquiry to delivery."
+        }
         actions={
           <Link href="/orders" className="wb-button-secondary">
-            View all orders
+            {isSw ? "Tazama orders zote" : "View all orders"}
           </Link>
         }
       >
         <div className="grid gap-4 xl:grid-cols-4">
-          <OrderStageBoard title="New order" orders={stageGroups.newOrder} />
           <OrderStageBoard
-            title="Awaiting payment"
+            title={isSw ? "Order mpya" : "New order"}
+            orders={stageGroups.newOrder}
+          />
+          <OrderStageBoard
+            title={isSw ? "Inasubiri malipo" : "Awaiting payment"}
             orders={stageGroups.waitingPayment}
           />
           <OrderStageBoard
-            title="Paid / Packing"
+            title={isSw ? "Imelipwa / Inapakiwa" : "Paid / Packing"}
             orders={stageGroups.packing}
           />
           <OrderStageBoard
-            title="Dispatch / Delivered"
+            title={isSw ? "Kutuma / Imefika" : "Dispatch / Delivered"}
             orders={stageGroups.dispatch}
           />
         </div>
@@ -423,21 +486,33 @@ export default async function DashboardPage() {
 
       <section className="grid gap-4 xl:grid-cols-[0.92fr_1.08fr]">
         <ChartCard
-          title="Weekly performance"
-          description="Mon–Sun weekly performance snapshot."
+          title={isSw ? "Utendaji wa wiki" : "Weekly performance"}
+          description={
+            isSw
+              ? "Muhtasari wa utendaji wa wiki (Mon–Sun)."
+              : "Mon–Sun weekly performance snapshot."
+          }
           data={weeklyPerformanceSeries}
           dataKey="amount"
         />
         <SectionCard
-          title="Recent activity"
-          description="A clean operational timeline for the team."
+          title={isSw ? "Shughuli za karibuni" : "Recent activity"}
+          description={
+            isSw
+              ? "Mstari wa muda safi wa operesheni kwa timu."
+              : "A clean operational timeline for the team."
+          }
         >
           {recentActivity.length ? (
             <TimelineList items={recentActivity} />
           ) : (
             <EmptyState
-              title="No activity yet"
-              detail="New orders, payments, and follow-ups will appear here as your team starts using the workspace."
+              title={isSw ? "Bado hakuna shughuli" : "No activity yet"}
+              detail={
+                isSw
+                  ? "Orders mpya, malipo na follow-ups zitaonekana hapa timu yako itakapoanza kutumia workspace."
+                  : "New orders, payments, and follow-ups will appear here as your team starts using the workspace."
+              }
             />
           )}
         </SectionCard>
@@ -445,8 +520,12 @@ export default async function DashboardPage() {
 
       <section className="grid gap-4 xl:grid-cols-[1.02fr_0.98fr]">
         <SectionCard
-          title="Customer activity"
-          description="Living customer records instead of scattered chat names."
+          title={isSw ? "Shughuli za wateja" : "Customer activity"}
+          description={
+            isSw
+              ? "Rekodi hai za wateja badala ya majina yaliotawanyika kwenye chat."
+              : "Living customer records instead of scattered chat names."
+          }
         >
           <div className="space-y-3">
             {customers.length ? (
@@ -457,11 +536,15 @@ export default async function DashboardPage() {
                 ))
             ) : (
               <EmptyState
-                title="No customers yet"
-                detail="Add your first order or customer to start building buyer records."
+                title={isSw ? "Bado hakuna wateja" : "No customers yet"}
+                detail={
+                  isSw
+                    ? "Ongeza order au mteja wako wa kwanza kuanza kujenga rekodi za wanunuzi."
+                    : "Add your first order or customer to start building buyer records."
+                }
                 action={
                   <Link href="/customers/new" className="wb-button-secondary">
-                    Add customer
+                    {isSw ? "Ongeza mteja" : "Add customer"}
                   </Link>
                 }
               />
@@ -470,8 +553,12 @@ export default async function DashboardPage() {
         </SectionCard>
 
         <SectionCard
-          title="Quick actions"
-          description="Move fast on the most common daily tasks."
+          title={isSw ? "Hatua za haraka" : "Quick actions"}
+          description={
+            isSw
+              ? "Fanya haraka kazi za kila siku zinazotumika zaidi."
+              : "Move fast on the most common daily tasks."
+          }
         >
           <div className="grid gap-3 sm:grid-cols-2">
             <Link
@@ -479,10 +566,10 @@ export default async function DashboardPage() {
               className="wb-soft-card p-4 transition hover:bg-white"
             >
               <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-                Create new order
+                {isSw ? "Unda order mpya" : "Create new order"}
               </p>
               <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-                Add a fresh sale from chat.
+                {isSw ? "Ongeza mauzo mapya kutoka chat." : "Add a fresh sale from chat."}
               </p>
             </Link>
             <Link
@@ -490,10 +577,12 @@ export default async function DashboardPage() {
               className="wb-soft-card p-4 transition hover:bg-white"
             >
               <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-                Open customers
+                {isSw ? "Fungua wateja" : "Open customers"}
               </p>
               <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-                Check buyer history and spend.
+                {isSw
+                  ? "Angalia historia ya mnunuzi na matumizi."
+                  : "Check buyer history and spend."}
               </p>
             </Link>
             <Link
@@ -501,10 +590,12 @@ export default async function DashboardPage() {
               className="wb-soft-card p-4 transition hover:bg-white"
             >
               <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-                Schedule follow-up
+                {isSw ? "Panga follow-up" : "Schedule follow-up"}
               </p>
               <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-                Keep today’s leads from going cold.
+                {isSw
+                  ? "Zuia leads za leo zisipoweza kupoa."
+                  : "Keep today’s leads from going cold."}
               </p>
             </Link>
             <Link
@@ -512,10 +603,12 @@ export default async function DashboardPage() {
               className="wb-soft-card p-4 transition hover:bg-white"
             >
               <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-                Review payments
+                {isSw ? "Kagua malipo" : "Review payments"}
               </p>
               <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-                Confirm paid vs pending quickly.
+                {isSw
+                  ? "Thibitisha yaliyolipwa dhidi ya yanayosubiri haraka."
+                  : "Confirm paid vs pending quickly."}
               </p>
             </Link>
           </div>

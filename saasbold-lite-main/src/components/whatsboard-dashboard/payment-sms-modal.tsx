@@ -179,7 +179,7 @@ export function PaymentSmsModal({
                   {tr("Paste Payment SMS")}
                 </h3>
                 <p className="mt-2 text-sm text-[var(--color-wb-text-muted)]">
-                  {tr("WhatsBoard parses the SMS and suggests the best order match.")}
+                  {tr("Folapp parses the SMS and suggests the best order match.")}
                 </p>
               </div>
               <button

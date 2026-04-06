@@ -52,8 +52,8 @@ const swTranslations: Record<string, string> = {
     "Anza na Free, kisha boresha kupitia malipo ya moja kwa moja ya Snippe unapohitaji oda zaidi, mwonekano wa malipo, ufuatiliaji, na udhibiti zaidi.",
   "Current billing": "Bili ya sasa",
   "Live billing active": "Bili ya moja kwa moja iko hai",
-  "Snippe handles the payment page. WhatsBoard handles the plan activation.":
-    "Snippe inasimamia ukurasa wa malipo. WhatsBoard inasimamia kuwasha mpango.",
+  "Snippe handles the payment page. Folapp handles the plan activation.":
+    "Snippe inasimamia ukurasa wa malipo. Folapp inasimamia kuwasha mpango.",
   "Checkout stays secure, and the plan state stays tied to the same business record used by the dashboard.":
     "Malipo yanabaki salama, na hali ya mpango inaendelea kuhusishwa na rekodi ile ile ya biashara inayotumiwa na dashibodi.",
   "Free includes 30 orders per month. Paid plans unlock deeper operations that are already live in the app.":
@@ -132,20 +132,20 @@ const swTranslations: Record<string, string> = {
     "Kila saa unayotumia kuchimba chat ni muda ambao hautumiki kuuza, kupakia, au kusafirisha.",
   "Most sellers do not have a marketing problem. They have a follow-up problem dressed like normal business.":
     "Wauzaji wengi hawana tatizo la masoko. Wana tatizo la ufuatiliaji ambalo limejificha kama biashara ya kawaida.",
-  "WhatsBoard Starter is TZS 15,000/month. Losing even one order can cost more than that.":
-    "WhatsBoard Starter ni TZS 15,000 kwa mwezi. Kupoteza hata oda moja kunaweza kugharimu zaidi ya hapo.",
+  "Folapp Starter is TZS 15,000/month. Losing even one order can cost more than that.":
+    "Folapp Starter ni TZS 15,000 kwa mwezi. Kupoteza hata oda moja kunaweza kugharimu zaidi ya hapo.",
   "Stop losing money in silence": "Acha kupoteza pesa kimya kimya",
   "Track your first 30 orders free and see what organized selling feels like.":
     "Fuatilia oda zako 30 za kwanza bure na uone kuuza kwa mpangilio kunavyojisikia.",
   "Simple & Powerful": "Rahisi na nguvu",
-  "How WhatsBoard Works": "Jinsi WhatsBoard inavyofanya kazi",
+  "How Folapp Works": "Jinsi Folapp inavyofanya kazi",
   "Four simple steps to transform your WhatsApp selling into a professional operation.":
     "Hatua nne rahisi kubadilisha mauzo yako ya WhatsApp kuwa mfumo wa kitaalamu.",
   "Step": "Hatua",
   "Order Comes In": "Oda inaingia",
   "A customer messages you on WhatsApp with their order. Same as always.": "Mteja anakutumia ujumbe WhatsApp akiwa na oda yake. Kama kawaida.",
   "Log It Instantly": "Iandike mara moja",
-  "With one click, add the order to your WhatsBoard. Customer details, products, everything organized.": "Kwa kubofya mara moja, ongeza oda kwenye WhatsBoard yako. Taarifa za mteja, bidhaa, kila kitu kimepangwa.",
+  "With one click, add the order to your Folapp. Customer details, products, everything organized.": "Kwa kubofya mara moja, ongeza oda kwenye Folapp yako. Taarifa za mteja, bidhaa, kila kitu kimepangwa.",
   "Track Progress": "Fuatilia maendeleo",
   "Move orders through stages: New → Confirmed → Packed → Shipped → Delivered. Always know where every order stands.": "Hamisha oda kwenye hatua: Mpya → Imethibitishwa → Imepakiwa → Imetumwa → Imewasilishwa. Jua kila oda ilipo muda wote.",
   "Deliver & Delight": "Wasilisha na furahisha",
@@ -153,7 +153,7 @@ const swTranslations: Record<string, string> = {
   "The Transformation": "Mabadiliko",
   "From Chaos to ": "Kutoka vurugu hadi ",
   "Complete Control": "udhibiti kamili",
-  "See the difference WhatsBoard makes for your business.": "Ona tofauti ambayo WhatsBoard inaleta kwenye biashara yako.",
+  "See the difference Folapp makes for your business.": "Ona tofauti ambayo Folapp inaleta kwenye biashara yako.",
   "Before": "Kabla",
   "After": "Baada",
   "Scattered WhatsApp messages": "Jumbe za WhatsApp zilizotapakaa",
@@ -205,9 +205,9 @@ const swTranslations: Record<string, string> = {
   "Sellers Who Transformed ": "Wauzaji waliobadilisha ",
   "Their Business": "biashara zao",
   "Real stories from East African sellers who said goodbye to chaos.": "Hadithi halisi kutoka kwa wauzaji wa Afrika Mashariki walioacha vurugu nyuma.",
-  "Before WhatsBoard, I was losing at least 5 orders every week. Now I handle 3x more orders with zero stress. My customers even notice how professional I've become.": "Kabla ya WhatsBoard, nilikuwa napoteza angalau oda 5 kila wiki. Sasa nashughulikia oda mara 3 zaidi bila msongo. Hata wateja wangu wanaona jinsi nilivyokuwa mtaalamu zaidi.",
-  "I used to stay up until 2am trying to remember who ordered what. WhatsBoard gave me my evenings back. My family is happier, and honestly, so am I.": "Nilikuwa nakesha hadi saa 8 usiku nikijaribu kukumbuka nani aliagiza nini. WhatsBoard imenirejeshea jioni zangu. Familia yangu ina furaha zaidi, na ukweli ni kwamba mimi pia.",
-  "My business grew so fast I couldn't keep up. WhatsBoard saved my sanity. I can now track 50+ orders daily without breaking a sweat.": "Biashara yangu ilikua haraka sana kiasi kwamba sikuweza kuimudu. WhatsBoard iliokoa utulivu wangu wa akili. Sasa naweza kufuatilia oda 50+ kila siku bila shida.",
+  "Before Folapp, I was losing at least 5 orders every week. Now I handle 3x more orders with zero stress. My customers even notice how professional I've become.": "Kabla ya Folapp, nilikuwa napoteza angalau oda 5 kila wiki. Sasa nashughulikia oda mara 3 zaidi bila msongo. Hata wateja wangu wanaona jinsi nilivyokuwa mtaalamu zaidi.",
+  "I used to stay up until 2am trying to remember who ordered what. Folapp gave me my evenings back. My family is happier, and honestly, so am I.": "Nilikuwa nakesha hadi saa 8 usiku nikijaribu kukumbuka nani aliagiza nini. Folapp imenirejeshea jioni zangu. Familia yangu ina furaha zaidi, na ukweli ni kwamba mimi pia.",
+  "My business grew so fast I couldn't keep up. Folapp saved my sanity. I can now track 50+ orders daily without breaking a sweat.": "Biashara yangu ilikua haraka sana kiasi kwamba sikuweza kuimudu. Folapp iliokoa utulivu wangu wa akili. Sasa naweza kufuatilia oda 50+ kila siku bila shida.",
   "More orders": "Oda zaidi",
   "Daily orders": "Oda za kila siku",
   "Average Rating": "Ukadiriaji wa wastani",
@@ -225,7 +225,7 @@ const swTranslations: Record<string, string> = {
   "Cancel anytime": "Sitisha wakati wowote",
   "The order management system for Tanzanian and East African online sellers. Turn chat chaos into organized growth.":
     "Mfumo wa kusimamia oda kwa wauzaji wa Tanzania na Afrika Mashariki. Badilisha vurugu za chat kuwa ukuaji uliopangwa.",
-  "© 2026 WhatsBoard. All rights reserved.": "© 2026 WhatsBoard. Haki zote zimehifadhiwa.",
+  "© 2026 Folapp. All rights reserved.": "© 2026 Folapp. Haki zote zimehifadhiwa.",
   "(coming soon)": "(inakuja hivi karibuni)",
   "Most Popular": "Maarufu zaidi",
   "Best Value": "Thamani bora",

@@ -4,38 +4,41 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 import type { Session } from "@supabase/supabase-js";
+import { useTranslations } from "next-intl";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
 import { clearAuthSessionCookies } from "@/lib/auth/cookies";
 
 type AuthMode = "login" | "register";
 
-function resolveAuthErrorMessage(error: unknown) {
+type TranslateFn = (key: string) => string;
+
+function resolveAuthErrorMessage(error: unknown, t: TranslateFn) {
   if (error instanceof Error) {
     const message = error.message.toLowerCase();
     if (message.includes("invalid login credentials")) {
-      return "Email or password is incorrect. Please try again.";
+      return t("auth.errors.invalidCredentials");
     }
     if (message.includes("email not confirmed")) {
-      return "Please confirm your email first, then sign in.";
+      return t("auth.errors.emailNotConfirmed");
     }
     if (message.includes("user already registered")) {
-      return "This email is already registered. Please sign in instead.";
+      return t("auth.errors.alreadyRegistered");
     }
     if (message.includes("password should be at least")) {
-      return "Password must be at least 8 characters.";
+      return t("auth.errors.passwordMinLength");
     }
     if (message.includes("missing required env var")) {
-      return "Authentication is not configured correctly. Contact support.";
+      return t("auth.errors.authNotConfigured");
     }
     if (
       message.includes("blocked session cookie") ||
       message.includes("could not persist session")
     ) {
-      return "Login could not be completed because session cookies were blocked. Enable cookies for this site and try again.";
+      return t("auth.errors.cookiesBlocked");
     }
     return error.message;
   }
-  return "Something went wrong. Please try again.";
+  return t("auth.errors.generic");
 }
 
 function getRedirectPath(nextParam: string | null) {
@@ -52,6 +55,7 @@ function getRedirectPath(nextParam: string | null) {
 async function bootstrapBusinessContext(options: {
   session: Session;
   businessName?: string;
+  referralToken?: string | null;
 }) {
   const response = await fetch("/api/auth/bootstrap", {
     method: "POST",
@@ -63,6 +67,7 @@ async function bootstrapBusinessContext(options: {
       refreshToken: options.session.refresh_token,
       expiresAt: options.session.expires_at,
       businessName: options.businessName || undefined,
+      referralToken: options.referralToken || undefined,
     }),
   });
 
@@ -71,10 +76,11 @@ async function bootstrapBusinessContext(options: {
   const payload = (await response.json().catch(() => ({}))) as {
     error?: string;
   };
-  throw new Error(payload.error || "Failed to prepare your business profile.");
+  throw new Error(payload.error || "bootstrap_failed");
 }
 
 export function AuthForm({ mode }: { mode: AuthMode }) {
+  const t = useTranslations();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,6 +89,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const [forceAuthFlow, setForceAuthFlow] = useState(false);
   const [paramsReady, setParamsReady] = useState(false);
   const [authSwitchQuery, setAuthSwitchQuery] = useState("");
+  const [referralToken, setReferralToken] = useState<string | null>(null);
   const redirectInFlightRef = useRef(false);
 
   const isRegister = mode === "register";
@@ -95,9 +102,12 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     const next = params.get("next");
     const plan = params.get("plan");
     const force = params.get("force");
+    const ref = params.get("ref");
     if (next) switchParams.set("next", next);
     if (plan) switchParams.set("plan", plan);
     if (force === "1") switchParams.set("force", "1");
+    if (ref) switchParams.set("ref", ref);
+    setReferralToken(ref);
     const nextQuery = switchParams.toString();
     setAuthSwitchQuery(nextQuery ? `?${nextQuery}` : "");
     setParamsReady(true);
@@ -120,13 +130,14 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         const { data, error } = await supabase.auth.getSession();
 
         if (error) {
-          setErrorMessage(resolveAuthErrorMessage(error));
+          setErrorMessage(resolveAuthErrorMessage(error, t));
           return;
         }
 
         if (data.session) {
           await bootstrapBusinessContext({
             session: data.session,
+            referralToken,
           });
           if (!redirectInFlightRef.current) {
             redirectInFlightRef.current = true;
@@ -137,7 +148,11 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         clearAuthSessionCookies();
       } catch (error) {
         redirectInFlightRef.current = false;
-        setErrorMessage(resolveAuthErrorMessage(error));
+        const resolvedMessage =
+          error instanceof Error && error.message === "bootstrap_failed"
+            ? t("auth.errors.bootstrapFailed")
+            : resolveAuthErrorMessage(error, t);
+        setErrorMessage(resolvedMessage);
       } finally {
         if (mounted) {
           setIsCheckingSession(false);
@@ -150,17 +165,17 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     return () => {
       mounted = false;
     };
-  }, [forceAuthFlow, paramsReady, redirectPath]);
+  }, [forceAuthFlow, paramsReady, redirectPath, referralToken, t]);
 
   if (isCheckingSession) {
     return (
       <div className="wb-shell-card w-full max-w-lg p-8">
         <div className="flex items-center gap-3 text-[var(--color-wb-text-muted)]">
           <Loader2 className="h-5 w-5 animate-spin text-[var(--color-wb-primary)]" />
-          <span className="text-sm font-semibold">
-            Checking your session...
-          </span>
-        </div>
+            <span className="text-sm font-semibold">
+              {t("auth.checkingSession")}
+            </span>
+          </div>
       </div>
     );
   }
@@ -168,17 +183,17 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   return (
     <div className="wb-shell-card w-full max-w-lg p-6 sm:p-8">
       <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-wb-primary)]">
-        {isRegister ? "Create account" : "Welcome back"}
+        {isRegister ? t("auth.createAccount") : t("auth.welcomeBack")}
       </p>
       <h1 className="mt-3 text-3xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-4xl">
         {isRegister
-          ? "Open your WhatsBoard workspace"
-          : "Sign in to WhatsBoard"}
+          ? t("auth.openWorkspace")
+          : t("auth.signInTitle")}
       </h1>
       <p className="mt-3 text-sm leading-7 text-[var(--color-wb-text-muted)] sm:text-base">
         {isRegister
-          ? "Set up your seller workspace for orders, payments, follow-ups, and customer tracking."
-          : "Access your seller control room and continue managing daily operations."}
+          ? t("auth.registerDescription")
+          : t("auth.loginDescription")}
       </p>
 
       <form
@@ -201,19 +216,19 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             ).trim();
 
             if (!email || !password) {
-              setErrorMessage("Email and password are required.");
+              setErrorMessage(t("auth.errors.emailPasswordRequired"));
               return;
             }
             if (!email.includes("@")) {
-              setErrorMessage("Enter a valid email address.");
+              setErrorMessage(t("auth.errors.invalidEmail"));
               return;
             }
             if (isRegister && password.length < 8) {
-              setErrorMessage("Password must be at least 8 characters.");
+              setErrorMessage(t("auth.errors.passwordMinLength"));
               return;
             }
             if (isRegister && password !== confirmPassword) {
-              setErrorMessage("Passwords do not match.");
+              setErrorMessage(t("auth.errors.passwordMismatch"));
               return;
             }
 
@@ -231,14 +246,12 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               });
 
               if (error) {
-                setErrorMessage(resolveAuthErrorMessage(error));
+                setErrorMessage(resolveAuthErrorMessage(error, t));
                 return;
               }
 
               if (!data.session) {
-                setInfoMessage(
-                  "Account created. Check your email to verify before signing in.",
-                );
+                setInfoMessage(t("auth.messages.checkEmail"));
                 clearAuthSessionCookies();
                 return;
               }
@@ -246,6 +259,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               await bootstrapBusinessContext({
                 session: data.session,
                 businessName,
+                referralToken,
               });
               window.location.assign(redirectPath);
               return;
@@ -257,7 +271,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             });
 
             if (error) {
-              setErrorMessage(resolveAuthErrorMessage(error));
+              setErrorMessage(resolveAuthErrorMessage(error, t));
               return;
             }
 
@@ -265,23 +279,29 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               const { data: sessionData } = await supabase.auth.getSession();
               if (!sessionData.session) {
                 setErrorMessage(
-                  "Login succeeded but session is not active yet. Refresh and try again.",
+                  t("auth.errors.sessionNotActive"),
                 );
                 clearAuthSessionCookies();
                 return;
               }
               await bootstrapBusinessContext({
                 session: sessionData.session,
+                referralToken,
               });
             } else {
               await bootstrapBusinessContext({
                 session: data.session,
+                referralToken,
               });
             }
 
             window.location.assign(redirectPath);
           } catch (error) {
-            setErrorMessage(resolveAuthErrorMessage(error));
+            const resolvedMessage =
+              error instanceof Error && error.message === "bootstrap_failed"
+                ? t("auth.errors.bootstrapFailed")
+                : resolveAuthErrorMessage(error, t);
+            setErrorMessage(resolvedMessage);
           } finally {
             setIsSubmitting(false);
           }
@@ -290,7 +310,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         {isRegister ? (
           <label className="block">
             <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-wb-text-muted)]">
-              Business Name
+              {t("auth.businessName")}
             </span>
             <input
               name="businessName"
@@ -303,9 +323,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         ) : null}
 
         <label className="block">
-          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-wb-text-muted)]">
-            Email
-          </span>
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-wb-text-muted)]">
+              {t("auth.email")}
+            </span>
           <input
             name="email"
             type="email"
@@ -317,9 +337,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-wb-text-muted)]">
-            Password
-          </span>
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-wb-text-muted)]">
+              {t("auth.password")}
+            </span>
           <input
             name="password"
             type="password"
@@ -332,9 +352,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
 
         {isRegister ? (
           <label className="block">
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-wb-text-muted)]">
-              Confirm Password
-            </span>
+              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-wb-text-muted)]">
+                {t("auth.confirmPassword")}
+              </span>
             <input
               name="confirmPassword"
               type="password"
@@ -354,12 +374,12 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           {isSubmitting ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Please wait...
+              {t("auth.pleaseWait")}
             </>
           ) : isRegister ? (
-            "Create account"
+            t("auth.createAccountButton")
           ) : (
-            "Login"
+            t("auth.loginButton")
           )}
           {!isSubmitting ? <ArrowRight className="h-4 w-4" /> : null}
         </button>
@@ -380,21 +400,21 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       <div className="mt-6 flex flex-col gap-2 text-sm text-[var(--color-wb-text-muted)] sm:flex-row sm:items-center sm:justify-between">
         <p className="inline-flex items-center gap-2">
           <ShieldCheck className="h-4 w-4 text-[var(--color-wb-primary)]" />
-          Powered by Supabase Auth
+          {t("auth.poweredBy")}
         </p>
         {isRegister ? (
           <Link
             href={`/login${authSwitchQuery}`}
             className="font-semibold text-[var(--color-wb-primary)]"
           >
-            Already have an account?
+            {t("auth.alreadyHaveAccount")}
           </Link>
         ) : (
           <Link
             href={`/register${authSwitchQuery}`}
             className="font-semibold text-[var(--color-wb-primary)]"
           >
-            Create account
+            {t("auth.switchToCreate")}
           </Link>
         )}
       </div>

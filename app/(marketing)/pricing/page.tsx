@@ -281,7 +281,7 @@ export default async function PricingPage({
 
           <div className="mt-10 rounded-[28px] border border-border bg-card p-6 text-center shadow-sm">
             <p className="text-lg font-bold text-foreground">
-              <TranslatedText text="Snippe handles the payment page. WhatsBoard handles the plan activation." />
+              <TranslatedText text="Snippe handles the payment page. Folapp handles the plan activation." />
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
               <TranslatedText text="Checkout stays secure, and the plan state stays tied to the same business record used by the dashboard." />

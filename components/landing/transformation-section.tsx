@@ -73,7 +73,7 @@ export function TransformationSection() {
             <span className="text-primary">{t("Complete Control")}</span>
           </h2>
           <p className="mt-6 text-lg text-muted-foreground text-pretty">
-            {t("See the difference WhatsBoard makes for your business.")}
+            {t("See the difference Folapp makes for your business.")}
           </p>
         </div>
 

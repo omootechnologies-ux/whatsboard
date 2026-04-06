@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "WhatsBoard",
+    "name": "Folapp",
     "description": "Premium fintech-style seller dashboard for East African online sellers turning WhatsApp chat chaos into sales control."
   },
   "locale": {
@@ -50,8 +50,8 @@
     "checkingSession": "Checking your session...",
     "createAccount": "Create account",
     "welcomeBack": "Welcome back",
-    "openWorkspace": "Open your WhatsBoard workspace",
-    "signInTitle": "Sign in to WhatsBoard",
+    "openWorkspace": "Open your Folapp workspace",
+    "signInTitle": "Sign in to Folapp",
     "registerDescription": "Set up your seller workspace for orders, payments, follow-ups, and customer tracking.",
     "loginDescription": "Access your seller control room and continue managing daily operations.",
     "businessName": "Business Name",
@@ -125,7 +125,7 @@
     "ordersCount": "{count} orders",
     "noOrdersStage": "No orders in this stage.",
     "loading": "Loading...",
-    "whatsBoard": "WhatsBoard"
+    "whatsBoard": "Folapp"
   },
   "badges": {
     "payment": {
@@ -170,30 +170,30 @@
     "title": "Receipt",
     "total": "Total",
     "payment": "Payment",
-    "orderTrackedWith": "Order tracked with WhatsBoard"
+    "orderTrackedWith": "Order tracked with Folapp"
   },
   "pages": {
     "login": {
-      "title": "Login | WhatsBoard",
-      "description": "Sign in to access your WhatsBoard workspace."
+      "title": "Login | Folapp",
+      "description": "Sign in to access your Folapp workspace."
     },
     "register": {
-      "title": "Register | WhatsBoard",
-      "description": "Create your WhatsBoard account and start tracking orders."
+      "title": "Register | Folapp",
+      "description": "Create your Folapp account and start tracking orders."
     },
     "pricing": {
-      "title": "Pricing | WhatsBoard",
-      "description": "Clear monthly TZS pricing for East African online sellers using WhatsBoard."
+      "title": "Pricing | Folapp",
+      "description": "Clear monthly TZS pricing for East African online sellers using Folapp."
     },
     "privacy": {
       "title": "Privacy Policy",
-      "description": "WhatsBoard stores seller operations data such as orders, customers, follow-ups, and payments to provide workflow visibility and team coordination. We do not sell your business data.",
+      "description": "Folapp stores seller operations data such as orders, customers, follow-ups, and payments to provide workflow visibility and team coordination. We do not sell your business data.",
       "contactPrefix": "For production support or privacy requests, contact",
       "contactSuffix": "."
     },
     "terms": {
       "title": "Terms of Service",
-      "description": "WhatsBoard helps online sellers run structured operations. By using the product, you agree to use it for lawful business activities and keep account and workspace access secure.",
+      "description": "Folapp helps online sellers run structured operations. By using the product, you agree to use it for lawful business activities and keep account and workspace access secure.",
       "contactPrefix": "Pricing, plan limits, and feature availability may vary by plan tier. Contact",
       "contactSuffix": "for enterprise terms."
     }

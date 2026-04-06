@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { getLocale } from "next-intl/server";
 import {
   BuyerBadge,
   DataCell,
@@ -37,6 +38,8 @@ export default async function OrdersPage({
   searchParams: OrdersPageSearchParams;
 }) {
   const query = await searchParams;
+  const locale = await getLocale();
+  const isSw = locale === "sw";
   const [filteredOrders, allOrders] = await Promise.all([
     listOrders({
       search: query.search,
@@ -59,12 +62,16 @@ export default async function OrdersPage({
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
-        title="Orders"
-        description="Search, filter, and move orders quickly from inquiry to delivery without losing payment visibility."
+        title={isSw ? "Orders" : "Orders"}
+        description={
+          isSw
+            ? "Tafuta, chuja, na songesha orders haraka kutoka inquiry hadi delivery bila kupoteza mwonekano wa malipo."
+            : "Search, filter, and move orders quickly from inquiry to delivery without losing payment visibility."
+        }
         primaryAction={
           <Link href="/orders/new" className="wb-button-primary">
             <Plus className="h-4 w-4" />
-            Create Order
+            {isSw ? "Unda Order" : "Create Order"}
           </Link>
         }
         secondaryAction={
@@ -73,43 +80,67 @@ export default async function OrdersPage({
       />
 
       <FilterToolbar
-        searchPlaceholder="Search by order ID, customer, product, or area"
+        searchPlaceholder={
+          isSw
+            ? "Tafuta kwa order ID, mteja, bidhaa au eneo"
+            : "Search by order ID, customer, product, or area"
+        }
         chips={[
-          { key: "stage", label: "All stages" },
-          { key: "stage", label: "New order", value: "new_order" },
-          { key: "stage", label: "Awaiting payment", value: "waiting_payment" },
-          { key: "stage", label: "Packing", value: "packing" },
-          { key: "stage", label: "Dispatched", value: "dispatched" },
-          { key: "payment", label: "Paid", value: "paid" },
-          { key: "payment", label: "Unpaid", value: "unpaid" },
+          { key: "stage", label: isSw ? "Hatua zote" : "All stages" },
+          {
+            key: "stage",
+            label: isSw ? "Order mpya" : "New order",
+            value: "new_order",
+          },
+          {
+            key: "stage",
+            label: isSw ? "Inasubiri malipo" : "Awaiting payment",
+            value: "waiting_payment",
+          },
+          { key: "stage", label: isSw ? "Inapakiwa" : "Packing", value: "packing" },
+          {
+            key: "stage",
+            label: isSw ? "Imetumwa" : "Dispatched",
+            value: "dispatched",
+          },
+          { key: "payment", label: isSw ? "Imelipwa" : "Paid", value: "paid" },
+          {
+            key: "payment",
+            label: isSw ? "Haijalipwa" : "Unpaid",
+            value: "unpaid",
+          }
         ]}
       />
 
       <SectionCard
-        title="Orders Board"
-        description="Stage-by-stage workflow with touch-friendly cards."
+        title={isSw ? "Board ya Orders" : "Orders Board"}
+        description={
+          isSw
+            ? "Workflow ya hatua kwa hatua yenye kadi rafiki kwa mguso."
+            : "Stage-by-stage workflow with touch-friendly cards."
+        }
       >
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <OrderStageBoard
-            title="New order"
+            title={isSw ? "Order mpya" : "New order"}
             orders={filteredOrders.filter(
               (order) => order.stage === "new_order",
             )}
           />
           <OrderStageBoard
-            title="Awaiting payment"
+            title={isSw ? "Inasubiri malipo" : "Awaiting payment"}
             orders={filteredOrders.filter(
               (order) => order.stage === "waiting_payment",
             )}
           />
           <OrderStageBoard
-            title="Paid / Packing"
+            title={isSw ? "Imelipwa / Inapakiwa" : "Paid / Packing"}
             orders={filteredOrders.filter((order) =>
               ["paid", "packing"].includes(order.stage),
             )}
           />
           <OrderStageBoard
-            title="Dispatch / Delivered"
+            title={isSw ? "Kutuma / Imefika" : "Dispatch / Delivered"}
             orders={filteredOrders.filter((order) =>
               ["dispatched", "delivered"].includes(order.stage),
             )}
@@ -118,27 +149,32 @@ export default async function OrdersPage({
       </SectionCard>
 
       <SectionCard
-        title="Order ledger"
-        description="Desktop table + mobile cards for clean scanning and quick actions."
+        title={isSw ? "Daftari la Orders" : "Order ledger"}
+        description={
+          isSw
+            ? "Jedwali la desktop pamoja na kadi za simu kwa ukaguzi safi na vitendo vya haraka."
+            : "Desktop table + mobile cards for clean scanning and quick actions."
+        }
       >
         <div className="hidden lg:block">
           {filteredOrders.length ? (
             <DataTable
               headers={[
-                "Order",
-                "Customer",
-                "Stage",
-                "Payment",
-                "Amount",
-                "Updated",
-                "Action",
+                isSw ? "Order" : "Order",
+                isSw ? "Mteja" : "Customer",
+                isSw ? "Hatua" : "Stage",
+                isSw ? "Malipo" : "Payment",
+                isSw ? "Kiasi" : "Amount",
+                isSw ? "Imeboreshwa" : "Updated",
+                isSw ? "Kitendo" : "Action",
               ]}
             >
               {filteredOrders.map((order) => (
                 <DataRow key={order.id}>
                   <DataCell>
                     <p className="font-semibold">
-                      Order #{formatOrderReference(order.id) || "WB-00000"}
+                      {(isSw ? "Order #" : "Order #") +
+                        (formatOrderReference(order.id) || "WB-00000")}
                     </p>
                     <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
                       {order.channel}
@@ -183,7 +219,7 @@ export default async function OrdersPage({
                       href={`/orders/${order.id}`}
                       className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
                     >
-                      View
+                      {isSw ? "Tazama" : "View"}
                     </Link>
                   </DataCell>
                 </DataRow>
@@ -191,11 +227,15 @@ export default async function OrdersPage({
             </DataTable>
           ) : (
             <EmptyState
-              title="No orders found"
-              detail="No orders match your current filters yet."
+              title={isSw ? "Hakuna order zilizopatikana" : "No orders found"}
+              detail={
+                isSw
+                  ? "Hakuna order zinazolingana na filters zako kwa sasa."
+                  : "No orders match your current filters yet."
+              }
               action={
                 <Link href="/orders/new" className="wb-button-secondary">
-                  Create order
+                  {isSw ? "Unda order" : "Create order"}
                 </Link>
               }
             />
@@ -215,8 +255,12 @@ export default async function OrdersPage({
             ))
           ) : (
             <EmptyState
-              title="No orders found"
-              detail="No orders match your current filters yet."
+              title={isSw ? "Hakuna order zilizopatikana" : "No orders found"}
+              detail={
+                isSw
+                  ? "Hakuna order zinazolingana na filters zako kwa sasa."
+                  : "No orders match your current filters yet."
+              }
             />
           )}
         </div>

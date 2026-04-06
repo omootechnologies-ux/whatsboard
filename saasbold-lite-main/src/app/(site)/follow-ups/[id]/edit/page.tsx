@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Save } from "lucide-react";
+import { getLocale } from "next-intl/server";
 import {
   PageHeader,
   SectionCard,
 } from "@/components/whatsboard-dashboard/dashboard-ui";
 import { listFollowUps } from "@/lib/whatsboard-repository";
+import { translateUiText } from "@/lib/ui-translations";
 
 export default async function EditFollowUpPage({
   params,
@@ -16,6 +18,8 @@ export default async function EditFollowUpPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
+  const locale = await getLocale();
+  const tr = (value: string) => translateUiText(value, locale as "en" | "sw");
   const followUp = (await listFollowUps()).find((item) => item.id === id);
 
   if (!followUp) {
@@ -25,8 +29,10 @@ export default async function EditFollowUpPage({
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
-        title="Edit follow-up"
-        description="Update due date, status, priority, and notes for this reminder."
+        title={tr("Edit follow-up")}
+        description={tr(
+          "Update due date, status, priority, and notes for this reminder.",
+        )}
         primaryAction={
           <button
             className="wb-button-primary"
@@ -34,26 +40,28 @@ export default async function EditFollowUpPage({
             form="edit-followup-form"
           >
             <Save className="h-4 w-4" />
-            Save changes
+            {tr("Save changes")}
           </button>
         }
         secondaryAction={
           <Link href="/follow-ups" className="wb-button-secondary">
             <ArrowLeft className="h-4 w-4" />
-            Back to follow-ups
+            {tr("Back to follow-ups")}
           </Link>
         }
       />
 
       <SectionCard
-        title="Follow-up details"
-        description="Keep this reminder accurate so no customer drops off."
+        title={tr("Follow-up details")}
+        description={tr("Keep this reminder accurate so no customer drops off.")}
       >
         {query.error === "invalid" || query.error === "persistence" ? (
           <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
             {query.error === "invalid"
-              ? "Please provide title, due date, and note."
-              : "Could not update follow-up. Check your Supabase connection and try again."}
+              ? tr("Please provide title, due date, and note.")
+              : tr(
+                  "Could not update follow-up. Check your Supabase connection and try again.",
+                )}
           </div>
         ) : null}
 
@@ -65,7 +73,7 @@ export default async function EditFollowUpPage({
         >
           <div className="sm:col-span-2">
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Title
+              {tr("Title")}
             </label>
             <input
               name="title"
@@ -76,7 +84,7 @@ export default async function EditFollowUpPage({
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Due date
+              {tr("Due date")}
             </label>
             <input
               name="dueAt"
@@ -88,34 +96,34 @@ export default async function EditFollowUpPage({
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Priority
+              {tr("Priority")}
             </label>
             <select
               name="priority"
               className="wb-input"
               defaultValue={followUp.priority}
             >
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
+              <option value="high">{tr("High")}</option>
+              <option value="medium">{tr("Medium")}</option>
+              <option value="low">{tr("Low")}</option>
             </select>
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Status
+              {tr("Status")}
             </label>
             <select
               name="status"
               className="wb-input"
               defaultValue={followUp.status === "completed" ? "completed" : ""}
             >
-              <option value="">Open (auto from due date)</option>
-              <option value="completed">Completed</option>
+              <option value="">{tr("Open (auto from due date)")}</option>
+              <option value="completed">{tr("Completed")}</option>
             </select>
           </div>
           <div className="sm:col-span-2">
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Note
+              {tr("Note")}
             </label>
             <textarea
               name="note"

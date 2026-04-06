@@ -1,6 +1,6 @@
-# WhatsBoard Dashboard
+# Folapp Dashboard
 
-WhatsBoard is a premium, mobile-first seller operating dashboard for East African online businesses.  
+Folapp is a premium, mobile-first seller operating dashboard for East African online businesses.  
 It helps teams move from chat chaos to sales control across orders, customers, follow-ups, payments, and analytics.
 
 ## Stack

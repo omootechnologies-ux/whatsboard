@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CreditCard, Wallet } from "lucide-react";
+import { getLocale } from "next-intl/server";
 import {
   ChartCard,
   DataCell,
@@ -27,6 +28,7 @@ import {
   getPrimaryOrderLabel,
 } from "@/lib/display-labels";
 import { PaymentSmsModal } from "@/components/whatsboard-dashboard/payment-sms-modal";
+import { translateUiText } from "@/lib/ui-translations";
 
 type PaymentsPageSearchParams = Promise<{
   search?: string;
@@ -46,6 +48,8 @@ export default async function PaymentsPage({
   searchParams: PaymentsPageSearchParams;
 }) {
   const query = await searchParams;
+  const locale = await getLocale();
+  const tr = (value: string) => translateUiText(value, locale as "en" | "sw");
   const [records, unmatchedPayments, allOrders, { stats, series }] =
     await Promise.all([
       listPayments({
@@ -72,12 +76,14 @@ export default async function PaymentsPage({
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
-        title="Payments"
-        description="Track paid, partial, and unpaid orders with clean records tied to real customer sales."
+        title={tr("Payments")}
+        description={tr(
+          "Track paid, partial, and unpaid orders with clean records tied to real customer sales.",
+        )}
         primaryAction={
           <Link href="/payments/new" className="wb-button-primary">
             <CreditCard className="h-4 w-4" />
-            Record Payment
+            {tr("Record Payment")}
           </Link>
         }
         secondaryAction={<PaymentSmsModal orderOptions={orderOptions} />}
@@ -86,63 +92,65 @@ export default async function PaymentsPage({
       {query.created === "1" || query.updated === "1" ? (
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
           {query.created === "1"
-            ? "Payment recorded successfully."
-            : "Payment updated successfully."}
+            ? tr("Payment recorded successfully.")
+            : tr("Payment updated successfully.")}
         </div>
       ) : null}
 
       {query.assigned === "1" ? (
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
-          Payment assigned to order and marked as paid.
+          {tr("Payment assigned to order and marked as paid.")}
         </div>
       ) : null}
 
       {query.assignError === "1" || query.assignNotFound === "1" ? (
         <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
           {query.assignNotFound === "1"
-            ? "Could not find that payment or order."
-            : "Could not assign payment. Try again."}
+            ? tr("Could not find that payment or order.")
+            : tr("Could not assign payment. Try again.")}
         </div>
       ) : null}
 
       {query.error === "not-found" ? (
         <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
-          Payment record was not found.
+          {tr("Payment record was not found.")}
         </div>
       ) : null}
 
       <section className="grid gap-4 md:grid-cols-3">
         <KpiCard
-          label="Collected"
+          label={tr("Collected")}
           value={formatCurrency(
             records
               .filter((payment) => payment.status === "paid")
               .reduce((sum, payment) => sum + payment.amount, 0),
           )}
-          detail="Confirmed paid value visible in the dashboard."
+          detail={tr("Confirmed paid value visible in the dashboard.")}
           accent={<Wallet className="h-5 w-5" />}
         />
         <KpiCard
-          label="Pending"
+          label={tr("Pending")}
           value={formatCurrency(stats.payoutPending)}
-          detail="Revenue still waiting for full confirmation."
+          detail={tr("Revenue still waiting for full confirmation.")}
           accent={<CreditCard className="h-5 w-5" />}
         />
         <KpiCard
-          label="Transactions"
+          label={tr("Transactions")}
           value={String(records.length)}
-          detail="Recent payment records tied to active orders."
+          detail={tr("Recent payment records tied to active orders.")}
           accent={<CreditCard className="h-5 w-5" />}
         />
       </section>
 
       <FilterToolbar
-        searchPlaceholder="Search by order ID, customer, method, or reference"
+        searchPlaceholder={tr(
+          "Search by order ID, customer, method, or reference",
+        )}
         chips={[
-          { key: "status", label: "All status" },
-          { key: "status", label: "Paid", value: "paid" },
-          { key: "status", label: "Partial", value: "partial" },
-          { key: "status", label: "Unpaid", value: "unpaid" },
+          { key: "status", label: tr("All status") },
+          { key: "status", label: tr("Paid"), value: "paid" },
+          { key: "status", label: tr("Partial"), value: "partial" },
+          { key: "status", label: tr("Unpaid"), value: "unpaid" },
           { key: "status", label: "COD", value: "cod" },
           { key: "method", label: "M-Pesa", value: "M-Pesa" },
           { key: "method", label: "Tigopesa", value: "Tigopesa" },
@@ -153,8 +161,10 @@ export default async function PaymentsPage({
       />
 
       <SectionCard
-        title="Unmatched payments inbox"
-        description="Pending or unmatched mobile money confirmations requiring manual assignment."
+        title={tr("Unmatched payments inbox")}
+        description={tr(
+          "Pending or unmatched mobile money confirmations requiring manual assignment.",
+        )}
       >
         {unmatchedPayments.length ? (
           <div className="space-y-3">
@@ -179,18 +189,18 @@ export default async function PaymentsPage({
                         })}
                       </p>
                       <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-                        {payment.provider?.toUpperCase() || "UNKNOWN"} •{" "}
+                        {payment.provider?.toUpperCase() || tr("UNKNOWN")} •{" "}
                         {formatCurrency(payment.amount)} • Ref {payment.reference}
                       </p>
                       <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-                        Confidence {Math.round(payment.matchConfidence || 0)}%
+                        {tr("Confidence")} {Math.round(payment.matchConfidence || 0)}%
                         {suggestedOrder
                           ? ` • Suggested #${formatOrderReference(suggestedOrder.id) || "WB-00000"}`
                           : ""}
                       </p>
                     </div>
                     <span className="inline-flex rounded-full border border-amber-100 bg-amber-50 px-3 py-1 text-xs font-semibold capitalize text-amber-700">
-                      {payment.reconciliationStatus || "unmatched"}
+                      {payment.reconciliationStatus || tr("unmatched")}
                     </span>
                   </div>
 
@@ -206,7 +216,7 @@ export default async function PaymentsPage({
                       required
                       className="wb-input"
                     >
-                      <option value="">Select order</option>
+                      <option value="">{tr("Select order")}</option>
                       {allOrders.map((order) => (
                         <option key={order.id} value={order.id}>
                           #{formatOrderReference(order.id) || "WB-00000"} •{" "}
@@ -224,7 +234,7 @@ export default async function PaymentsPage({
                       type="submit"
                       className="wb-button-primary w-full whitespace-nowrap sm:w-auto"
                     >
-                      Assign payment
+                      {tr("Assign payment")}
                     </button>
                   </form>
                 </article>
@@ -233,35 +243,37 @@ export default async function PaymentsPage({
           </div>
         ) : (
           <EmptyState
-            title="No unmatched payments"
-            detail="All parsed mobile money confirmations are currently matched."
+            title={tr("No unmatched payments")}
+            detail={tr(
+              "All parsed mobile money confirmations are currently matched.",
+            )}
           />
         )}
       </SectionCard>
 
       <section className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
         <ChartCard
-          title="Collections trend"
-          description="Daily payment flow for this week."
+          title={tr("Collections trend")}
+          description={tr("Daily payment flow for this week.")}
           data={series}
           dataKey="revenue"
         />
         <SectionCard
-          title="Payment records"
-          description="Clean ledger for payment state, amount, and reference."
+          title={tr("Payment records")}
+          description={tr("Clean ledger for payment state, amount, and reference.")}
         >
           {records.length ? (
             <>
               <div className="hidden md:block">
                 <DataTable
                   headers={[
-                    "Customer",
-                    "Order",
-                    "Method",
-                    "Amount",
-                    "Status",
-                    "Date",
-                    "Action",
+                    tr("Customer"),
+                    tr("Order"),
+                    tr("Method"),
+                    tr("Amount"),
+                    tr("Status"),
+                    tr("Date"),
+                    tr("Action"),
                   ]}
                 >
                   {records.map((payment) => (
@@ -298,7 +310,7 @@ export default async function PaymentsPage({
                           href={`/payments/${payment.id}/edit`}
                           className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
                         >
-                          Edit
+                          {tr("Edit")}
                         </Link>
                       </DataCell>
                     </DataRow>
@@ -322,7 +334,7 @@ export default async function PaymentsPage({
                           })}
                         </p>
                         <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-                          Order #
+                          {tr("Order #")}
                           {formatOrderReference(
                             payment.orderId || payment.suggestedOrderId,
                           ) || "WB-00000"}
@@ -344,7 +356,7 @@ export default async function PaymentsPage({
                         href={`/payments/${payment.id}/edit`}
                         className="font-semibold text-[var(--color-wb-primary)]"
                       >
-                        Edit
+                        {tr("Edit")}
                       </Link>
                     </div>
                   </article>
@@ -353,11 +365,11 @@ export default async function PaymentsPage({
             </>
           ) : (
             <EmptyState
-              title="No payments recorded"
-              detail="Record your first payment to start building the ledger."
+              title={tr("No payments recorded")}
+              detail={tr("Record your first payment to start building the ledger.")}
               action={
                 <Link href="/payments/new" className="wb-button-secondary">
-                  Record payment
+                  {tr("Record payment")}
                 </Link>
               }
             />

@@ -95,10 +95,10 @@ export function PwaInstallPrompt() {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm font-semibold text-[var(--color-wb-text)]">
-              Install WhatsBoard
+              Install Folapp
             </p>
             <p className="mt-1 text-xs leading-5 text-[var(--color-wb-text-muted)]">
-              Use WhatsBoard as a full-screen app on your phone for faster daily
+              Use Folapp as a full-screen app on your phone for faster daily
               order tracking.
             </p>
           </div>

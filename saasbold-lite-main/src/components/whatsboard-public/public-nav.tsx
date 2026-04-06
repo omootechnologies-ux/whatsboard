@@ -43,7 +43,7 @@ export function PublicNav() {
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-[0_16px_30px_rgba(0,0,0,0.2)] sm:h-11 sm:w-11">
             <Image
               src="/whatsboard-logo.png"
-              alt="WhatsBoard logo"
+              alt="Folapp logo"
               width={40}
               height={40}
               className="h-8 w-8 object-contain sm:h-9 sm:w-9"

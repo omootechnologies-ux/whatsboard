@@ -42,12 +42,12 @@ const whoItIsFor = [
 
 const howItWorks = [
   "Receive order from chat",
-  "Add it to WhatsBoard",
+  "Add it to Folapp",
   "Track payment and delivery",
   "Follow up and sell better",
 ] as const;
 
-const beforeWhatsBoard = [
+const beforeFolapp = [
   "Orders live inside chats",
   "You scroll to remember everything",
   "Payment status is unclear",
@@ -55,7 +55,7 @@ const beforeWhatsBoard = [
   "Customers feel ignored",
 ] as const;
 
-const afterWhatsBoard = [
+const afterFolapp = [
   "Orders are organized",
   "Payment status is visible",
   "Delivery status is easy to track",
@@ -98,7 +98,7 @@ const faqs = [
   {
     question: "Is this made for WhatsApp sellers only?",
     answer:
-      "No. WhatsBoard supports sellers managing orders from WhatsApp, Instagram, Facebook, and status-driven sales.",
+      "No. Folapp supports sellers managing orders from WhatsApp, Instagram, Facebook, and status-driven sales.",
   },
   {
     question: "Can I use it if I sell on Instagram too?",
@@ -118,7 +118,7 @@ const faqs = [
   {
     question: "Is it mobile-friendly?",
     answer:
-      "Yes. WhatsBoard is built for sellers who manage business from phone-first workflows.",
+      "Yes. Folapp is built for sellers who manage business from phone-first workflows.",
   },
 ] as const;
 
@@ -336,8 +336,8 @@ export default async function HomePage() {
   const localizedPainPoints = painPoints.map((item) => tr(item));
   const localizedWhoItIsFor = whoItIsFor.map((item) => tr(item));
   const localizedHowItWorks = howItWorks.map((item) => tr(item));
-  const localizedBeforeWhatsBoard = beforeWhatsBoard.map((item) => tr(item));
-  const localizedAfterWhatsBoard = afterWhatsBoard.map((item) => tr(item));
+  const localizedBeforeFolapp = beforeFolapp.map((item) => tr(item));
+  const localizedAfterFolapp = afterFolapp.map((item) => tr(item));
   const localizedCredibilityBlocks = credibilityBlocks.map((item) => tr(item));
   const localizedTestimonials = testimonials.map((item) => ({
     ...item,
@@ -405,7 +405,7 @@ export default async function HomePage() {
             {/* Alternative: Manage WhatsApp orders before they manage you */}
             <p className="mt-5 max-w-xl text-base leading-8 text-[var(--color-wb-text-muted)] sm:text-lg">
               {tr(
-                "If you sell through WhatsApp, Instagram, or status, you already know the problem: chats move fast, orders get buried, payments get forgotten, and follow-ups disappear. WhatsBoard gives you one simple place to track orders, customers, payments, and deliveries.",
+                "If you sell through WhatsApp, Instagram, or status, you already know the problem: chats move fast, orders get buried, payments get forgotten, and follow-ups disappear. Folapp gives you one simple place to track orders, customers, payments, and deliveries.",
               )}
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -573,7 +573,7 @@ export default async function HomePage() {
               {tr("This is where the chaos stops")}
             </h2>
             <p className="mt-4 text-base leading-8 text-[var(--color-wb-text-muted)] sm:text-lg">
-              {tr("WhatsBoard turns scattered chats into a simple order system.")}
+              {tr("Folapp turns scattered chats into a simple order system.")}
             </p>
 
             <ul className="mt-6 space-y-3">
@@ -681,10 +681,10 @@ export default async function HomePage() {
         <div className="mt-9 grid gap-5 lg:grid-cols-2">
           <article className="wb-shell-card border-rose-200 p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">
-              {tr("Before WhatsBoard")}
+              {tr("Before Folapp")}
             </p>
             <ul className="mt-5 space-y-3">
-              {localizedBeforeWhatsBoard.map((item) => (
+              {localizedBeforeFolapp.map((item) => (
                 <li
                   key={item}
                   className="flex items-start gap-3 text-sm text-[var(--color-wb-text)] sm:text-base"
@@ -698,10 +698,10 @@ export default async function HomePage() {
 
           <article className="wb-shell-card border-emerald-200 p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-              {tr("After WhatsBoard")}
+              {tr("After Folapp")}
             </p>
             <ul className="mt-5 space-y-3">
-              {localizedAfterWhatsBoard.map((item) => (
+              {localizedAfterFolapp.map((item) => (
                 <li
                   key={item}
                   className="flex items-start gap-3 text-sm text-[var(--color-wb-text)] sm:text-base"

@@ -1,4 +1,5 @@
 import { Bell, Building2, Database, Shield, Smartphone } from "lucide-react";
+import { getLocale } from "next-intl/server";
 import {
   EmptyState,
   PageHeader,
@@ -16,6 +17,7 @@ import {
 } from "@/lib/whatsboard-repository";
 import { resolveLegacyBusinessContextForRequest } from "@/lib/repositories/supabase-legacy-repository";
 import { isSupabaseServerConfigured } from "@/lib/supabase/server";
+import { translateUiText } from "@/lib/ui-translations";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +40,8 @@ function mostFrequent(values: string[]) {
 }
 
 export default async function SettingsPage() {
+  const locale = await getLocale();
+  const tr = (value: string) => translateUiText(value, locale as "en" | "sw");
   const [orders, customers, followUps, payments, businessContext] =
     await Promise.all([
       listOrders(),
@@ -66,19 +70,21 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
-        title="Settings"
-        description="Live workspace configuration and system status based on real Supabase data."
+        title={tr("Settings")}
+        description={tr(
+          "Live workspace configuration and system status based on real Supabase data.",
+        )}
       />
 
       <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
         <SectionCard
-          title="Workspace profile"
-          description="Operational profile computed from your current data."
+          title={tr("Workspace profile")}
+          description={tr("Operational profile computed from your current data.")}
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="wb-soft-card p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
-                Business name
+                {tr("Business name")}
               </p>
               <p className="mt-2 text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                 {businessContext.businessName}
@@ -86,10 +92,10 @@ export default async function SettingsPage() {
             </div>
             <div className="wb-soft-card p-4">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
-                Account email
+                {tr("Account email")}
               </p>
               <p className="mt-2 text-sm font-semibold text-[var(--color-wb-text)]">
-                {businessContext.profileEmail || "Not set"}
+                {businessContext.profileEmail || tr("Not set")}
               </p>
             </div>
           </div>
@@ -98,23 +104,23 @@ export default async function SettingsPage() {
             <div className="mt-4 grid gap-4 sm:grid-cols-2">
               <div className="wb-soft-card p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
-                  Primary channel
+                  {tr("Primary channel")}
                 </p>
                 <p className="mt-2 text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
-                  {topChannel || "Not enough data yet"}
+                  {topChannel || tr("Not enough data yet")}
                 </p>
               </div>
               <div className="wb-soft-card p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
-                  Top delivery city
+                  {tr("Top delivery city")}
                 </p>
                 <p className="mt-2 text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
-                  {topCity || "Not enough data yet"}
+                  {topCity || tr("Not enough data yet")}
                 </p>
               </div>
               <div className="wb-soft-card p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
-                  Customers tracked
+                  {tr("Customers tracked")}
                 </p>
                 <p className="mt-2 text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                   {customers.length}
@@ -122,7 +128,7 @@ export default async function SettingsPage() {
               </div>
               <div className="wb-soft-card p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
-                  Revenue recorded
+                  {tr("Revenue recorded")}
                 </p>
                 <p className="mt-2 text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                   {formatCurrency(totalRevenue)}
@@ -130,55 +136,57 @@ export default async function SettingsPage() {
               </div>
               <div className="wb-soft-card p-4 sm:col-span-2">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
-                  Latest activity
+                  {tr("Latest activity")}
                 </p>
                 <p className="mt-2 text-sm font-semibold text-[var(--color-wb-text)]">
                   {lastActivityAt
                     ? formatDate(lastActivityAt)
-                    : "No activity yet"}
+                    : tr("No activity yet")}
                 </p>
               </div>
             </div>
           ) : (
             <EmptyState
-              title="No workspace data yet"
-              detail="Create your first customer, order, follow-up, or payment to generate a live workspace profile."
+              title={tr("No workspace data yet")}
+              detail={tr(
+                "Create your first customer, order, follow-up, or payment to generate a live workspace profile.",
+              )}
             />
           )}
         </SectionCard>
 
         <SectionCard
-          title="System and security status"
-          description="Current persistence and app health configuration."
+          title={tr("System and security status")}
+          description={tr("Current persistence and app health configuration.")}
         >
           <div className="space-y-3">
             {[
               {
                 icon: Database,
-                label: "Persistence driver",
+                label: tr("Persistence driver"),
                 detail: persistenceDriver,
               },
               {
                 icon: Shield,
-                label: "Supabase configuration",
+                label: tr("Supabase configuration"),
                 detail: isSupabaseServerConfigured()
-                  ? "Configured"
-                  : "Missing required environment variables",
+                  ? tr("Configured")
+                  : tr("Missing required environment variables"),
               },
               {
                 icon: Building2,
-                label: "Orders stored",
-                detail: `${orders.length} records`,
+                label: tr("Orders stored"),
+                detail: `${orders.length} ${tr("records")}`,
               },
               {
                 icon: Bell,
-                label: "Follow-ups stored",
-                detail: `${followUps.length} records`,
+                label: tr("Follow-ups stored"),
+                detail: `${followUps.length} ${tr("records")}`,
               },
               {
                 icon: Smartphone,
-                label: "Payments stored",
-                detail: `${payments.length} records`,
+                label: tr("Payments stored"),
+                detail: `${payments.length} ${tr("records")}`,
               },
             ].map((item) => (
               <div

@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Save } from "lucide-react";
+import { getLocale } from "next-intl/server";
 import {
   PageHeader,
   SectionCard,
 } from "@/components/whatsboard-dashboard/dashboard-ui";
 import { getCustomerById } from "@/lib/whatsboard-repository";
 import { getPrimaryOrderLabel } from "@/lib/display-labels";
+import { translateUiText } from "@/lib/ui-translations";
 
 export default async function EditCustomerPage({
   params,
@@ -17,6 +19,8 @@ export default async function EditCustomerPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
+  const locale = await getLocale();
+  const tr = (value: string) => translateUiText(value, locale as "en" | "sw");
   const customer = await getCustomerById(id);
 
   if (!customer) {
@@ -26,12 +30,14 @@ export default async function EditCustomerPage({
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
-        title={`Edit ${getPrimaryOrderLabel({
+        title={`${tr("Edit")} ${getPrimaryOrderLabel({
           customerName: customer.name,
           customerPhone: customer.phone,
           kind: "customer",
         })}`}
-        description="Update customer details and keep phone, location, and status in sync."
+        description={tr(
+          "Update customer details and keep phone, location, and status in sync.",
+        )}
         primaryAction={
           <button
             className="wb-button-primary"
@@ -39,26 +45,28 @@ export default async function EditCustomerPage({
             form="edit-customer-form"
           >
             <Save className="h-4 w-4" />
-            Save changes
+            {tr("Save changes")}
           </button>
         }
         secondaryAction={
           <Link href={`/customers/${customer.id}`} className="wb-button-secondary">
             <ArrowLeft className="h-4 w-4" />
-            Back to profile
+            {tr("Back to profile")}
           </Link>
         }
       />
 
       <SectionCard
-        title="Customer profile"
-        description="Update this customer record in your active workspace."
+        title={tr("Customer profile")}
+        description={tr("Update this customer record in your active workspace.")}
       >
         {query.error === "invalid" || query.error === "persistence" ? (
           <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
             {query.error === "invalid"
-              ? "Please complete all required fields."
-              : "Could not update customer. Check your Supabase connection and try again."}
+              ? tr("Please complete all required fields.")
+              : tr(
+                  "Could not update customer. Check your Supabase connection and try again.",
+                )}
           </div>
         ) : null}
 
@@ -70,7 +78,7 @@ export default async function EditCustomerPage({
         >
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Full name
+              {tr("Full name")}
             </label>
             <input
               name="name"
@@ -81,7 +89,7 @@ export default async function EditCustomerPage({
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Phone number
+              {tr("Phone number")}
             </label>
             <input
               name="phone"
@@ -92,7 +100,7 @@ export default async function EditCustomerPage({
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              WhatsApp number
+              {tr("WhatsApp number")}
             </label>
             <input
               name="whatsappNumber"
@@ -102,7 +110,7 @@ export default async function EditCustomerPage({
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Location
+              {tr("Location")}
             </label>
             <input
               name="location"
@@ -113,7 +121,7 @@ export default async function EditCustomerPage({
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Source channel
+              {tr("Source channel")}
             </label>
             <select
               name="sourceChannel"
@@ -124,26 +132,26 @@ export default async function EditCustomerPage({
               <option value="Instagram">Instagram</option>
               <option value="Facebook">Facebook</option>
               <option value="TikTok">TikTok</option>
-              <option value="Unknown">Unknown</option>
+              <option value="Unknown">{tr("Unknown")}</option>
             </select>
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Status
+              {tr("Status")}
             </label>
             <select
               name="status"
               className="wb-input"
               defaultValue={customer.status}
             >
-              <option value="active">Active</option>
-              <option value="waiting">Waiting</option>
+              <option value="active">{tr("Active")}</option>
+              <option value="waiting">{tr("Waiting")}</option>
               <option value="vip">VIP</option>
             </select>
           </div>
           <div className="sm:col-span-2">
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Private notes
+              {tr("Private notes")}
             </label>
             <textarea
               name="notes"

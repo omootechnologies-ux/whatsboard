@@ -1,26 +1,26 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
-export default function NotFoundPage() {
+export default async function NotFoundPage() {
+  const t = await getTranslations();
   return (
     <main className="mx-auto flex min-h-[60vh] w-full max-w-3xl items-center px-4 py-12 sm:px-6 lg:px-8">
       <section className="wb-shell-card w-full p-6 text-center sm:p-10">
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-wb-primary)]">
-          WhatsBoard
+          Folapp
         </p>
         <h1 className="mt-4 text-3xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-4xl">
-          Page not found
+          {t("notFound.title")}
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[var(--color-wb-text-muted)] sm:text-base">
-          This page does not exist or was moved. Go back to the homepage or open
-          your dashboard workspace to continue managing orders, payments, and
-          follow-ups.
+          {t("notFound.description")}
         </p>
         <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link href="/dashboard" className="wb-button-primary">
-            Open dashboard
+            {t("notFound.openDashboard")}
           </Link>
           <Link href="/" className="wb-button-secondary">
-            Back home
+            {t("notFound.backHome")}
           </Link>
         </div>
       </section>

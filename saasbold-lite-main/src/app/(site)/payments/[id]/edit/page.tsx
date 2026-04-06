@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Save } from "lucide-react";
+import { getLocale } from "next-intl/server";
 import {
   PageHeader,
   SectionCard,
@@ -11,6 +12,7 @@ import {
   getPrimaryOrderLabel,
 } from "@/lib/display-labels";
 import { listOrders, listPayments } from "@/lib/whatsboard-repository";
+import { translateUiText } from "@/lib/ui-translations";
 
 export default async function EditPaymentPage({
   params,
@@ -21,6 +23,8 @@ export default async function EditPaymentPage({
 }) {
   const { id } = await params;
   const query = await searchParams;
+  const locale = await getLocale();
+  const tr = (value: string) => translateUiText(value, locale as "en" | "sw");
   const [payments, orders] = await Promise.all([listPayments(), listOrders()]);
   const payment = payments.find((item) => item.id === id);
 
@@ -37,8 +41,8 @@ export default async function EditPaymentPage({
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
-        title="Edit payment"
-        description="Update payment method, reference, amount, and status."
+        title={tr("Edit payment")}
+        description={tr("Update payment method, reference, amount, and status.")}
         primaryAction={
           <button
             className="wb-button-primary"
@@ -46,26 +50,28 @@ export default async function EditPaymentPage({
             form="edit-payment-form"
           >
             <Save className="h-4 w-4" />
-            Save changes
+            {tr("Save changes")}
           </button>
         }
         secondaryAction={
           <Link href="/payments" className="wb-button-secondary">
             <ArrowLeft className="h-4 w-4" />
-            Back to payments
+            {tr("Back to payments")}
           </Link>
         }
       />
 
       <SectionCard
-        title="Payment details"
-        description="Keep transaction records clean and traceable."
+        title={tr("Payment details")}
+        description={tr("Keep transaction records clean and traceable.")}
       >
         {query.error === "invalid" || query.error === "persistence" ? (
           <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
             {query.error === "invalid"
-              ? "Please complete all required payment fields."
-              : "Could not update payment. Check your Supabase connection and try again."}
+              ? tr("Please complete all required payment fields.")
+              : tr(
+                  "Could not update payment. Check your Supabase connection and try again.",
+                )}
           </div>
         ) : null}
 
@@ -77,7 +83,7 @@ export default async function EditPaymentPage({
         >
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Order
+              {tr("Order")}
             </label>
             <select
               name="orderId"
@@ -88,7 +94,7 @@ export default async function EditPaymentPage({
               {currentOrderId && !hasCurrentOrder ? (
                 <option value={currentOrderId}>
                   #{formatOrderReference(currentOrderId) || "WB-00000"} •
-                  Current linked
+                  {tr("Current linked")}
                 </option>
               ) : null}
               {orderOptions.map((order) => (
@@ -106,7 +112,7 @@ export default async function EditPaymentPage({
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Amount (TZS)
+              {tr("Amount (TZS)")}
             </label>
             <input
               name="amount"
@@ -119,7 +125,7 @@ export default async function EditPaymentPage({
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Method
+              {tr("Method")}
             </label>
             <select
               name="method"
@@ -135,22 +141,22 @@ export default async function EditPaymentPage({
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Status
+              {tr("Status")}
             </label>
             <select
               name="status"
               className="wb-input"
               defaultValue={payment.status}
             >
-              <option value="paid">Paid</option>
-              <option value="partial">Partial</option>
-              <option value="unpaid">Unpaid</option>
+              <option value="paid">{tr("Paid")}</option>
+              <option value="partial">{tr("Partial")}</option>
+              <option value="unpaid">{tr("Unpaid")}</option>
               <option value="cod">COD</option>
             </select>
           </div>
           <div className="sm:col-span-2">
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Reference
+              {tr("Reference")}
             </label>
             <input
               name="reference"

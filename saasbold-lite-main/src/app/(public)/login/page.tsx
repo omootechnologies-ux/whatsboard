@@ -1,9 +1,14 @@
 import { AuthForm } from "@/components/whatsboard-public/auth-placeholder-form";
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
-export const metadata = {
-  title: "Login | WhatsBoard",
-  description: "Log in to access your WhatsBoard seller workspace.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations();
+  return {
+    title: t("pages.login.title"),
+    description: t("pages.login.description"),
+  };
+}
 
 export default function LoginPage() {
   return (

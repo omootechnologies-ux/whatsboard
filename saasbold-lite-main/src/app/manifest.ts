@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "WhatsBoard",
-    short_name: "WhatsBoard",
+    name: "Folapp",
+    short_name: "Folapp",
     description:
       "Order management for East African social sellers. Turn chat chaos into sales control.",
     id: "/",

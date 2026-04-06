@@ -1,4 +1,5 @@
 import { CreditCard } from "lucide-react";
+import { getLocale } from "next-intl/server";
 import {
   DataCell,
   DataRow,
@@ -23,6 +24,7 @@ import {
 } from "@/lib/billing/plans";
 import { resolveLegacyBusinessIdForRequest } from "@/lib/repositories/supabase-legacy-repository";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
+import { translateUiText } from "@/lib/ui-translations";
 
 export const dynamic = "force-dynamic";
 
@@ -64,33 +66,36 @@ function isUpgrade(currentPlanAmount: number, targetPlanAmount: number) {
 function statusMessage(
   search: Awaited<BillingSearchParams>,
   state: BusinessBillingState,
+  tr: (value: string) => string,
 ) {
   if (search.updated === "1") {
     const plan = parseBillingPlan(search.plan || state.plan);
     return {
       tone: "success" as const,
-      text: `Plan updated successfully. Your workspace is now on ${plan.toUpperCase()}.`,
+      text: `${tr("Plan updated successfully. Your workspace is now on")} ${plan.toUpperCase()}.`,
     };
   }
 
   if (search.error === "team-limit") {
     return {
       tone: "danger" as const,
-      text: "Plan change blocked: reduce your current team members first to fit the selected plan limit.",
+      text: tr(
+        "Plan change blocked: reduce your current team members first to fit the selected plan limit.",
+      ),
     };
   }
 
   if (search.error === "forbidden") {
     return {
       tone: "danger" as const,
-      text: "Only owner/admin can change billing plans.",
+      text: tr("Only owner/admin can change billing plans."),
     };
   }
 
   if (search.error === "persistence") {
     return {
       tone: "danger" as const,
-      text: "Could not update billing plan right now. Please try again.",
+      text: tr("Could not update billing plan right now. Please try again."),
     };
   }
 
@@ -99,7 +104,7 @@ function statusMessage(
     if (checkoutPlan !== state.plan) {
       return {
         tone: "info" as const,
-        text: `Checkout ready: confirm ${checkoutPlan.toUpperCase()} to activate this plan.`,
+        text: `${tr("Checkout ready: confirm")} ${checkoutPlan.toUpperCase()} ${tr("to activate this plan.")}`,
       };
     }
   }
@@ -113,6 +118,8 @@ export default async function BillingPage({
   searchParams: BillingSearchParams;
 }) {
   const search = await searchParams;
+  const locale = await getLocale();
+  const tr = (value: string) => translateUiText(value, locale as "en" | "sw");
   const businessId = await resolveLegacyBusinessIdForRequest();
   const client = createSupabaseServiceClient();
   const billingState = await getBusinessBillingState(businessId, client);
@@ -144,13 +151,15 @@ export default async function BillingPage({
     (plan) => plan.key === activePlan,
   );
   const checkoutPlan = search.checkout ? parseBillingPlan(search.checkout) : null;
-  const flash = statusMessage(search, billingState);
+  const flash = statusMessage(search, billingState, tr);
 
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
-        title="Billing"
-        description="Plan selection, billing state, and hard limits that protect workflow quality."
+        title={tr("Billing")}
+        description={tr(
+          "Plan selection, billing state, and hard limits that protect workflow quality.",
+        )}
       />
 
       {flash ? (
@@ -169,19 +178,19 @@ export default async function BillingPage({
 
       <section className="grid gap-4 md:grid-cols-4">
         <KpiCard
-          label="Current plan"
+          label={tr("Current plan")}
           value={activePlan.toUpperCase()}
-          detail="Plan currently assigned to your workspace."
+          detail={tr("Plan currently assigned to your workspace.")}
           accent={<CreditCard className="h-5 w-5" />}
         />
         <KpiCard
-          label="Billing status"
+          label={tr("Billing status")}
           value={(billingState.status || "inactive").toUpperCase()}
-          detail="Current billing lifecycle state."
+          detail={tr("Current billing lifecycle state.")}
           accent={<CreditCard className="h-5 w-5" />}
         />
         <KpiCard
-          label="Monthly orders"
+          label={tr("Monthly orders")}
           value={String(billingState.monthlyOrders)}
           detail={renderLimit(
             billingState.monthlyOrderLimit,
@@ -190,16 +199,18 @@ export default async function BillingPage({
           accent={<CreditCard className="h-5 w-5" />}
         />
         <KpiCard
-          label="Team members"
+          label={tr("Team members")}
           value={String(billingState.teamMemberCount)}
-          detail={`${billingState.teamMemberLimit} member limit on ${activePlan.toUpperCase()}`}
+          detail={`${billingState.teamMemberLimit} ${tr("member limit on")} ${activePlan.toUpperCase()}`}
           accent={<CreditCard className="h-5 w-5" />}
         />
       </section>
 
       <SectionCard
-        title="Plan management"
-        description="Upgrade or downgrade plans. Team and order limits are enforced server-side."
+        title={tr("Plan management")}
+        description={tr(
+          "Upgrade or downgrade plans. Team and order limits are enforced server-side.",
+        )}
       >
         <div className="grid gap-4 xl:grid-cols-4">
           {listBillingPlanConfigs().map((plan) => {
@@ -208,12 +219,12 @@ export default async function BillingPage({
             const blockedByTeamSize =
               billingState.teamMemberCount > plan.teamMemberLimit;
             const ctaLabel = isCurrent
-              ? "Current plan"
+              ? tr("Current plan")
               : blockedByTeamSize
-                ? "Reduce team first"
+                ? tr("Reduce team first")
                 : isUpgrade(activePlanConfig?.priceTzs || 0, plan.priceTzs)
-                  ? "Upgrade"
-                  : "Downgrade";
+                  ? tr("Upgrade")
+                  : tr("Downgrade");
 
             return (
               <article
@@ -233,12 +244,12 @@ export default async function BillingPage({
                   {formatPlanPriceLabel(plan.priceTzs)}
                 </p>
                 <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
-                  {plan.priceTzs === 0 ? "/forever" : "/month"}
+                  {plan.priceTzs === 0 ? tr("/forever") : tr("/month")}
                 </p>
 
                 <ul className="mt-4 space-y-2 text-sm text-[var(--color-wb-text-muted)]">
-                  <li>{renderLimit(plan.orderLimitPerMonth, "orders/month")}</li>
-                  <li>{`${plan.teamMemberLimit} team members`}</li>
+                  <li>{renderLimit(plan.orderLimitPerMonth, tr("orders/month"))}</li>
+                  <li>{`${plan.teamMemberLimit} ${tr("team members")}`}</li>
                 </ul>
 
                 {isCurrent || blockedByTeamSize ? (
@@ -263,47 +274,48 @@ export default async function BillingPage({
         </div>
 
         <p className="mt-4 text-sm text-[var(--color-wb-text-muted)]">
-          Free allows dashboard access and up to 30 new orders per month.
-          Growth allows up to 2 team members. Business allows up to 5.
+          {tr(
+            "Free allows dashboard access and up to 30 new orders per month. Growth allows up to 2 team members. Business allows up to 5.",
+          )}
         </p>
       </SectionCard>
 
       <SectionCard
-        title="Subscription window"
-        description="Current billing period boundaries."
+        title={tr("Subscription window")}
+        description={tr("Current billing period boundaries.")}
       >
         <div className="grid gap-4 sm:grid-cols-2">
           <article className="wb-soft-card p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-wb-text-muted)]">
-              Period start
+              {tr("Period start")}
             </p>
             <p className="mt-2 text-sm font-semibold text-[var(--color-wb-text)]">
               {billingState.periodStartsAt
                 ? formatDate(billingState.periodStartsAt)
-                : "Not set"}
+                : tr("Not set")}
             </p>
           </article>
           <article className="wb-soft-card p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-wb-text-muted)]">
-              Period end
+              {tr("Period end")}
             </p>
             <p className="mt-2 text-sm font-semibold text-[var(--color-wb-text)]">
               {billingState.periodEndsAt
                 ? formatDate(billingState.periodEndsAt)
-                : "Not set"}
+                : tr("Not set")}
             </p>
           </article>
         </div>
       </SectionCard>
 
       <SectionCard
-        title="Transaction history"
-        description="Recent billing events saved in Supabase."
+        title={tr("Transaction history")}
+        description={tr("Recent billing events saved in Supabase.")}
       >
         <div className="mb-4 grid gap-4 md:grid-cols-2">
           <article className="wb-soft-card p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-wb-text-muted)]">
-              Lifetime paid
+              {tr("Lifetime paid")}
             </p>
             <p className="mt-2 text-lg font-black tracking-[-0.03em] text-[var(--color-wb-primary)]">
               {formatCurrency(lifetimePaid)}
@@ -311,7 +323,7 @@ export default async function BillingPage({
           </article>
           <article className="wb-soft-card p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-wb-text-muted)]">
-              Currency
+              {tr("Currency")}
             </p>
             <p className="mt-2 text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
               {billingState.currency}

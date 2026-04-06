@@ -197,11 +197,11 @@ export default async function OrderDetailsPage({
                     {receiptState.capabilities.allowedFooterModes.map((mode) => (
                       <option key={mode} value={mode}>
                         {mode === "whatsboard_link"
-                          ? tr("Order tracked with WhatsBoard")
+                          ? tr("Order tracked with Folapp")
                           : mode === "powered_by_whatsboard"
-                            ? tr("Powered by WhatsBoard")
+                            ? tr("Powered by Folapp")
                             : mode === "white_label"
-                              ? tr("White-label (no WhatsBoard footer)")
+                              ? tr("White-label (no Folapp footer)")
                               : tr("Hide footer")}
                       </option>
                     ))}

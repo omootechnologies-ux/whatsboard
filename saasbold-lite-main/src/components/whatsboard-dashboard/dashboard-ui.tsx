@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useLocale, useTranslations } from "next-intl";
 import {
   ArrowUpRight,
   BarChart3,
@@ -35,17 +36,27 @@ import {
 } from "@/components/whatsboard-dashboard/formatting";
 import {
   formatOrderReference,
-  formatPaymentStatusLabel,
-  formatStageLabel,
   getPrimaryOrderLabel,
 } from "@/lib/display-labels";
 import { clearAuthSessionCookies } from "@/lib/auth/cookies";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { LanguageSwitcher } from "@/components/shared/language-switcher";
+import { translateUiText } from "@/lib/ui-translations";
 
 type NavItem = {
   href: string;
-  label: string;
-  group: "Operations" | "Control";
+  labelKey:
+    | "overview"
+    | "orders"
+    | "products"
+    | "customers"
+    | "followUps"
+    | "payments"
+    | "team"
+    | "billing"
+    | "analytics"
+    | "settings";
+  group: "operations" | "control";
   icon: React.ComponentType<{ className?: string }>;
 };
 
@@ -56,26 +67,46 @@ type ToolbarChip = {
 };
 
 const desktopNav: NavItem[] = [
-  { href: "/dashboard", label: "Overview", group: "Operations", icon: Home },
-  { href: "/orders", label: "Orders", group: "Operations", icon: Package2 },
+  {
+    href: "/dashboard",
+    labelKey: "overview",
+    group: "operations",
+    icon: Home,
+  },
+  { href: "/orders", labelKey: "orders", group: "operations", icon: Package2 },
   {
     href: "/products",
-    label: "Products",
-    group: "Operations",
+    labelKey: "products",
+    group: "operations",
     icon: LayoutGrid,
   },
-  { href: "/customers", label: "Customers", group: "Operations", icon: Users },
-  { href: "/follow-ups", label: "Follow-ups", group: "Operations", icon: Bell },
-  { href: "/payments", label: "Payments", group: "Control", icon: Wallet },
-  { href: "/team", label: "Team", group: "Control", icon: Users },
-  { href: "/billing", label: "Billing", group: "Control", icon: CreditCard },
+  {
+    href: "/customers",
+    labelKey: "customers",
+    group: "operations",
+    icon: Users,
+  },
+  {
+    href: "/follow-ups",
+    labelKey: "followUps",
+    group: "operations",
+    icon: Bell,
+  },
+  { href: "/payments", labelKey: "payments", group: "control", icon: Wallet },
+  { href: "/team", labelKey: "team", group: "control", icon: Users },
+  { href: "/billing", labelKey: "billing", group: "control", icon: CreditCard },
   {
     href: "/dashboard/analytics",
-    label: "Analytics",
-    group: "Control",
+    labelKey: "analytics",
+    group: "control",
     icon: BarChart3,
   },
-  { href: "/settings", label: "Settings", group: "Control", icon: Settings },
+  {
+    href: "/settings",
+    labelKey: "settings",
+    group: "control",
+    icon: Settings,
+  },
 ];
 
 const mobileNav = desktopNav.filter((item) =>
@@ -126,24 +157,29 @@ export function DashboardShellFrame({
   workspaceName?: string | null;
   paymentsReconciledToday?: number;
 }) {
+  const t = useTranslations();
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const activeNavHref = getActiveNavHref(pathname);
-  const currentLabel =
-    desktopNav.find((item) => item.href === activeNavHref)?.label ?? "Overview";
+  const currentLabelKey =
+    desktopNav.find((item) => item.href === activeNavHref)?.labelKey || "overview";
+  const currentLabel = t(`dashboardShell.nav.${currentLabelKey}`);
   const groupedNav = useMemo(
     () =>
-      (["Operations", "Control"] as const).map((group) => ({
+      (["operations", "control"] as const).map((group) => ({
         group,
         items: desktopNav.filter((item) => item.group === group),
       })),
     [],
   );
-  const workspaceLabel = workspaceName?.trim() || "My Business";
-  const workspaceTagline = `Seller control room • ${workspaceLabel}`;
+  const workspaceLabel =
+    workspaceName?.trim() || t("dashboardShell.defaultWorkspace");
+  const workspaceTagline = t("dashboardShell.tagline", {
+    workspace: workspaceLabel,
+  });
 
   const onSignOut = async () => {
     if (isSigningOut) return;
@@ -185,7 +221,7 @@ export function DashboardShellFrame({
               {!collapsed ? (
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-wb-text-muted)]">
-                    WhatsBoard
+                    {t("app.name")}
                   </p>
                   <p className="text-sm font-black tracking-[-0.03em] text-[var(--color-wb-text)]">
                     {workspaceLabel}
@@ -216,11 +252,10 @@ export function DashboardShellFrame({
             <div className="px-4 pt-4">
               <div className="wb-soft-card p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
-                  Built for East African sellers
+                  {t("dashboardShell.builtForTitle")}
                 </p>
                 <p className="mt-3 text-sm leading-6 text-[var(--color-wb-text-muted)]">
-                  Turn WhatsApp, Instagram, TikTok, and Facebook orders into one
-                  clean daily workflow.
+                  {t("dashboardShell.builtForBody")}
                 </p>
               </div>
             </div>
@@ -232,7 +267,7 @@ export function DashboardShellFrame({
                 <section key={section.group}>
                   {!collapsed ? (
                     <p className="px-3 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
-                      {section.group}
+                      {t(`dashboardShell.groups.${section.group}`)}
                     </p>
                   ) : null}
                   <div className={`space-y-2 ${collapsed ? "" : "mt-2"}`}>
@@ -242,6 +277,7 @@ export function DashboardShellFrame({
                         item={item}
                         activeHref={activeNavHref}
                         collapsed={collapsed}
+                        label={t(`dashboardShell.nav.${item.labelKey}`)}
                       />
                     ))}
                   </div>
@@ -274,8 +310,11 @@ export function DashboardShellFrame({
               <div className="flex items-center gap-2 sm:gap-3">
                 <span className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700 lg:inline-flex">
                   <Wallet className="h-3.5 w-3.5" />
-                  Reconciled today: {paymentsReconciledToday}
+                  {t("dashboardShell.reconciledToday", {
+                    count: paymentsReconciledToday,
+                  })}
                 </span>
+                <LanguageSwitcher compact className="hidden sm:inline-flex" />
                 <span className="hidden items-center gap-2 rounded-full border border-[var(--color-wb-border)] bg-white px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-primary)] xl:inline-flex">
                   <LayoutGrid className="h-3.5 w-3.5" />
                   <span className="max-w-[16rem] truncate">
@@ -289,7 +328,7 @@ export function DashboardShellFrame({
                 >
                   <LogOut className="h-4 w-4" />
                   <span className="hidden sm:inline">
-                    {isSigningOut ? "Signing out..." : "Sign out"}
+                    {isSigningOut ? t("actions.signingOut") : t("actions.logout")}
                   </span>
                 </button>
               </div>
@@ -324,7 +363,7 @@ export function DashboardShellFrame({
                     {groupedNav.map((section) => (
                       <section key={section.group}>
                         <p className="px-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
-                          {section.group}
+                          {t(`dashboardShell.groups.${section.group}`)}
                         </p>
                         <div className="mt-2 space-y-2">
                           {section.items.map((item) => (
@@ -332,6 +371,7 @@ export function DashboardShellFrame({
                               key={item.href}
                               item={item}
                               activeHref={activeNavHref}
+                              label={t(`dashboardShell.nav.${item.labelKey}`)}
                               onClick={() => setMobileOpen(false)}
                             />
                           ))}
@@ -341,13 +381,16 @@ export function DashboardShellFrame({
                   </div>
                 </div>
                 <div className="mt-4 border-t border-[var(--color-wb-border)] pt-4">
+                  <div className="mb-3">
+                    <LanguageSwitcher compact className="w-full justify-between" />
+                  </div>
                   <button
                     onClick={onSignOut}
                     className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[var(--color-wb-border)] bg-white text-sm font-semibold text-[var(--color-wb-text-muted)]"
                     disabled={isSigningOut}
                   >
                     <LogOut className="h-4 w-4" />
-                    {isSigningOut ? "Signing out..." : "Sign out"}
+                    {isSigningOut ? t("actions.signingOut") : t("actions.logout")}
                   </button>
                 </div>
               </div>
@@ -363,7 +406,7 @@ export function DashboardShellFrame({
             className="fixed bottom-[calc(5.05rem+env(safe-area-inset-bottom))] right-3 z-20 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--color-wb-primary)] px-4 text-sm font-semibold text-white shadow-[0_24px_40px_rgba(15,93,70,0.26)] transition hover:bg-[var(--color-wb-primary-dark)] max-[430px]:h-11 max-[430px]:w-11 max-[430px]:px-0 sm:bottom-24 sm:right-4 sm:h-12 sm:px-5 lg:bottom-8 lg:right-8 lg:h-14 lg:px-6"
           >
             <Plus className="h-4 w-4" />
-            <span className="max-[430px]:hidden">Add order</span>
+            <span className="max-[430px]:hidden">{t("actions.addOrder")}</span>
             <ArrowUpRight className="h-4 w-4 max-[430px]:hidden" />
           </Link>
 
@@ -372,6 +415,7 @@ export function DashboardShellFrame({
               {mobileNav.map((item) => {
                 const active = item.href === activeNavHref;
                 const Icon = item.icon;
+                const label = t(`dashboardShell.nav.${item.labelKey}`);
                 return (
                   <Link
                     key={item.href}
@@ -389,7 +433,7 @@ export function DashboardShellFrame({
                     >
                       <Icon className="h-4 w-4" />
                     </span>
-                    <span className="truncate text-[11px]">{item.label}</span>
+                    <span className="truncate text-[11px]">{label}</span>
                   </Link>
                 );
               })}
@@ -403,11 +447,13 @@ export function DashboardShellFrame({
 
 function AppLink({
   item,
+  label,
   activeHref,
   collapsed = false,
   onClick,
 }: {
   item: NavItem;
+  label: string;
   activeHref: string;
   collapsed?: boolean;
   onClick?: () => void;
@@ -432,7 +478,7 @@ function AppLink({
       >
         <Icon className="h-4 w-4" />
       </span>
-      {!collapsed ? <span className="truncate">{item.label}</span> : null}
+      {!collapsed ? <span className="truncate">{label}</span> : null}
     </Link>
   );
 }
@@ -448,18 +494,20 @@ export function PageHeader({
   primaryAction?: React.ReactNode;
   secondaryAction?: React.ReactNode;
 }) {
+  const t = useTranslations();
+  const locale = useLocale();
   return (
     <div className="wb-shell-card p-5 sm:p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--color-wb-primary)]">
-            WhatsBoard
+            {t("app.name")}
           </p>
           <h2 className="mt-3 break-words text-2xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-3xl lg:text-4xl">
-            {title}
+            {translateUiText(title, locale as "en" | "sw")}
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-[var(--color-wb-text-muted)] sm:text-base">
-            {description}
+            {translateUiText(description, locale as "en" | "sw")}
           </p>
         </div>
         {primaryAction || secondaryAction ? (
@@ -482,16 +530,19 @@ export function PageHeader({
 }
 
 export function FilterBar({
-  searchPlaceholder = "Search orders, customers, or payments",
+  searchPlaceholder,
   children,
 }: {
   searchPlaceholder?: string;
   children?: React.ReactNode;
 }) {
+  const t = useTranslations();
   return (
     <div className="wb-soft-card p-4">
       <div className="flex flex-col gap-4">
-        <SearchBar placeholder={searchPlaceholder} />
+        <SearchBar
+          placeholder={searchPlaceholder || t("shared.searchEverything")}
+        />
         {children ? (
           <div className="flex flex-wrap gap-2">{children}</div>
         ) : null}
@@ -509,13 +560,14 @@ export function EmptyState({
   detail: string;
   action?: React.ReactNode;
 }) {
+  const locale = useLocale();
   return (
     <div className="rounded-[22px] border border-dashed border-[var(--color-wb-border-strong)] bg-[var(--color-wb-surface-alt)] px-5 py-8 text-center">
       <p className="text-base font-semibold text-[var(--color-wb-text)]">
-        {title}
+        {translateUiText(title, locale as "en" | "sw")}
       </p>
       <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[var(--color-wb-text-muted)]">
-        {detail}
+        {translateUiText(detail, locale as "en" | "sw")}
       </p>
       {action ? <div className="mt-4 inline-flex">{action}</div> : null}
     </div>
@@ -529,6 +581,7 @@ export function DataTable({
   headers: string[];
   children: React.ReactNode;
 }) {
+  const locale = useLocale();
   return (
     <div className="-mx-2 overflow-x-auto rounded-[22px] border border-[var(--color-wb-border)] bg-white sm:mx-0">
       <table className="min-w-[680px] divide-y divide-[var(--color-wb-border)] sm:min-w-full">
@@ -539,7 +592,7 @@ export function DataTable({
                 key={header}
                 className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-wb-text-muted)]"
               >
-                {header}
+                {translateUiText(header, locale as "en" | "sw")}
               </th>
             ))}
           </tr>
@@ -624,18 +677,19 @@ export function KpiCard({
   detail: string;
   accent?: React.ReactNode;
 }) {
+  const locale = useLocale();
   return (
     <div className="wb-shell-card p-4 sm:p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-wb-text-muted)]">
-            {label}
+            {translateUiText(label, locale as "en" | "sw")}
           </p>
           <p className="mt-3 break-words text-2xl font-black tracking-[-0.04em] text-[var(--color-wb-text)] sm:text-3xl">
             {value}
           </p>
           <p className="mt-2 text-sm leading-6 text-[var(--color-wb-text-muted)]">
-            {detail}
+            {translateUiText(detail, locale as "en" | "sw")}
           </p>
         </div>
         {accent ? (
@@ -659,16 +713,17 @@ export function SectionCard({
   actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
+  const locale = useLocale();
   return (
     <section className="wb-shell-card p-5 sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <h3 className="break-words text-lg font-black tracking-[-0.03em] text-[var(--color-wb-text)] sm:text-xl">
-            {title}
+            {translateUiText(title, locale as "en" | "sw")}
           </h3>
           {description ? (
             <p className="mt-2 text-sm leading-6 text-[var(--color-wb-text-muted)]">
-              {description}
+              {translateUiText(description, locale as "en" | "sw")}
             </p>
           ) : null}
         </div>
@@ -690,6 +745,7 @@ export function FilterChip({
   label: string;
   active?: boolean;
 }) {
+  const locale = useLocale();
   return (
     <span
       className={`inline-flex max-w-full items-center rounded-full border px-3 py-1.5 text-xs font-semibold transition sm:px-4 sm:py-2 sm:text-sm ${
@@ -698,13 +754,13 @@ export function FilterChip({
           : "border-[var(--color-wb-border)] bg-white text-[var(--color-wb-text-muted)]"
       }`}
     >
-      {label}
+      {translateUiText(label, locale as "en" | "sw")}
     </span>
   );
 }
 
 export function FilterToolbar({
-  searchPlaceholder = "Search records",
+  searchPlaceholder,
   searchKey = "search",
   chips = [],
 }: {
@@ -712,6 +768,7 @@ export function FilterToolbar({
   searchKey?: string;
   chips?: ToolbarChip[];
 }) {
+  const t = useTranslations();
   const pathname = usePathname();
   const router = useRouter();
   const params = useSearchParams();
@@ -748,7 +805,7 @@ export function FilterToolbar({
         >
           <div className="flex-1">
             <SearchBar
-              placeholder={searchPlaceholder}
+              placeholder={searchPlaceholder || t("shared.searchRecords")}
               value={search}
               onChange={setSearch}
             />
@@ -757,7 +814,7 @@ export function FilterToolbar({
             type="submit"
             className="wb-button-secondary w-full sm:w-auto"
           >
-            Apply
+            {t("actions.apply")}
           </button>
         </form>
         {chips.length ? (
@@ -785,6 +842,7 @@ export function FilterToolbar({
 }
 
 export function PaymentBadge({ status }: { status: PaymentStatus }) {
+  const t = useTranslations();
   const tone = paymentBadgeTone(status);
   const tones = {
     success: "bg-emerald-50 text-emerald-700 border-emerald-100",
@@ -797,12 +855,13 @@ export function PaymentBadge({ status }: { status: PaymentStatus }) {
     <span
       className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold capitalize ${tones[tone]}`}
     >
-      {status}
+      {t(`badges.payment.${status}`)}
     </span>
   );
 }
 
 export function StageBadge({ stage }: { stage: OrderRecord["stage"] }) {
+  const t = useTranslations();
   const tone = stageTone(stage);
   const tones = {
     success: "bg-emerald-50 text-emerald-700 border-emerald-100",
@@ -816,7 +875,7 @@ export function StageBadge({ stage }: { stage: OrderRecord["stage"] }) {
     <span
       className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold capitalize ${tones[tone]}`}
     >
-      {formatStageLabel(stage)}
+      {t(`badges.stage.${stage}`)}
     </span>
   );
 }
@@ -828,6 +887,7 @@ export function BuyerBadge({
   status?: BuyerStatus;
   compact?: boolean;
 }) {
+  const t = useTranslations();
   const resolved = status || "new";
   const tones: Record<BuyerStatus, string> = {
     new: "bg-slate-50 text-slate-700 border-slate-100",
@@ -841,12 +901,13 @@ export function BuyerBadge({
     <span
       className={`inline-flex rounded-full border ${compact ? "px-2.5 py-0.5 text-[11px]" : "px-3 py-1 text-xs"} font-semibold capitalize ${tones[resolved]}`}
     >
-      {resolved === "at_risk" ? "At-risk customer" : `${resolved} customer`}
+      {t(`badges.buyer.${resolved}`)}
     </span>
   );
 }
 
 export function OrderCard({ order }: { order: OrderRecord }) {
+  const t = useTranslations();
   const primaryLabel = getPrimaryOrderLabel({
     customerName: order.customerName,
     customerPhone: order.customerPhone,
@@ -866,7 +927,7 @@ export function OrderCard({ order }: { order: OrderRecord }) {
           </div>
           <p className="mt-1 text-sm text-[var(--color-wb-text-muted)]">
             {order.channel} • {formatCurrency(order.amount)} •{" "}
-            {formatPaymentStatusLabel(order.paymentStatus)}
+            {t(`badges.payment.${order.paymentStatus}`)}
           </p>
         </div>
         <StageBadge stage={order.stage} />
@@ -874,15 +935,17 @@ export function OrderCard({ order }: { order: OrderRecord }) {
       <div className="mt-4 flex flex-wrap items-start justify-between gap-3 border-t border-[var(--color-wb-border)] pt-3">
         <div className="min-w-0">
           <p className="break-words text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-text-muted)]">
-            {reference ? `Order #${reference}` : "Untitled order"}
+            {reference
+              ? `Order #${reference}`
+              : t("shared.orderUntitled")}
           </p>
           {order.paymentReference ? (
             <p className="mt-1 break-words text-xs font-semibold text-[var(--color-wb-primary)]">
-              Payment ref: {order.paymentReference}
+              {t("shared.paymentRef", { reference: order.paymentReference })}
             </p>
           ) : null}
           <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-            Updated {formatDate(order.updatedAt)}
+            {t("shared.updatedAt", { date: formatDate(order.updatedAt) })}
           </p>
         </div>
         <PaymentBadge status={order.paymentStatus} />
@@ -898,13 +961,17 @@ export function OrderStageBoard({
   title: string;
   orders: OrderRecord[];
 }) {
+  const t = useTranslations();
+  const locale = useLocale();
   return (
     <div className="rounded-[24px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="font-semibold text-[var(--color-wb-text)]">{title}</p>
+          <p className="font-semibold text-[var(--color-wb-text)]">
+            {translateUiText(title, locale as "en" | "sw")}
+          </p>
           <p className="mt-1 text-xs text-[var(--color-wb-text-muted)]">
-            {orders.length} orders
+            {t("shared.ordersCount", { count: orders.length })}
           </p>
         </div>
       </div>
@@ -917,7 +984,7 @@ export function OrderStageBoard({
           ))
         ) : (
           <div className="rounded-[20px] border border-dashed border-[var(--color-wb-border)] bg-white px-4 py-8 text-center text-sm text-[var(--color-wb-text-muted)]">
-            No orders in this stage.
+            {t("shared.noOrdersStage")}
           </div>
         )}
       </div>
@@ -930,6 +997,7 @@ export function TimelineList({
 }: {
   items: Array<{ title: string; detail: string; meta?: string }>;
 }) {
+  const locale = useLocale();
   return (
     <div className="space-y-4">
       {items.map((item, index) => (
@@ -943,7 +1011,7 @@ export function TimelineList({
           <div className="min-w-0 flex-1 rounded-[22px] border border-[var(--color-wb-border)] bg-[var(--color-wb-surface-alt)] p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="font-semibold text-[var(--color-wb-text)]">
-                {item.title}
+                {translateUiText(item.title, locale as "en" | "sw")}
               </p>
               {item.meta ? (
                 <span className="text-xs text-[var(--color-wb-text-muted)]">
@@ -952,7 +1020,7 @@ export function TimelineList({
               ) : null}
             </div>
             <p className="mt-2 text-sm leading-6 text-[var(--color-wb-text-muted)]">
-              {item.detail}
+              {translateUiText(item.detail, locale as "en" | "sw")}
             </p>
           </div>
         </div>
@@ -972,6 +1040,7 @@ export function ChartCard({
   data: Array<Record<string, string | number>>;
   dataKey: string;
 }) {
+  const locale = useLocale();
   const normalized = data.map((item, index) => {
     const rawValue = Number(item[dataKey]);
     const value = Number.isFinite(rawValue) ? rawValue : 0;
@@ -988,7 +1057,7 @@ export function ChartCard({
   const max = Math.max(...normalized.map((item) => item.value), 1);
 
   const formatValue = (value: number) =>
-    new Intl.NumberFormat("en-TZ", {
+    new Intl.NumberFormat(locale === "sw" ? "sw-TZ" : "en-TZ", {
       maximumFractionDigits: 0,
     }).format(value);
 
@@ -1041,7 +1110,7 @@ export function ChartCard({
 }
 
 export function SearchBar({
-  placeholder = "Search orders, customers, or payments",
+  placeholder,
   value,
   onChange,
 }: {
@@ -1049,12 +1118,17 @@ export function SearchBar({
   value?: string;
   onChange?: (nextValue: string) => void;
 }) {
+  const t = useTranslations();
+  const locale = useLocale();
   return (
     <label className="relative block">
       <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-wb-text-muted)]" />
       <input
         className="wb-input pl-11"
-        placeholder={placeholder}
+        placeholder={translateUiText(
+          placeholder || t("shared.searchEverything"),
+          locale as "en" | "sw",
+        )}
         value={value}
         onChange={
           onChange ? (event) => onChange(event.target.value) : undefined
@@ -1067,12 +1141,14 @@ export function SearchBar({
 export function CustomerRow({
   customer,
   actionHref,
-  actionLabel = "Edit",
+  actionLabel,
 }: {
   customer: CustomerRecord;
   actionHref?: string;
   actionLabel?: string;
 }) {
+  const t = useTranslations();
+  const locale = useLocale();
   const customerLabel = getPrimaryOrderLabel({
     customerName: customer.name,
     customerPhone: customer.phone,
@@ -1101,7 +1177,7 @@ export function CustomerRow({
             href={actionHref}
             className="rounded-full border border-[var(--color-wb-border)] bg-white px-3 py-1 text-xs font-semibold text-[var(--color-wb-primary)] transition hover:bg-[var(--color-wb-primary-soft)]"
           >
-            {actionLabel}
+            {translateUiText(actionLabel || t("actions.edit"), locale as "en" | "sw")}
           </Link>
         ) : null}
       </div>
@@ -1112,12 +1188,14 @@ export function CustomerRow({
 export function FollowUpCard({
   item,
   actionHref,
-  actionLabel = "Edit",
+  actionLabel,
 }: {
   item: FollowUpRecord;
   actionHref?: string;
   actionLabel?: string;
 }) {
+  const t = useTranslations();
+  const locale = useLocale();
   const customerLabel = getPrimaryOrderLabel({
     customerName: item.customerName,
     orderId: item.orderId,
@@ -1146,7 +1224,7 @@ export function FollowUpCard({
         <span
           className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold capitalize ${tone}`}
         >
-          {item.status}
+          {t(`badges.followUpStatus.${item.status}`)}
         </span>
       </div>
       <p className="mt-4 text-sm leading-6 text-[var(--color-wb-text-muted)]">
@@ -1158,14 +1236,14 @@ export function FollowUpCard({
         </span>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           <span className="rounded-full bg-[var(--color-wb-surface-alt)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-wb-primary)]">
-            {item.priority}
+            {t(`badges.priority.${item.priority}`)}
           </span>
           {actionHref ? (
             <Link
               href={actionHref}
-              className="rounded-full border border-[var(--color-wb-border)] bg-white px-3 py-1 text-xs font-semibold text-[var(--color-wb-primary)] transition hover:bg-[var(--color-wb-primary-soft)]"
-            >
-              {actionLabel}
+            className="rounded-full border border-[var(--color-wb-border)] bg-white px-3 py-1 text-xs font-semibold text-[var(--color-wb-primary)] transition hover:bg-[var(--color-wb-primary-soft)]"
+          >
+              {translateUiText(actionLabel || t("actions.edit"), locale as "en" | "sw")}
             </Link>
           ) : null}
         </div>

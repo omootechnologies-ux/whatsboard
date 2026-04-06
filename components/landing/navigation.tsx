@@ -38,7 +38,7 @@ export function Navigation() {
               <span className="text-primary-foreground font-bold text-sm">W</span>
             </div>
             <span className="font-bold text-xl text-foreground" style={{ fontFamily: 'var(--font-display)' }}>
-              WhatsBoard
+              Folapp
             </span>
           </Link>
 

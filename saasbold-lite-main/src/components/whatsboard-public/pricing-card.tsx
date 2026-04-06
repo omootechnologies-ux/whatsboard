@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { PricingPlan } from "@/data/pricing-plans";
 import { buildBillingCheckoutPath } from "@/lib/billing/plans";
 
 export function PricingCard({ plan }: { plan: PricingPlan }) {
+  const t = useTranslations();
   const checkoutPath = buildBillingCheckoutPath(plan.key);
   const loginHref = `/login?next=${encodeURIComponent(checkoutPath)}&plan=${plan.key}`;
 
@@ -90,7 +92,7 @@ export function PricingCard({ plan }: { plan: PricingPlan }) {
           plan.highlight ? "text-white/80" : "text-[var(--color-wb-text-muted)]"
         }`}
       >
-        Already have account? Login
+        {`${t("auth.alreadyHaveAccount")} ${t("actions.login")}`}
       </Link>
     </article>
   );

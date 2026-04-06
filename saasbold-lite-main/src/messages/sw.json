@@ -1,6 +1,6 @@
 {
   "app": {
-    "name": "WhatsBoard",
+    "name": "Folapp",
     "description": "Dashibodi ya kisasa ya wauzaji wa Afrika Mashariki inayobadilisha vurugu za chat za WhatsApp kuwa udhibiti wa mauzo."
   },
   "locale": {
@@ -50,8 +50,8 @@
     "checkingSession": "Tunaangalia session yako...",
     "createAccount": "Fungua akaunti",
     "welcomeBack": "Karibu tena",
-    "openWorkspace": "Fungua workspace yako ya WhatsBoard",
-    "signInTitle": "Ingia kwenye WhatsBoard",
+    "openWorkspace": "Fungua workspace yako ya Folapp",
+    "signInTitle": "Ingia kwenye Folapp",
     "registerDescription": "Weka workspace ya biashara yako kwa orders, payments, follow-ups, na ufuatiliaji wa wateja.",
     "loginDescription": "Fungua control room yako na endelea kusimamia shughuli za kila siku.",
     "businessName": "Jina la Biashara",
@@ -125,7 +125,7 @@
     "ordersCount": "Order {count}",
     "noOrdersStage": "Hakuna order katika hatua hii.",
     "loading": "Inapakia...",
-    "whatsBoard": "WhatsBoard"
+    "whatsBoard": "Folapp"
   },
   "badges": {
     "payment": {
@@ -170,30 +170,30 @@
     "title": "Receipt",
     "total": "Jumla",
     "payment": "Malipo",
-    "orderTrackedWith": "Order imefuatiliwa na WhatsBoard"
+    "orderTrackedWith": "Order imefuatiliwa na Folapp"
   },
   "pages": {
     "login": {
-      "title": "Ingia | WhatsBoard",
-      "description": "Ingia kufikia workspace yako ya WhatsBoard."
+      "title": "Ingia | Folapp",
+      "description": "Ingia kufikia workspace yako ya Folapp."
     },
     "register": {
-      "title": "Jisajili | WhatsBoard",
-      "description": "Fungua akaunti ya WhatsBoard na anza kufuatilia orders."
+      "title": "Jisajili | Folapp",
+      "description": "Fungua akaunti ya Folapp na anza kufuatilia orders."
     },
     "pricing": {
-      "title": "Bei | WhatsBoard",
+      "title": "Bei | Folapp",
       "description": "Bei wazi za kila mwezi kwa TZS kwa wauzaji wa mtandaoni Afrika Mashariki."
     },
     "privacy": {
       "title": "Sera ya Faragha",
-      "description": "WhatsBoard huhifadhi data za uendeshaji wa muuzaji kama orders, wateja, follow-ups na malipo ili kutoa mwonekano wa kazi na uratibu wa timu. Hatuuzi data ya biashara yako.",
+      "description": "Folapp huhifadhi data za uendeshaji wa muuzaji kama orders, wateja, follow-ups na malipo ili kutoa mwonekano wa kazi na uratibu wa timu. Hatuuzi data ya biashara yako.",
       "contactPrefix": "Kwa support ya production au maombi ya faragha, wasiliana na",
       "contactSuffix": "."
     },
     "terms": {
       "title": "Masharti ya Matumizi",
-      "description": "WhatsBoard husaidia wauzaji wa mtandaoni kuendesha operesheni zenye mpangilio. Kwa kutumia bidhaa hii, unakubali kuitumia kwa shughuli halali za biashara na kulinda akaunti na workspace yako.",
+      "description": "Folapp husaidia wauzaji wa mtandaoni kuendesha operesheni zenye mpangilio. Kwa kutumia bidhaa hii, unakubali kuitumia kwa shughuli halali za biashara na kulinda akaunti na workspace yako.",
       "contactPrefix": "Bei, mipaka ya plan na upatikanaji wa vipengele vinaweza kutofautiana kwa kila plan. Wasiliana na",
       "contactSuffix": "kwa masharti ya enterprise."
     }

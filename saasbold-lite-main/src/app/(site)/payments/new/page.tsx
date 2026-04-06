@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
+import { getLocale } from "next-intl/server";
 import {
   PageHeader,
   SectionCard,
@@ -10,6 +11,7 @@ import {
   getPrimaryOrderLabel,
 } from "@/lib/display-labels";
 import { listOrders } from "@/lib/whatsboard-repository";
+import { translateUiText } from "@/lib/ui-translations";
 
 type NewPaymentSearchParams = Promise<{ error?: string }>;
 
@@ -19,13 +21,17 @@ export default async function NewPaymentPage({
   searchParams: NewPaymentSearchParams;
 }) {
   const query = await searchParams;
+  const locale = await getLocale();
+  const tr = (value: string) => translateUiText(value, locale as "en" | "sw");
   const orderOptions = (await listOrders()).slice(0, 200);
 
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
-        title="Record payment"
-        description="Capture payment confirmation against an order in a clean, auditable flow."
+        title={tr("Record payment")}
+        description={tr(
+          "Capture payment confirmation against an order in a clean, auditable flow.",
+        )}
         primaryAction={
           <button
             className="wb-button-primary"
@@ -33,26 +39,30 @@ export default async function NewPaymentPage({
             form="create-payment-form"
           >
             <Save className="h-4 w-4" />
-            Save payment
+            {tr("Save payment")}
           </button>
         }
         secondaryAction={
           <Link href="/payments" className="wb-button-secondary">
             <ArrowLeft className="h-4 w-4" />
-            Back to payments
+            {tr("Back to payments")}
           </Link>
         }
       />
 
       <SectionCard
-        title="Payment details"
-        description="Record payment transactions directly in your active Supabase workspace."
+        title={tr("Payment details")}
+        description={tr(
+          "Record payment transactions directly in your active Supabase workspace.",
+        )}
       >
         {query.error === "invalid" || query.error === "persistence" ? (
           <div className="mb-4 rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
             {query.error === "invalid"
-              ? "Please complete all required payment fields."
-              : "Could not save payment. Verify the selected order and Supabase connection, then try again."}
+              ? tr("Please complete all required payment fields.")
+              : tr(
+                  "Could not save payment. Verify the selected order and Supabase connection, then try again.",
+                )}
           </div>
         ) : null}
         <form
@@ -63,10 +73,10 @@ export default async function NewPaymentPage({
         >
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Order
+              {tr("Order")}
             </label>
             <select name="orderId" required className="wb-input">
-              <option value="">Select order</option>
+              <option value="">{tr("Select order")}</option>
               {orderOptions.map((order) => (
                 <option key={order.id} value={order.id}>
                   #{formatOrderReference(order.id) || "WB-00000"} •{" "}
@@ -82,7 +92,7 @@ export default async function NewPaymentPage({
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Amount (TZS)
+              {tr("Amount (TZS)")}
             </label>
             <input
               name="amount"
@@ -95,7 +105,7 @@ export default async function NewPaymentPage({
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Method
+              {tr("Method")}
             </label>
             <select name="method" className="wb-input" defaultValue="M-Pesa">
               <option value="M-Pesa">M-Pesa</option>
@@ -107,18 +117,18 @@ export default async function NewPaymentPage({
           </div>
           <div>
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Status
+              {tr("Status")}
             </label>
             <select name="status" className="wb-input" defaultValue="paid">
-              <option value="paid">Paid</option>
-              <option value="partial">Partial</option>
-              <option value="unpaid">Unpaid</option>
+              <option value="paid">{tr("Paid")}</option>
+              <option value="partial">{tr("Partial")}</option>
+              <option value="unpaid">{tr("Unpaid")}</option>
               <option value="cod">COD</option>
             </select>
           </div>
           <div className="sm:col-span-2">
             <label className="mb-2 block text-sm font-semibold text-[var(--color-wb-text)]">
-              Reference
+              {tr("Reference")}
             </label>
             <input
               name="reference"

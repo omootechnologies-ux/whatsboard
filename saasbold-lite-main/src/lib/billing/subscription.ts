@@ -138,7 +138,7 @@ export async function getBusinessBillingState(
 
   return {
     businessId,
-    businessName: business.name?.trim() || "WhatsBoard Business",
+    businessName: business.name?.trim() || "Folapp Business",
     currency: business.currency?.trim() || "TZS",
     plan,
     status: (business.billing_status || "inactive") as BillingStatus,

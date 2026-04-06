@@ -113,7 +113,7 @@ export function HeroSection() {
               <div className="absolute -bottom-8 -right-8 w-2/3 rounded-2xl overflow-hidden shadow-2xl border-4 border-background z-20 transform rotate-3 hover:rotate-0 transition-transform duration-500">
                 <Image
                   src="/images/hero-calm.jpg"
-                  alt="Calm organized seller using WhatsBoard"
+                  alt="Calm organized seller using Folapp"
                   width={400}
                   height={300}
                   className="w-full h-auto object-cover"

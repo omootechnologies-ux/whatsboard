@@ -28,7 +28,7 @@ export function Footer() {
                 className="text-2xl font-bold text-background"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                WhatsBoard
+                Folapp
               </span>
             </Link>
             <p className="text-background/70">
@@ -50,7 +50,7 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col items-center justify-between gap-4 border-t border-background/10 py-6 text-sm text-background/50 sm:flex-row">
-          <p>{t("© 2026 WhatsBoard. All rights reserved.")}</p>
+          <p>{t("© 2026 Folapp. All rights reserved.")}</p>
           <p>{t("Built for Tanzanian and East African online sellers.")}</p>
         </div>
       </div>

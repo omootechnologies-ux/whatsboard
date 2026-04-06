@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Bell } from "lucide-react";
+import { getLocale } from "next-intl/server";
 import {
   EmptyState,
   FilterToolbar,
@@ -13,6 +14,7 @@ import {
   formatOrderReference,
   getPrimaryOrderLabel,
 } from "@/lib/display-labels";
+import { translateUiText } from "@/lib/ui-translations";
 
 type FollowUpsPageSearchParams = Promise<{
   search?: string;
@@ -28,6 +30,8 @@ export default async function FollowUpsPage({
   searchParams: FollowUpsPageSearchParams;
 }) {
   const query = await searchParams;
+  const locale = await getLocale();
+  const tr = (value: string) => translateUiText(value, locale as "en" | "sw");
   const records = await listFollowUps({
     search: query.search,
     status: query.status,
@@ -40,12 +44,14 @@ export default async function FollowUpsPage({
   return (
     <div className="space-y-5 lg:space-y-6">
       <PageHeader
-        title="Follow-ups"
-        description="Action center for overdue reminders, today’s callbacks, and upcoming customer tasks."
+        title={tr("Follow-ups")}
+        description={tr(
+          "Action center for overdue reminders, today’s callbacks, and upcoming customer tasks.",
+        )}
         primaryAction={
           <Link href="/follow-ups/new" className="wb-button-primary">
             <Bell className="h-4 w-4" />
-            Add Follow-up
+            {tr("Add Follow-up")}
           </Link>
         }
       />
@@ -53,55 +59,55 @@ export default async function FollowUpsPage({
       {query.created === "1" || query.updated === "1" ? (
         <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-700">
           {query.created === "1"
-            ? "Follow-up created successfully."
-            : "Follow-up updated successfully."}
+            ? tr("Follow-up created successfully.")
+            : tr("Follow-up updated successfully.")}
         </div>
       ) : null}
 
       {query.error === "not-found" ? (
         <div className="rounded-2xl border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
-          Follow-up was not found.
+          {tr("Follow-up was not found.")}
         </div>
       ) : null}
 
       <section className="grid gap-4 md:grid-cols-4">
         <KpiCard
-          label="Overdue"
+          label={tr("Overdue")}
           value={String(overdue.length)}
-          detail="Urgent tasks likely leaking revenue."
+          detail={tr("Urgent tasks likely leaking revenue.")}
         />
         <KpiCard
-          label="Today"
+          label={tr("Today")}
           value={String(today.length)}
-          detail="Follow-ups that should close today."
+          detail={tr("Follow-ups that should close today.")}
         />
         <KpiCard
-          label="Upcoming"
+          label={tr("Upcoming")}
           value={String(upcoming.length)}
-          detail="Next queued reminders in the pipeline."
+          detail={tr("Next queued reminders in the pipeline.")}
         />
         <KpiCard
-          label="Completed"
+          label={tr("Completed")}
           value={String(completed.length)}
-          detail="Tasks already closed and logged."
+          detail={tr("Tasks already closed and logged.")}
         />
       </section>
 
       <FilterToolbar
-        searchPlaceholder="Search by customer, order, note, or priority"
+        searchPlaceholder={tr("Search by customer, order, note, or priority")}
         chips={[
-          { key: "status", label: "All statuses" },
-          { key: "status", label: "Overdue", value: "overdue" },
-          { key: "status", label: "Today", value: "today" },
-          { key: "status", label: "Upcoming", value: "upcoming" },
-          { key: "status", label: "Completed", value: "completed" },
+          { key: "status", label: tr("All statuses") },
+          { key: "status", label: tr("Overdue"), value: "overdue" },
+          { key: "status", label: tr("Today"), value: "today" },
+          { key: "status", label: tr("Upcoming"), value: "upcoming" },
+          { key: "status", label: tr("Completed"), value: "completed" },
         ]}
       />
 
       <section className="grid gap-4 xl:grid-cols-2">
         <SectionCard
-          title="Overdue + Today"
-          description="Handle these first to protect conversion and trust."
+          title={tr("Overdue + Today")}
+          description={tr("Handle these first to protect conversion and trust.")}
         >
           <div className="space-y-3">
             {[...overdue, ...today].length ? (
@@ -114,16 +120,16 @@ export default async function FollowUpsPage({
               ))
             ) : (
               <EmptyState
-                title="No urgent follow-ups"
-                detail="Nothing overdue or due today."
+                title={tr("No urgent follow-ups")}
+                detail={tr("Nothing overdue or due today.")}
               />
             )}
           </div>
         </SectionCard>
 
         <SectionCard
-          title="Upcoming queue"
-          description="Planned reminders and scheduled customer callbacks."
+          title={tr("Upcoming queue")}
+          description={tr("Planned reminders and scheduled customer callbacks.")}
         >
           <div className="space-y-3">
             {upcoming.length ? (
@@ -136,11 +142,11 @@ export default async function FollowUpsPage({
               ))
             ) : (
               <EmptyState
-                title="No upcoming follow-ups"
-                detail="Create a follow-up to keep your pipeline warm."
+                title={tr("No upcoming follow-ups")}
+                detail={tr("Create a follow-up to keep your pipeline warm.")}
                 action={
                   <Link href="/follow-ups/new" className="wb-button-secondary">
-                    Add follow-up
+                    {tr("Add follow-up")}
                   </Link>
                 }
               />
@@ -150,8 +156,8 @@ export default async function FollowUpsPage({
       </section>
 
       <SectionCard
-        title="Completed follow-ups"
-        description="Recently completed reminders and outcomes."
+        title={tr("Completed follow-ups")}
+        description={tr("Recently completed reminders and outcomes.")}
       >
         <div className="space-y-3">
           {completed.length ? (
@@ -182,13 +188,13 @@ export default async function FollowUpsPage({
                     >
                       {item.orderId
                         ? `Open order #${formatOrderReference(item.orderId) || "WB-00000"}`
-                        : "Open orders"}
+                        : tr("Open orders")}
                     </Link>
                     <Link
                       href={`/follow-ups/${item.id}/edit`}
                       className="text-sm font-semibold text-[var(--color-wb-primary)] hover:underline"
                     >
-                      Edit
+                      {tr("Edit")}
                     </Link>
                   </div>
                 </div>
@@ -199,8 +205,8 @@ export default async function FollowUpsPage({
             ))
           ) : (
             <EmptyState
-              title="No completed follow-ups yet"
-              detail="Completed reminders will appear here."
+              title={tr("No completed follow-ups yet")}
+              detail={tr("Completed reminders will appear here.")}
             />
           )}
         </div>

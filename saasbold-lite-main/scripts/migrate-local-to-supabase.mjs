@@ -37,7 +37,7 @@ function readLocalState() {
 async function ensureWorkspace(client) {
   const preferredWorkspaceId = process.env.WHATSBOARD_DEFAULT_WORKSPACE_ID;
   const preferredWorkspaceName =
-    process.env.WHATSBOARD_DEFAULT_WORKSPACE_NAME || "WhatsBoard Workspace";
+    process.env.WHATSBOARD_DEFAULT_WORKSPACE_NAME || "Folapp Workspace";
 
   if (preferredWorkspaceId) {
     const { data, error } = await client

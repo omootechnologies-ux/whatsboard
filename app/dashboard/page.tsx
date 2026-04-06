@@ -397,7 +397,7 @@ export default async function DashboardOverviewPage() {
                 title={canSeeCustomers ? "No customers yet" : "Customer records unlock on Starter"}
                 description={
                   canSeeCustomers
-                    ? "Create orders and WhatsBoard will build the customer base automatically."
+                    ? "Create orders and Folapp will build the customer base automatically."
                     : "Upgrade to turn every sale into a reusable customer record."
                 }
               />

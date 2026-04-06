@@ -1,9 +1,14 @@
 import { AuthForm } from "@/components/whatsboard-public/auth-placeholder-form";
+import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 
-export const metadata = {
-  title: "Register | WhatsBoard",
-  description: "Create your WhatsBoard account and start tracking orders.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations();
+  return {
+    title: t("pages.register.title"),
+    description: t("pages.register.description"),
+  };
+}
 
 export default function RegisterPage() {
   return (

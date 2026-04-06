@@ -88,3 +88,82 @@ export const pricingPlans: PricingPlan[] = [
     ],
   },
 ];
+
+export function getPricingPlans(locale?: string): PricingPlan[] {
+  if (locale !== "sw") {
+    return pricingPlans;
+  }
+
+  return [
+    {
+      key: "free",
+      name: "Bure",
+      priceLabel: formatPlanPriceLabel(0),
+      cadence: "/milele",
+      badge: "Jaribu kwanza",
+      description:
+        "Fuatilia orders zako za mwanzo na uone biashara yenye mpangilio bila kulipa mwanzo.",
+      ctaLabel: "Anza Bure",
+      ctaHref: buildPlanRegisterHref("free"),
+      features: [
+        "Hadi order 30 kwa mwezi",
+        "Board ya orders ya msingi",
+        "Rekodi za wateja",
+        "Dashibodi rafiki kwa simu",
+      ],
+    },
+    {
+      key: "starter",
+      name: "Starter",
+      priceLabel: formatPlanPriceLabel(15_000),
+      cadence: "/mwezi",
+      badge: "Muuzaji solo",
+      description:
+        "Kwa wauzaji wa mtu mmoja wanaohitaji udhibiti wa kila siku wa malipo, follow-ups na delivery.",
+      ctaLabel: "Anza Leo",
+      ctaHref: buildPlanRegisterHref("starter"),
+      features: [
+        "Order zisizo na kikomo",
+        "Ufuatiliaji wa malipo",
+        "Vikumbusho vya follow-up",
+        "Workflow ya dispatch",
+        "Ripoti za TZS",
+      ],
+    },
+    {
+      key: "growth",
+      name: "Growth",
+      priceLabel: formatPlanPriceLabel(35_000),
+      cadence: "/mwezi",
+      badge: "Biashara inayokua",
+      description:
+        "Imetengenezwa kwa timu zinazokua kwenye social commerce zinazohitaji kazi za pamoja na operesheni madhubuti.",
+      ctaLabel: "Anza Leo",
+      ctaHref: buildPlanRegisterHref("growth"),
+      highlight: true,
+      features: [
+        "Vyote vya Starter",
+        "Wanachama 2 wa timu wamejumuishwa",
+        "Analytics za juu",
+        "Support ya kipaumbele",
+      ],
+    },
+    {
+      key: "business",
+      name: "Business",
+      priceLabel: formatPlanPriceLabel(70_000),
+      cadence: "/mwezi",
+      badge: "Workflow ya timu",
+      description:
+        "Kwa wauzaji waliokomaa Afrika Mashariki wanaoendesha timu za channels nyingi na volume kubwa ya kila siku.",
+      ctaLabel: "Anza Leo",
+      ctaHref: buildPlanRegisterHref("business"),
+      features: [
+        "Vyote vya Growth",
+        "Wanachama 5 wa timu wamejumuishwa",
+        "Mapitio ya operesheni",
+        "Vipengele vya mapema",
+      ],
+    },
+  ];
+}

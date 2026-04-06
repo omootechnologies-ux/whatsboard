@@ -1,28 +1,33 @@
 import "../styles/globals.css";
 import "../styles/satoshi.css";
 import type { Metadata, Viewport } from "next";
+import { getLocale, getTranslations } from "next-intl/server";
+import { NextIntlClientProvider } from "next-intl";
 import { PwaRegister } from "@/components/pwa/pwa-register";
 
-export const metadata: Metadata = {
-  title: "WhatsBoard",
-  description:
-    "Premium fintech-style seller dashboard for East African online sellers turning WhatsApp chat chaos into sales control.",
-  applicationName: "WhatsBoard",
-  manifest: "/manifest.webmanifest",
-  appleWebApp: {
-    capable: true,
-    title: "WhatsBoard",
-    statusBarStyle: "default",
-  },
-  icons: {
-    icon: [
-      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
-    shortcut: ["/icons/icon-192x192.png"],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations();
+  const appName = t("app.name");
+  return {
+    title: appName,
+    description: t("app.description"),
+    applicationName: appName,
+    manifest: "/manifest.webmanifest",
+    appleWebApp: {
+      capable: true,
+      title: appName,
+      statusBarStyle: "default",
+    },
+    icons: {
+      icon: [
+        { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+      ],
+      apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+      shortcut: ["/icons/icon-192x192.png"],
+    },
+  };
+}
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -31,16 +36,19 @@ export const viewport: Viewport = {
   themeColor: "#0F5D46",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getLocale();
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body>
-        {children}
-        <PwaRegister />
+        <NextIntlClientProvider>
+          {children}
+          <PwaRegister />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

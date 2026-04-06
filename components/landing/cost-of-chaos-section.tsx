@@ -82,7 +82,7 @@ export function CostOfChaosSection() {
               {t("Most sellers do not have a marketing problem. They have a follow-up problem dressed like normal business.")}
             </p>
             <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-[#111111]">
-              {t("WhatsBoard Starter is TZS 15,000/month. Losing even one order can cost more than that.")}
+              {t("Folapp Starter is TZS 15,000/month. Losing even one order can cost more than that.")}
             </p>
           </div>
 

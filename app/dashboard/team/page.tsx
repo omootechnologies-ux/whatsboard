@@ -98,7 +98,7 @@ export default async function TeamPage({
           <DashboardPanelHeader
             eyebrow="Invite"
             title="Add team member"
-            description="The user must already have a WhatsBoard account before you can add them."
+            description="The user must already have a Folapp account before you can add them."
           />
           <form action={addTeamMemberAction} className="mt-5 rounded-2xl border border-border bg-secondary/50 p-4">
             <label className="form-field">

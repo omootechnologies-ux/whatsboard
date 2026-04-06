@@ -11,21 +11,21 @@ const testimonials = [
     name: "Asha Mushi",
     role: "Fashion Seller, Dar es Salaam",
     image: "/images/testimonial-1.jpg",
-    quote: "Before WhatsBoard, I was losing at least 5 orders every week. Now I handle 3x more orders with zero stress. My customers even notice how professional I've become.",
+    quote: "Before Folapp, I was losing at least 5 orders every week. Now I handle 3x more orders with zero stress. My customers even notice how professional I've become.",
     stats: { metric: "300%", label: "More orders" }
   },
   {
     name: "Brian Otieno",
     role: "Electronics Seller, Nairobi",
     image: "/images/testimonial-2.jpg",
-    quote: "I used to stay up until 2am trying to remember who ordered what. WhatsBoard gave me my evenings back. My family is happier, and honestly, so am I.",
+    quote: "I used to stay up until 2am trying to remember who ordered what. Folapp gave me my evenings back. My family is happier, and honestly, so am I.",
     stats: { metric: "0", label: "Missed orders" }
   },
   {
     name: "Neema Juma",
     role: "Beauty Seller, Arusha",
     image: "/images/testimonial-3.jpg",
-    quote: "My business grew so fast I couldn't keep up. WhatsBoard saved my sanity. I can now track 50+ orders daily without breaking a sweat.",
+    quote: "My business grew so fast I couldn't keep up. Folapp saved my sanity. I can now track 50+ orders daily without breaking a sweat.",
     stats: { metric: "50+", label: "Daily orders" }
   }
 ]

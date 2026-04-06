@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { getLocale } from "next-intl/server";
 import {
   getPublicReceiptByToken,
   hashVisitorIp,
   recordReceiptViewByToken,
 } from "@/lib/receipts/receipt-service";
+import { translateUiText } from "@/lib/ui-translations";
 
 export const dynamic = "force-dynamic";
 
@@ -41,6 +43,8 @@ export default async function ReceiptPublicPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
+  const locale = await getLocale();
+  const tr = (value: string) => translateUiText(value, locale as "en" | "sw");
   const headerStore = await headers();
 
   const receipt = await getPublicReceiptByToken(token);
@@ -62,7 +66,7 @@ export default async function ReceiptPublicPage({
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#5f6368]">
-                Receipt
+                {tr("Receipt")}
               </p>
               <h1 className="mt-1 text-xl font-black tracking-[-0.03em] text-[#111111]">
                 {receipt.shopName}
@@ -82,7 +86,7 @@ export default async function ReceiptPublicPage({
           <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
             <div className="rounded-xl border border-[#e2e8e3] bg-[#f8faf9] px-3 py-2">
               <p className="text-[11px] uppercase tracking-[0.14em] text-[#5f6368]">
-                Order
+                {tr("Order")}
               </p>
               <p className="mt-1 font-semibold text-[#111111]">
                 {receipt.orderReference}
@@ -90,7 +94,7 @@ export default async function ReceiptPublicPage({
             </div>
             <div className="rounded-xl border border-[#e2e8e3] bg-[#f8faf9] px-3 py-2">
               <p className="text-[11px] uppercase tracking-[0.14em] text-[#5f6368]">
-                Date
+                {tr("Date")}
               </p>
               <p className="mt-1 font-semibold text-[#111111]">
                 {formatDate(receipt.date)}
@@ -110,7 +114,9 @@ export default async function ReceiptPublicPage({
                   <p className="break-words text-sm font-semibold text-[#111111]">
                     {item.name}
                   </p>
-                  <p className="text-xs text-[#5f6368]">Qty {item.qty}</p>
+                  <p className="text-xs text-[#5f6368]">
+                    {tr("Qty")} {item.qty}
+                  </p>
                 </div>
                 <p className="text-sm font-semibold text-[#111111]">
                   {formatCurrency(item.price * item.qty)}
@@ -121,20 +127,20 @@ export default async function ReceiptPublicPage({
 
           <div className="mt-4 rounded-xl border border-[#cfe6db] bg-[#f1f8f4] p-3">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-sm text-[#5f6368]">Total</span>
+              <span className="text-sm text-[#5f6368]">{tr("Total")}</span>
               <span className="text-lg font-black tracking-[-0.03em] text-[#0F5D46]">
                 {formatCurrency(receipt.totalAmount)}
               </span>
             </div>
             <div className="mt-2 flex items-center justify-between gap-3 text-sm">
-              <span className="text-[#5f6368]">Payment</span>
+              <span className="text-[#5f6368]">{tr("Payment")}</span>
               <span className="inline-flex rounded-full border border-[#d7e7de] bg-white px-2.5 py-1 text-xs font-semibold text-[#0F5D46]">
                 {receipt.paymentStatusLabel}
               </span>
             </div>
             {receipt.paymentReference ? (
               <p className="mt-2 text-xs text-[#5f6368]">
-                Ref: {receipt.paymentReference}
+                {tr("Ref")}: {receipt.paymentReference}
               </p>
             ) : null}
           </div>
