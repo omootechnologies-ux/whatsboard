@@ -5,17 +5,19 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
-
-const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/login", label: "Login" },
-];
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/shared/language-switcher";
 
 export function PublicNav() {
+  const t = useTranslations();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const navLinks = [
+    { href: "/", label: t("publicNav.home") },
+    { href: "/pricing", label: t("publicNav.pricing") },
+    { href: "/login", label: t("publicNav.login") },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 18);
@@ -49,10 +51,10 @@ export function PublicNav() {
           </span>
           <div className="min-w-0 leading-tight">
             <p className="text-xs font-semibold tracking-[0.18em] text-white/75 sm:text-sm sm:tracking-[0.2em]">
-              WHATSBOARD
+              {t("app.name").toUpperCase()}
             </p>
             <p className="hidden text-sm font-black tracking-[-0.03em] text-white sm:block">
-              Sales Control
+              {t("publicNav.salesControl")}
             </p>
           </div>
         </Link>
@@ -77,24 +79,25 @@ export function PublicNav() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
+          <LanguageSwitcher compact className="border-white/35 bg-white/95" />
           <Link
             href="/login?next=%2Fdashboard"
             className="inline-flex items-center justify-center rounded-xl border border-white/35 bg-transparent px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
           >
-            Watch Demo
+            {t("actions.watchDemo")}
           </Link>
           <Link
             href="/register?force=1"
             className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-[var(--color-wb-primary)] transition hover:bg-white/90"
           >
-            Start Free
+            {t("actions.startFree")}
           </Link>
         </div>
 
         <button
           onClick={() => setOpen((prev) => !prev)}
           className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/30 bg-white/10 text-white md:hidden"
-          aria-label="Toggle navigation"
+          aria-label={t("publicNav.toggleNavigation")}
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
@@ -117,18 +120,21 @@ export function PublicNav() {
                 </Link>
               );
             })}
+            <div className="pt-1">
+              <LanguageSwitcher compact className="border-white/35 bg-white/95" />
+            </div>
             <div className="mt-2 grid grid-cols-2 gap-2 max-[360px]:grid-cols-1">
               <Link
                 href="/login?next=%2Fdashboard"
                 className="inline-flex items-center justify-center rounded-xl border border-white/35 bg-transparent px-4 py-2 text-sm font-semibold text-white"
               >
-                Watch Demo
+                {t("actions.watchDemo")}
               </Link>
               <Link
                 href="/register?force=1"
                 className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-[var(--color-wb-primary)]"
               >
-                Start Free
+                {t("actions.startFree")}
               </Link>
             </div>
           </div>
