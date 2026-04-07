@@ -72,11 +72,9 @@ export default getRequestConfig(async () => {
   const headerLocale = resolveLocaleFromAcceptLanguage(
     headerStore.get("accept-language"),
   );
-  const locale = profileLocale
-    ? profileLocale
-    : isAppLocale(cookieLocale)
-      ? cookieLocale
-      : headerLocale || defaultAppLocale;
+  const locale = isAppLocale(cookieLocale)
+    ? cookieLocale
+    : profileLocale || headerLocale || defaultAppLocale;
 
   const messages = (
     await import(`@/messages/${locale}.json`)
